@@ -1,5 +1,6 @@
 use std::io::{BufWriter, Write};
 use clap::{arg, Command};
+mod lex;
 
 //gcc asm.s
 //./a.out
@@ -21,8 +22,8 @@ fn main() -> std::io::Result<()> {
     let codegen = matches.get_one::<String>("codegen");
 
 
-    if let Some (_) = lex {
-
+    if let Some (filename) = lex {
+        let tokens = lex::lex(&filename);
     }
 
     if let Some(_) = parse  {
