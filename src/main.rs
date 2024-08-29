@@ -1,5 +1,6 @@
 use std::io::{BufWriter, Write};
 use clap::{arg, Command};
+mod token;
 mod lex;
 
 //gcc asm.s
