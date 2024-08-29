@@ -24,9 +24,10 @@ fn main() -> std::io::Result<()> {
 
 
     if let Some (filename) = lex {
-        let tokens = lex::lex(&filename);
-        let identifier = token::identifier("main");
-        println!("{:?}", identifier);
+        let tokens = lex::lex(filename);
+        let identifier = token::Token::identifier("main(void)");
+        let int = token::Token::int("1234");
+        println!("{:?}, {:?}", identifier, int);
     }
 
     if let Some(_) = parse  {
