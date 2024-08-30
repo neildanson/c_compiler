@@ -25,8 +25,8 @@ pub enum Expression {
 
 fn parse_expression(tokens: &[Token]) -> Result<(Expression, &[Token])> {
     let (expression, tokens) = match tokens {
-        [Token::Constant(c), rest @ ..] => (Expression::Int(c.parse().unwrap()), rest),
-        [Token::Identifier(id), rest @ ..] => (Expression::Identifier(id.clone()), rest),
+        [Token::Constant(c), Token::SemiColon, rest @ ..] => (Expression::Int(c.parse().unwrap()), rest),
+        [Token::Identifier(id), Token::SemiColon,  rest @ ..] => (Expression::Identifier(id.clone()), rest),
         _ => return Err(ErrorKind::InvalidInput.into()),
     };
     Ok((expression, tokens))
@@ -34,11 +34,9 @@ fn parse_expression(tokens: &[Token]) -> Result<(Expression, &[Token])> {
 
 fn parse_statement(tokens: &[Token]) -> Result<(Statement, &[Token])> {
     let (statement, tokens) = match tokens {
-        [Token::Return, Token::Constant(c), Token::SemiColon, rest @ ..] => {
-            (Statement::Return(Expression::Int(c.parse().unwrap())), rest)
-        }
-        [Token::Return, Token::Identifier(id), Token::SemiColon, rest @ ..] => {
-            (Statement::Return(Expression::Identifier(id.clone())), rest)
+        [Token::Return, rest @..] => {
+            let (expression, rest) = parse_expression(rest)?;
+            (Statement::Return(expression), rest)
         }
         _ => return Err(ErrorKind::InvalidInput.into()),
     };
@@ -75,7 +73,7 @@ mod tests {
     #[test]
     fn test_parse_expression() {
         let tokenizer = Tokenizer::new();
-        let tokens = tokenizer.tokenize("42").unwrap();
+        let tokens = tokenizer.tokenize("42;").unwrap();
         let (expression, rest) = parse_expression(&tokens).unwrap();
         assert_eq!(expression, Expression::Int(42));
         assert!(rest.is_empty());
