@@ -25,8 +25,8 @@ pub enum Expression {
 
 fn parse_expression(tokens: &[Token]) -> Result<(Expression, &[Token])> {
     let (expression, tokens) = match tokens {
-        [Token::Constant(c), Token::SemiColon, rest @ ..] => (Expression::Int(c.parse().unwrap()), rest),
-        [Token::Identifier(id), Token::SemiColon,  rest @ ..] => (Expression::Identifier(id.clone()), rest),
+        [Token::Constant(c), rest @ ..] => (Expression::Int(c.parse().unwrap()), rest),
+        [Token::Identifier(id), rest @ ..] => (Expression::Identifier(id.clone()), rest),
         _ => return Err(ErrorKind::InvalidInput.into()),
     };
     Ok((expression, tokens))
@@ -34,18 +34,18 @@ fn parse_expression(tokens: &[Token]) -> Result<(Expression, &[Token])> {
 
 fn parse_statement(tokens: &[Token]) -> Result<(Statement, &[Token])> {
     let (statement, tokens) = match tokens {
-        [Token::Return, rest @..] => {
+        [Token::Return, rest @ ..] => {
             let (expression, rest) = parse_expression(rest)?;
+            let rest = match rest {
+                [Token::SemiColon, rest @ ..] => rest,
+                _ => return Err(ErrorKind::InvalidInput.into()),
+            };
             (Statement::Return(expression), rest)
         }
         _ => return Err(ErrorKind::InvalidInput.into()),
     };
     Ok((statement, tokens))
 }
-
-
-
-
 
 #[cfg(test)]
 mod tests {
@@ -66,16 +66,28 @@ mod tests {
         let tokenizer = Tokenizer::new();
         let tokens = tokenizer.tokenize("return x;").unwrap();
         let (statement, rest) = parse_statement(&tokens).unwrap();
-        assert_eq!(statement, Statement::Return(Expression::Identifier("x".to_string())));
+        assert_eq!(
+            statement,
+            Statement::Return(Expression::Identifier("x".to_string()))
+        );
         assert!(rest.is_empty());
     }
 
     #[test]
     fn test_parse_expression() {
         let tokenizer = Tokenizer::new();
-        let tokens = tokenizer.tokenize("42;").unwrap();
+        let tokens = tokenizer.tokenize("42").unwrap();
         let (expression, rest) = parse_expression(&tokens).unwrap();
         assert_eq!(expression, Expression::Int(42));
+        assert!(rest.is_empty());
+    }
+
+    #[test]
+    fn test_parse_expression_identifier() {
+        let tokenizer = Tokenizer::new();
+        let tokens = tokenizer.tokenize("x").unwrap();
+        let (expression, rest) = parse_expression(&tokens).unwrap();
+        assert_eq!(expression, Expression::Identifier("x".to_string()));
         assert!(rest.is_empty());
     }
 }

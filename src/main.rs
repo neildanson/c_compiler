@@ -1,6 +1,6 @@
 use clap::{arg, Command};
-use token::Tokenizer;
 use std::io::*;
+use token::Tokenizer;
 mod ast;
 mod token;
 
@@ -36,7 +36,7 @@ fn main() -> Result<()> {
     let codegen = matches.get_one::<String>("codegen");
 
     let tokenizer = Tokenizer::new();
-    
+
     if let Some(filename) = lex {
         let input = read_file(filename)?;
         let tokens = tokenizer.tokenize(&input)?;
