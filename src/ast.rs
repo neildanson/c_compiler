@@ -22,6 +22,17 @@ pub enum Expression {
     Identifier(String),
 }
 
+fn parse_return(tokens: &[Token]) -> (Statement, &[Token]) {
+    let (expression, rest) = match tokens {
+        [Token::Constant(c), Token::SemiColon, rest @ ..] => {
+            let c = c.parse().unwrap();
+            (Expression::Int(c), rest)
+        }
+        _ => panic!("Failed to parse {:?}", tokens),
+    };
+    (Statement::Return(expression), rest)
+}
+
 pub fn parse(tokens: &[Token]) -> Program {
     match tokens {
         [] => Program {

@@ -1,7 +1,7 @@
 use regex::Regex;
 use std::io::*;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Token {
     Comment(String),
     Identifier(String), //[a-zA-Z_]\w*\b
@@ -168,5 +168,30 @@ impl Tokenizer {
 
     fn semicolon<'a>(&self, input: &'a str) -> Option<(Token, &'a str)> {
         Self::parse(input, &self.semicolon, |_| Token::SemiColon)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_lex_simple_return() {
+        let tokenizer = Tokenizer::new();
+        let tokens = tokenizer.tokenize("int main() { return 42; }").unwrap();
+        assert_eq!(
+            tokens,
+            vec![
+                Token::Int,
+                Token::Identifier("main".to_string()),
+                Token::LParen,
+                Token::RParen,
+                Token::LBrace,
+                Token::Return,
+                Token::Constant("42".to_string()),
+                Token::SemiColon,
+                Token::RBrace
+            ]
+        );
     }
 }
