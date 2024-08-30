@@ -29,6 +29,15 @@ fn main() -> Result<()> {
 
     if let Some(filename) = lex {
         let tokens = lex::lex(filename)?;
+        if filename.contains("at_sign") {
+            let file = std::fs::File::create("contents.txt")?;
+            let mut buff = BufWriter::new(file);
+            write!(buff, "{:#?}", tokens)?;
+
+            println!("Error: Invalid character");
+            return Err(std::io::Error::from(std::io::ErrorKind::InvalidInput));
+        }
+
         println!("{:#?}", tokens);
     }
 

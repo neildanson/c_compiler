@@ -15,6 +15,9 @@ fn lex_internal(input: &str) -> Result<Vec<Token>> {
     while !input.is_empty() {
         if input.starts_with(" ") || input.starts_with("\n") || input.starts_with("\r") || input.starts_with("\t") {
             input = &input[1..];
+        } else if let Some((token, rest)) = Token::comment(input) {
+            tokens.push(token);
+            input = rest;
         } else if let Some((token, rest)) = Token::void(input) {
             tokens.push(token);
             input = rest;

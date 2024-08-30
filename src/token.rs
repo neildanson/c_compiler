@@ -2,6 +2,7 @@ use regex::Regex;
 
 #[derive(Debug)]
 pub enum Token {
+    Comment(String),        
     Identifier(String), //[a-zA-Z_]\w*\b
     Constant(String),   //[0-9]+\b
     Int,                //int\b
@@ -15,6 +16,16 @@ pub enum Token {
 }
 
 impl Token {
+    pub fn comment(input: &str) -> Option<(Token, &str)> {
+        let re = Regex::new(r"^/[*]([^*]|([*][^/]))*[*]/").unwrap();
+        if let Some(mat) = re.find(input) {
+            let s = mat.as_str();
+            Some((Token::Comment(s.to_string()), &input[s.len()..]))
+        } else {
+            None
+        }
+    }
+
     pub fn constant(input: &str) -> Option<(Token, &str)> {
         let re = Regex::new(r"\d+\b").unwrap();
         if let Some(mat) = re.find(input) {
