@@ -24,6 +24,10 @@ fn main() -> Result<()> {
     let parse = matches.get_one::<String>("parse");
     let codegen = matches.get_one::<String>("codegen");
 
+    println!("{:?}", lex);
+    println!("{:?}", parse);
+    println!("{:?}", codegen);
+
     if let Some(filename) = lex {
         let tokens = lex::lex(filename);
         println!("{:#?}", tokens);
