@@ -1,7 +1,7 @@
 use clap::{arg, Command};
-use std::io::{BufWriter, Result, Write};
+use token::Tokenizer;
+use std::io::*;
 mod ast;
-mod lex;
 mod token;
 
 //gcc asm.s
@@ -11,6 +11,14 @@ mod token;
 //Usage : cargo run -- --codegen a.s
 //Usage : cargo run -- --lex main.c
 //Usage : cargo run -- --parse main.c
+fn read_file(filename: &str) -> std::io::Result<String> {
+    let file = std::fs::File::open(filename)?;
+    let mut buff = std::io::BufReader::new(file);
+    let mut contents = String::new();
+    buff.read_to_string(&mut contents)?;
+    Ok(contents)
+}
+
 fn main() -> Result<()> {
     //let file = std::fs::File::create("contents.txt")?;
     //let mut buff = BufWriter::new(file);
@@ -27,27 +35,26 @@ fn main() -> Result<()> {
     let parse = matches.get_one::<String>("parse");
     let codegen = matches.get_one::<String>("codegen");
 
+    let tokenizer = Tokenizer::new();
+    
     if let Some(filename) = lex {
-        let tokens = lex::lex(filename)?;
-        if filename.contains("at_sign") {
-            let file = std::fs::File::create("contents.txt")?;
-            let mut buff = BufWriter::new(file);
-            write!(buff, "{:#?}", tokens)?;
-
-            println!("Error: Invalid character");
-            return Err(std::io::Error::from(std::io::ErrorKind::InvalidInput));
-        }
-
+        let input = read_file(filename)?;
+        let tokens = tokenizer.tokenize(&input)?;
         println!("{:#?}", tokens);
     }
 
     if let Some(filename) = parse {
-        let tokens = lex::lex(filename)?;
+        let input = read_file(filename)?;
+        let tokens = tokenizer.tokenize(&input)?;
         let ast = ast::parse(&tokens);
         println!("{:#?}", ast);
     }
 
     if let Some(filename) = codegen {
+        let input = read_file(filename)?;
+        let tokens = tokenizer.tokenize(&input)?;
+        let _ast = ast::parse(&tokens); //Turn Ast to Asm
+
         let file = std::fs::File::create(filename)?;
         let mut buff = BufWriter::new(file);
         write!(
