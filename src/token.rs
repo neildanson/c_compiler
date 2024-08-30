@@ -60,11 +60,11 @@ impl Tokenizer {
                 || input.starts_with("\t")
             {
                 input = &input[1..];
-            } else if let Some((token, rest)) = tokenizer.multi_line_comment(input) {
-                tokens.push(token);
+            } else if let Some((_token, rest)) = tokenizer.multi_line_comment(input) {
+                //tokens.push(token);
                 input = rest;
-            } else if let Some((token, rest)) = tokenizer.single_line_comment(input) {
-                tokens.push(token);
+            } else if let Some((_token, rest)) = tokenizer.single_line_comment(input) {
+                //tokens.push(token);
                 input = rest;
             } else if let Some((token, rest)) = tokenizer.void(input) {
                 tokens.push(token);
