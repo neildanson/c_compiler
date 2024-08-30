@@ -1,8 +1,7 @@
+use c_compiler::token::Tokenizer;
+use c_compiler::ast::*;
 use clap::{arg, Command};
 use std::io::*;
-use token::Tokenizer;
-mod ast;
-mod token;
 
 //gcc asm.s
 //./a.out
@@ -46,7 +45,7 @@ fn main() -> Result<()> {
     if let Some(filename) = parse {
         let input = read_file(filename)?;
         let tokens = tokenizer.tokenize(&input)?;
-        let (ast, remaining) = ast::parse_function(&tokens)?;
+        let (ast, remaining) = parse_function(&tokens)?;
         if remaining.len() > 0 {
             return Err(Error::new(ErrorKind::InvalidInput, "Failed to parse"));
         }
@@ -56,7 +55,7 @@ fn main() -> Result<()> {
     if let Some(filename) = codegen {
         let input = read_file(filename)?;
         let tokens = tokenizer.tokenize(&input)?;
-        let (_ast, remaining) = ast::parse_function(&tokens)?;
+        let (_ast, remaining) = parse_function(&tokens)?;
         if remaining.len() > 0 {
             return Err(Error::new(ErrorKind::InvalidInput, "Failed to parse"));
         }
