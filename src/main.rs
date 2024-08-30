@@ -10,6 +10,7 @@ mod token;
 
 //Usage : cargo run -- --codegen a.s
 //Usage : cargo run -- --lex main.c
+//Usage : cargo run -- --parse main.c
 fn main() -> Result<()> {
     let matches = Command::new("C Compiler")
         .version("0.01")
