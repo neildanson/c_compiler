@@ -16,7 +16,7 @@ pub enum Token {
 }
 
 impl Token {
-    pub fn comment(input: &str) -> Option<(Token, &str)> {
+    pub fn multi_line_comment(input: &str) -> Option<(Token, &str)> {
         let re = Regex::new(r"^/[*]([^*]|([*][^/]))*[*]/").unwrap();
         if let Some(mat) = re.find(input) {
             let s = mat.as_str();
@@ -26,8 +26,18 @@ impl Token {
         }
     }
 
+    pub fn single_line_comment(input: &str) -> Option<(Token, &str)> {
+        let re = Regex::new(r"^//.*").unwrap();
+        if let Some(mat) = re.find(input) {
+            let s = mat.as_str();
+            Some((Token::Comment(s.to_string()), &input[s.len()..]))
+        } else {
+            None
+        }
+    }
+
     pub fn constant(input: &str) -> Option<(Token, &str)> {
-        let re = Regex::new(r"\d+\b").unwrap();
+        let re = Regex::new(r"^[0-9]+\b").unwrap();
         if let Some(mat) = re.find(input) {
             let s = mat.as_str();
             Some((Token::Constant(s.to_string()), &input[s.len()..]))
