@@ -46,14 +46,14 @@ fn main() -> Result<()> {
     if let Some(filename) = parse {
         let input = read_file(filename)?;
         let tokens = tokenizer.tokenize(&input)?;
-        let ast = ast::parse(&tokens);
-        println!("{:#?}", ast);
+        //let ast = ast::parse(&tokens);
+        //println!("{:#?}", ast);
     }
 
     if let Some(filename) = codegen {
         let input = read_file(filename)?;
         let tokens = tokenizer.tokenize(&input)?;
-        let _ast = ast::parse(&tokens); //Turn Ast to Asm
+        //let _ast = ast::parse(&tokens); //Turn Ast to Asm
 
         let file = std::fs::File::create(filename)?;
         let mut buff = BufWriter::new(file);
