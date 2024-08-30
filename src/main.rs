@@ -31,7 +31,7 @@ fn main() -> Result<()> {
 
     if let Some(filename) = parse {
         let tokens = lex::lex(filename)?;
-        let ast = ast::parse(tokens);
+        let ast = ast::parse(&tokens);
         println!("{:#?}", ast);
 
     }
