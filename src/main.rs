@@ -1,5 +1,6 @@
 use clap::{arg, Command};
 use std::io::{BufWriter, Write, Result};
+mod ast;
 mod lex;
 mod token;
 
@@ -27,7 +28,12 @@ fn main() -> Result<()> {
         println!("{:#?}", tokens);
     }
 
-    if let Some(_) = parse {}
+    if let Some(filename) = parse {
+        let tokens = lex::lex(filename)?;
+        let ast = ast::parse(tokens);
+        println!("{:#?}", ast);
+
+    }
 
     if let Some(filename) = codegen {
         let file = std::fs::File::create(filename)?;
