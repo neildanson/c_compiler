@@ -47,7 +47,7 @@ fn parse_statement(tokens: &[Token]) -> Result<(Statement, &[Token])> {
     Ok((statement, tokens))
 }
 
-fn parse_function(tokens: &[Token]) -> Result<(Function, &[Token])> {
+pub fn parse_function(tokens: &[Token]) -> Result<(Function, &[Token])> {
     let (function, tokens) = match tokens {
         [Token::Int, Token::Identifier(name), Token::LParen, Token::RParen, Token::LBrace, rest @ ..] => {
             let mut statements = Vec::new();
