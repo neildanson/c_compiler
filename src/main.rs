@@ -46,11 +46,11 @@ fn main() -> Result<()> {
     if let Some(filename) = parse {
         let input = read_file(filename)?;
         let tokens = tokenizer.tokenize(&input)?;
-        let (_ast, remaining) = ast::parse_function(&tokens)?;
+        let (ast, remaining) = ast::parse_function(&tokens)?;
         if remaining.len() > 0 {
             return Err(Error::new(ErrorKind::InvalidInput, "Failed to parse"));
         }
-        //println!("{:#?}", ast);
+        println!("{:#?}", ast);
     }
 
     if let Some(filename) = codegen {
