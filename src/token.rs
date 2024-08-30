@@ -35,7 +35,7 @@ impl Tokenizer {
     pub fn new() -> Self {
         Tokenizer {
             multi_line_comment: Regex::new(r"^/[*]([^*]|([*][^/]))*[*]/").unwrap(),
-            single_line_comment: Regex::new(r"^//.*").unwrap(),
+            single_line_comment: Regex::new(r"^//(.*)").unwrap(),
             constant: Regex::new(r"^[0-9]+\b").unwrap(),
             identifier: Regex::new(r"^[a-zA-Z_]\w*\b").unwrap(),
             int: Regex::new(r"^int\b").unwrap(),
