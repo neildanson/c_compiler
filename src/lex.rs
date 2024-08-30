@@ -1,4 +1,4 @@
-use crate::token::Token;
+use crate::token::{Token, Tokenizer};
 use std::io::*;
 
 fn read_file(filename: &str) -> std::io::Result<String> {
@@ -11,44 +11,45 @@ fn read_file(filename: &str) -> std::io::Result<String> {
 
 fn lex_internal(input: &str) -> Result<Vec<Token>> {
     let mut tokens = Vec::new();
+    let  tokenizer = Tokenizer::new();
     let mut input = input;
     while !input.is_empty() {
         if input.starts_with(" ") || input.starts_with("\n") || input.starts_with("\r") || input.starts_with("\t") {
             input = &input[1..];
-        } else if let Some((token, rest)) = Token::multi_line_comment(input) {
+        } else if let Some((token, rest)) = tokenizer.multi_line_comment(input) {
             tokens.push(token);
             input = rest;
-        } else if let Some((token, rest)) = Token::single_line_comment(input) {
+        } else if let Some((token, rest)) = tokenizer.single_line_comment(input) {
             tokens.push(token);
             input = rest;
-        } else if let Some((token, rest)) = Token::void(input) {
+        } else if let Some((token, rest)) = tokenizer.void(input) {
             tokens.push(token);
             input = rest;
-        } else if let Some((token, rest)) = Token::return_(input) {
+        } else if let Some((token, rest)) = tokenizer.return_(input) {
             tokens.push(token);
             input = rest;
-        } else if let Some((token, rest)) = Token::int(input) {
+        } else if let Some((token, rest)) = tokenizer.int(input) {
             tokens.push(token);
             input = rest;
-        } else if let Some((token, rest)) = Token::lparen(input) {
+        } else if let Some((token, rest)) = tokenizer.lparen(input) {
             tokens.push(token);
             input = rest;
-        } else if let Some((token, rest)) = Token::rparen(input) {
+        } else if let Some((token, rest)) = tokenizer.rparen(input) {
             tokens.push(token);
             input = rest;
-        } else if let Some((token, rest)) = Token::lbrace(input) {
+        } else if let Some((token, rest)) = tokenizer.lbrace(input) {
             tokens.push(token);
             input = rest;
-        } else if let Some((token, rest)) = Token::rbrace(input) {
+        } else if let Some((token, rest)) = tokenizer.rbrace(input) {
             tokens.push(token);
             input = rest;
-        } else if let Some((token, rest)) = Token::semicolon(input) {
+        } else if let Some((token, rest)) = tokenizer.semicolon(input) {
             tokens.push(token);
             input = rest;
-        } else if let Some((token, rest)) = Token::identifier(input) {
+        } else if let Some((token, rest)) = tokenizer.identifier(input) {
             tokens.push(token);
             input = rest;
-        } else if let Some((token, rest)) = Token::constant(input) {
+        } else if let Some((token, rest)) = tokenizer.constant(input) {
             tokens.push(token);
             input = rest;
         } else {
