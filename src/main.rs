@@ -12,6 +12,9 @@ mod token;
 //Usage : cargo run -- --lex main.c
 //Usage : cargo run -- --parse main.c
 fn main() -> Result<()> {
+    //let file = std::fs::File::create("contents.txt")?;
+    //let mut buff = BufWriter::new(file);
+    //write!(buff, "{}", "filename")?;
     let matches = Command::new("C Compiler")
         .version("0.01")
         .about("Does awesome things")
@@ -24,12 +27,8 @@ fn main() -> Result<()> {
     let parse = matches.get_one::<String>("parse");
     let codegen = matches.get_one::<String>("codegen");
 
-    println!("{:?}", lex);
-    println!("{:?}", parse);
-    println!("{:?}", codegen);
-
     if let Some(filename) = lex {
-        let tokens = lex::lex(filename);
+        let tokens = lex::lex(filename)?;
         println!("{:#?}", tokens);
     }
 

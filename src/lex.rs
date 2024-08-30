@@ -13,7 +13,7 @@ fn lex_internal(input: &str) -> Result<Vec<Token>> {
     let mut tokens = Vec::new();
     let mut input = input;
     while !input.is_empty() {
-        if input.starts_with(" ") || input.starts_with("\n") || input.starts_with("\r") {
+        if input.starts_with(" ") || input.starts_with("\n") || input.starts_with("\r") || input.starts_with("\t") {
             input = &input[1..];
         } else if let Some((token, rest)) = Token::void(input) {
             tokens.push(token);
