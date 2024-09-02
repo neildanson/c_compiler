@@ -1,4 +1,4 @@
-use c_compiler::token::Tokenizer;
+use c_compiler::token::*;
 use c_compiler::ast::*;
 use clap::{arg, Command};
 use std::io::*;
@@ -20,6 +20,35 @@ fn read_file(filename: &str) -> std::io::Result<String> {
     Ok(contents)
 }
 
+fn lex(filename: &str) -> Result<Vec<Token>> {
+    let tokenizer = Tokenizer::new();
+    let input = read_file(filename)?;
+    let tokens = tokenizer.tokenize(&input)?;
+    Ok(tokens)
+}
+
+fn parse(filename: &str) -> Result<Program> {
+    let tokens = lex(filename)?;
+    let ast = parse_program(&tokens)?;
+    Ok(ast)
+}   
+
+fn codegen(filename: &str) -> Result<()> {
+    let _ast = parse(filename)?;
+    let file = std::fs::File::create("out.s")?;
+    let mut buff = BufWriter::new(file);
+    write!(
+        buff,
+        ".globl main
+    main:
+        movl $2, %eax
+        ret
+    "
+    )?;
+    Ok(())
+}
+
+
 fn main() -> Result<()> {
     //let file = std::fs::File::create("contents.txt")?;
     //let mut buff = BufWriter::new(file);
@@ -32,40 +61,23 @@ fn main() -> Result<()> {
         .arg(arg!(--codegen <VALUE>).required(false))
         .get_matches();
 
-    let lex = matches.get_one::<String>("lex");
-    let parse = matches.get_one::<String>("parse");
-    let codegen = matches.get_one::<String>("codegen");
+    let lex_file = matches.get_one::<String>("lex");
+    let parse_file = matches.get_one::<String>("parse");
+    let codegen_file = matches.get_one::<String>("codegen");
 
-    let tokenizer = Tokenizer::new();
-
-    if let Some(filename) = lex {
-        let input = read_file(filename)?;
-        let tokens = tokenizer.tokenize(&input)?;
+    if let Some(filename) = lex_file {
+        let tokens = lex(&filename)?;
         println!("{:#?}", tokens);
     }
 
-    if let Some(filename) = parse {
-        let input = read_file(filename)?;
-        let tokens = tokenizer.tokenize(&input)?;
-        let _ast = parse_program(&tokens)?;
-        //println!("{:#?}", ast);
+    if let Some(filename) = parse_file {
+        let ast = parse(&filename)?;
+        println!("{:#?}", ast);
     }
 
-    if let Some(filename) = codegen {
-        let input = read_file(filename)?;
-        let tokens = tokenizer.tokenize(&input)?;
-        let _ast = parse_program(&tokens)?;
+    if let Some(filename) = codegen_file {
+        codegen(&filename)?;
         
-        let file = std::fs::File::create("out.s")?;
-        let mut buff = BufWriter::new(file);
-        write!(
-            buff,
-            ".globl main
-    main:
-        movl $2, %eax
-        ret
-    "
-        )?;
     } 
     Ok(())
 }
