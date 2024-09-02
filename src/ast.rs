@@ -18,15 +18,38 @@ pub enum Statement {
 }
 
 #[derive(Debug, PartialEq)]
+pub enum UnaryOperator {
+    Negation,
+    Tilde,
+}
+
+#[derive(Debug, PartialEq)]
 pub enum Expression {
     Int(i32),
     Identifier(String),
+    Unary(UnaryOperator, Box<Expression>),
 }
 
 fn parse_expression(tokens: &[Token]) -> Result<(Expression, &[Token])> {
     let (expression, tokens) = match tokens {
         [Token::Constant(c), rest @ ..] => (Expression::Int(c.parse().unwrap()), rest),
         [Token::Identifier(id), rest @ ..] => (Expression::Identifier(id.clone()), rest),
+        [Token::Negation, rest @ ..] => {
+            let (expression, rest) = parse_expression(rest)?;
+            (Expression::Unary(UnaryOperator::Negation, Box::new(expression)), rest)
+        }
+        [Token::Tilde, rest @ ..] => {
+            let (expression, rest) = parse_expression(rest)?;
+            (Expression::Unary(UnaryOperator::Tilde, Box::new(expression)), rest)
+        }
+        [Token::LParen, rest @ ..] => {
+            let (expression, rest) = parse_expression(rest)?;
+            let rest = match rest {
+                [Token::RParen, rest @ ..] => rest,
+                _ => return Err(CompilerError::Parse.into()),
+            };
+            (expression, rest)
+        }
         _ => return Err(CompilerError::Parse.into()),
     };
     Ok((expression, tokens))
