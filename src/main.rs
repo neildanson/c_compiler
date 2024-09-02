@@ -1,9 +1,8 @@
+use c_compiler::ast::*;
 use c_compiler::codegen;
 use c_compiler::token::*;
-use c_compiler::ast::*;
 use clap::{arg, Command};
 use std::io::*;
-
 
 fn read_file(filename: &str) -> std::io::Result<String> {
     let file = std::fs::File::open(filename)?;
@@ -20,7 +19,6 @@ fn write_file(filename: &str, contents: &str) -> std::io::Result<()> {
     Ok(())
 }
 
-
 fn lex(filename: &str) -> Result<Vec<Token>> {
     let tokenizer = Tokenizer::new();
     let input = read_file(filename)?;
@@ -32,11 +30,11 @@ fn parse(filename: &str) -> Result<Program> {
     let tokens = lex(filename)?;
     let ast = parse_program(&tokens)?;
     Ok(ast)
-}   
+}
 
 fn codegen(filename: &str) -> Result<()> {
     let ast = parse(filename)?;
-    let asm : codegen::Program = ast.try_into().unwrap();
+    let asm: codegen::Program = ast.try_into().unwrap();
     write_file("out.s", &asm.to_string())?;
     Ok(())
 }
@@ -75,7 +73,6 @@ fn main() -> Result<()> {
 
     if let Some(filename) = codegen_file {
         codegen(filename)?;
-        
-    } 
+    }
     Ok(())
 }

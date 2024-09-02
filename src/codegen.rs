@@ -1,8 +1,7 @@
 use crate::ast;
 
-
 enum Operand {
-    Register,//{ reg: u8 },
+    Register, //{ reg: u8 },
     Immediate { imm: i32 },
 }
 
@@ -22,7 +21,9 @@ enum Instruction {
 impl Instruction {
     fn to_string(&self) -> String {
         match self {
-            Instruction::Mov { src, dst } => format!("movl {}, {}", src.to_string(), dst.to_string()),
+            Instruction::Mov { src, dst } => {
+                format!("movl {}, {}", src.to_string(), dst.to_string())
+            }
             Instruction::Ret => "ret".to_string(),
         }
     }
@@ -57,7 +58,10 @@ impl TryFrom<ast::Function> for Function {
                         ast::Expression::Int(i) => Operand::Immediate { imm: i },
                         ast::Expression::Identifier(_) => Operand::Register,
                     };
-                    body.push(Instruction::Mov { src: operand, dst: Operand::Register });
+                    body.push(Instruction::Mov {
+                        src: operand,
+                        dst: Operand::Register,
+                    });
                     body.push(Instruction::Ret);
                 }
             }
@@ -69,12 +73,9 @@ impl TryFrom<ast::Function> for Function {
     }
 }
 
-
 pub struct Program {
-    function : Function,
+    function: Function,
 }
-
-
 
 impl Program {
     pub fn to_string(&self) -> String {
