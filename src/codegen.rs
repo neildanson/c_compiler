@@ -1,4 +1,4 @@
-use crate::ast;
+use crate::{ast::*, error::CompilerError};
 
 enum Operand {
     Register, //{ reg: u8 },
@@ -13,28 +13,28 @@ impl Operand {
         }
     }
 }
-enum Instruction {
+enum AsmInstruction {
     Mov { src: Operand, dst: Operand },
     Ret,
 }
 
-impl Instruction {
+impl AsmInstruction {
     fn to_string(&self) -> String {
         match self {
-            Instruction::Mov { src, dst } => {
+            AsmInstruction::Mov { src, dst } => {
                 format!("movl {}, {}", src.to_string(), dst.to_string())
             }
-            Instruction::Ret => "ret".to_string(),
+            AsmInstruction::Ret => "ret".to_string(),
         }
     }
 }
 
-struct Function {
+struct AsmFunction {
     name: String,
-    body: Vec<Instruction>,
+    body: Vec<AsmInstruction>,
 }
 
-impl Function {
+impl AsmFunction {
     fn to_string(&self) -> String {
         let mut body = String::new();
         body.push_str(&format!("    .globl {}\n", self.name));
@@ -46,48 +46,48 @@ impl Function {
     }
 }
 
-impl TryFrom<ast::Function> for Function {
-    type Error = &'static str;
+impl TryFrom<Function> for AsmFunction {
+    type Error = CompilerError;
 
-    fn try_from(ast: ast::Function) -> Result<Self, Self::Error> {
+    fn try_from(ast: Function) -> Result<Self, Self::Error> {
         let mut body = Vec::new();
         for statement in ast.body {
             match statement {
-                ast::Statement::Return(expression) => {
+                Statement::Return(expression) => {
                     let operand = match expression {
-                        ast::Expression::Int(i) => Operand::Immediate { imm: i },
-                        ast::Expression::Identifier(_) => Operand::Register,
+                        Expression::Int(i) => Operand::Immediate { imm: i },
+                        Expression::Identifier(_) => Operand::Register,
                     };
-                    body.push(Instruction::Mov {
+                    body.push(AsmInstruction::Mov {
                         src: operand,
                         dst: Operand::Register,
                     });
-                    body.push(Instruction::Ret);
+                    body.push(AsmInstruction::Ret);
                 }
             }
         }
-        Ok(Function {
+        Ok(AsmFunction {
             name: ast.name,
             body,
         })
     }
 }
 
-pub struct Program {
-    function: Function,
+pub struct AsmProgram {
+    function: AsmFunction,
 }
 
-impl Program {
+impl AsmProgram {
     pub fn to_string(&self) -> String {
         self.function.to_string()
     }
 }
 
-impl TryFrom<ast::Program> for Program {
-    type Error = &'static str;
+impl TryFrom<Program> for AsmProgram {
+    type Error = CompilerError;
 
-    fn try_from(ast: ast::Program) -> Result<Self, Self::Error> {
-        let function = Function::try_from(ast.function)?;
-        Ok(Program { function })
+    fn try_from(ast: Program) -> Result<Self, Self::Error> {
+        let function = AsmFunction::try_from(ast.function)?;
+        Ok(AsmProgram { function })
     }
 }

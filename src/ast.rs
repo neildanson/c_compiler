@@ -1,5 +1,5 @@
-use crate::token::Token;
-use std::io::{ErrorKind, Result};
+use crate::{error::CompilerError, token::Token};
+use anyhow::Result;
 
 #[derive(Debug, PartialEq)]
 pub struct Program {
@@ -27,7 +27,7 @@ fn parse_expression(tokens: &[Token]) -> Result<(Expression, &[Token])> {
     let (expression, tokens) = match tokens {
         [Token::Constant(c), rest @ ..] => (Expression::Int(c.parse().unwrap()), rest),
         [Token::Identifier(id), rest @ ..] => (Expression::Identifier(id.clone()), rest),
-        _ => return Err(ErrorKind::InvalidInput.into()),
+        _ => return Err(CompilerError::Parse.into()),
     };
     Ok((expression, tokens))
 }
@@ -38,11 +38,11 @@ fn parse_statement(tokens: &[Token]) -> Result<(Statement, &[Token])> {
             let (expression, rest) = parse_expression(rest)?;
             let rest = match rest {
                 [Token::SemiColon, rest @ ..] => rest,
-                _ => return Err(ErrorKind::InvalidInput.into()),
+                _ => return Err(CompilerError::Parse.into()),
             };
             (Statement::Return(expression), rest)
         }
-        _ => return Err(ErrorKind::InvalidInput.into()),
+        _ => return Err(CompilerError::Parse.into()),
     };
     Ok((statement, tokens))
 }
@@ -60,7 +60,7 @@ fn parse_function(tokens: &[Token]) -> Result<(Function, &[Token])> {
             }
             let rest = match rest {
                 [Token::RBrace, rest @ ..] => rest,
-                _ => return Err(ErrorKind::InvalidInput.into()),
+                _ => return Err(CompilerError::Parse.into()),
             };
             (
                 Function {
@@ -70,7 +70,7 @@ fn parse_function(tokens: &[Token]) -> Result<(Function, &[Token])> {
                 rest,
             )
         }
-        _ => return Err(ErrorKind::InvalidInput.into()),
+        _ => return Err(CompilerError::Parse.into()),
     };
     Ok((function, tokens))
 }
@@ -78,7 +78,7 @@ fn parse_function(tokens: &[Token]) -> Result<(Function, &[Token])> {
 pub fn parse_program(tokens: &[Token]) -> Result<Program> {
     let (function, rest) = parse_function(tokens)?;
     if !rest.is_empty() {
-        return Err(ErrorKind::InvalidInput.into());
+        return Err(CompilerError::Parse.into());
     }
     Ok(Program { function })
 }

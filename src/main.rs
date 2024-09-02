@@ -1,10 +1,14 @@
-use c_compiler::ast::*;
-use c_compiler::codegen;
-use c_compiler::token::*;
-use clap::{arg, Command};
-use std::io::*;
+use std::io::{Read, Write};
 
-fn read_file(filename: &str) -> std::io::Result<String> {
+use anyhow::Result;
+use clap::{arg, Command};
+
+use c_compiler::ast::parse_program;
+use c_compiler::ast::Program;
+use c_compiler::codegen::AsmProgram;
+use c_compiler::token::*;
+
+fn read_file(filename: &str) -> Result<String> {
     let file = std::fs::File::open(filename)?;
     let mut buff = std::io::BufReader::new(file);
     let mut contents = String::new();
@@ -12,7 +16,7 @@ fn read_file(filename: &str) -> std::io::Result<String> {
     Ok(contents)
 }
 
-fn write_file(filename: &str, contents: &str) -> std::io::Result<()> {
+fn write_file(filename: &str, contents: &str) -> Result<()> {
     let file = std::fs::File::create(filename)?;
     let mut buff = std::io::BufWriter::new(file);
     buff.write_all(contents.as_bytes())?;
@@ -32,10 +36,15 @@ fn parse(filename: &str) -> Result<Program> {
     Ok(ast)
 }
 
-fn codegen(filename: &str) -> Result<()> {
+fn codegen(filename: &str) -> Result<AsmProgram> {
     let ast = parse(filename)?;
-    let asm: codegen::Program = ast.try_into().unwrap();
-    write_file("out.s", &asm.to_string())?;
+    let asm = ast.try_into()?;
+    Ok(asm)
+}
+
+fn write_asm(filename: &str, asm: AsmProgram) -> Result<()> {
+    let asm = asm.to_string();
+    write_file(filename, &asm)?;
     Ok(())
 }
 
@@ -55,11 +64,13 @@ fn main() -> Result<()> {
         .arg(arg!(--lex <VALUE>).required(false))
         .arg(arg!(--parse <VALUE>).required(false))
         .arg(arg!(--codegen <VALUE>).required(false))
+        .arg(arg!(--S).required(false))
         .get_matches();
 
     let lex_file = matches.get_one::<String>("lex");
     let parse_file = matches.get_one::<String>("parse");
     let codegen_file = matches.get_one::<String>("codegen");
+    let s_flag = matches.get_flag("S");
 
     if let Some(filename) = lex_file {
         let tokens = lex(filename)?;
@@ -72,7 +83,11 @@ fn main() -> Result<()> {
     }
 
     if let Some(filename) = codegen_file {
-        codegen(filename)?;
+        let asm = codegen(filename)?;
+        if s_flag {
+            write_asm("a.s", asm)?;
+        }
     }
+
     Ok(())
 }

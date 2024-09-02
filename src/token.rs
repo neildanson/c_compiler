@@ -1,5 +1,7 @@
+use anyhow::Result;
 use regex::Regex;
-use std::io::*;
+
+use crate::error::CompilerError;
 
 #[derive(Debug, PartialEq)]
 pub enum Token {
@@ -104,7 +106,7 @@ impl Tokenizer {
                 input = rest;
             } else {
                 println!("Failed to lex {}", input);
-                return Err(Error::new(ErrorKind::InvalidInput, "Failed to lex"));
+                return Err(CompilerError::Lex.into());
             }
         }
         Ok(tokens)
