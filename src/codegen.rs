@@ -8,7 +8,6 @@ enum Operand {
 }
 
 impl Display for Operand {
-
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
             Operand::Register => write!(f, "%eax"),
@@ -46,7 +45,6 @@ impl Display for AsmFunction {
     }
 }
 
-
 impl TryFrom<Function> for AsmFunction {
     type Error = CompilerError;
 
@@ -77,7 +75,6 @@ impl TryFrom<Function> for AsmFunction {
 pub struct AsmProgram {
     function: AsmFunction,
 }
-
 
 impl Display for AsmProgram {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {

@@ -37,7 +37,6 @@ pub struct Tokenizer {
     tilde: Regex,
     negation: Regex,
     double_negation: Regex,
-
 }
 
 impl Default for Tokenizer {
@@ -122,7 +121,7 @@ impl Tokenizer {
                 input = rest;
             } else if let Some((token, rest)) = tokenizer.negation(input) {
                 tokens.push(token);
-                input = rest;            
+                input = rest;
             } else {
                 println!("Failed to lex {}", input);
                 return Err(CompilerError::Lex.into());
@@ -231,6 +230,16 @@ mod tests {
                 Token::SemiColon,
                 Token::RBrace
             ]
+        );
+    }
+
+    #[test]
+    fn test_double_negation() {
+        let tokenizer = Tokenizer::new();
+        let tokens = tokenizer.tokenize("--42").unwrap();
+        assert_eq!(
+            tokens,
+            vec![Token::DoubleNegation, Token::Constant("42".to_string())]
         );
     }
 }
