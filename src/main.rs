@@ -1,3 +1,4 @@
+use c_compiler::codegen;
 use c_compiler::token::*;
 use c_compiler::ast::*;
 use clap::{arg, Command};
@@ -34,17 +35,13 @@ fn parse(filename: &str) -> Result<Program> {
 }   
 
 fn codegen(filename: &str) -> Result<()> {
-    let _ast = parse(filename)?;
+    let ast = parse(filename)?;
+    let asm : codegen::Program = ast.try_into().unwrap();
     let file = std::fs::File::create("out.s")?;
     let mut buff = BufWriter::new(file);
     write!(
         buff,
-        ".globl main
-    main:
-        movl $2, %eax
-        ret
-    "
-    )?;
+        "{}", (asm.to_string()))?;
     Ok(())
 }
 
