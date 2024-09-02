@@ -7,6 +7,8 @@ use std::io::*;
 //./a.out
 //echo $?
 
+//../writing-a-c-compiler-tests/test_compiler ./target/debug/c_compiler --chapter 1 --stage parse
+
 //Usage : cargo run -- --codegen a.s
 //Usage : cargo run -- --lex main.c
 //Usage : cargo run -- --parse main.c
@@ -45,21 +47,14 @@ fn main() -> Result<()> {
     if let Some(filename) = parse {
         let input = read_file(filename)?;
         let tokens = tokenizer.tokenize(&input)?;
-        let (ast, remaining) = parse_function(&tokens)?;
-        if remaining.len() > 0 {
-            return Err(Error::new(ErrorKind::InvalidInput, "Failed to parse"));
-        }
-        println!("{:#?}", ast);
+        let _ast = parse_program(&tokens)?;
+        //println!("{:#?}", ast);
     }
 
     if let Some(filename) = codegen {
         let input = read_file(filename)?;
         let tokens = tokenizer.tokenize(&input)?;
-        let (_ast, remaining) = parse_function(&tokens)?;
-        if remaining.len() > 0 {
-            return Err(Error::new(ErrorKind::InvalidInput, "Failed to parse"));
-        }
-
+        let _ast = parse_program(&tokens)?;
         
         let file = std::fs::File::create("out.s")?;
         let mut buff = BufWriter::new(file);

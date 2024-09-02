@@ -47,7 +47,7 @@ fn parse_statement(tokens: &[Token]) -> Result<(Statement, &[Token])> {
     Ok((statement, tokens))
 }
 
-pub fn parse_function(tokens: &[Token]) -> Result<(Function, &[Token])> {
+fn parse_function(tokens: &[Token]) -> Result<(Function, &[Token])> {
     let (function, tokens) = match tokens {
         [Token::Int, Token::Identifier(name), Token::LParen, Token::Void, Token::RParen, Token::LBrace, rest @ ..] => {
             let mut statements = Vec::new();
@@ -72,6 +72,14 @@ pub fn parse_function(tokens: &[Token]) -> Result<(Function, &[Token])> {
         _ => return Err(ErrorKind::InvalidInput.into()),
     };
     Ok((function, tokens))
+}
+
+pub fn parse_program(tokens: &[Token]) -> Result<Program> {
+    let (function, rest) = parse_function(tokens)?;
+    if !rest.is_empty() {
+        return Err(ErrorKind::InvalidInput.into());
+    }
+    Ok(Program { functions: function })
 }
 
 #[cfg(test)]
