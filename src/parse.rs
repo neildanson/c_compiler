@@ -1,4 +1,4 @@
-use crate::{error::CompilerError, token::Token};
+use crate::{error::CompilerError, lex::Token};
 use anyhow::Result;
 
 #[derive(Debug, PartialEq)]
@@ -109,7 +109,7 @@ pub fn parse_program(tokens: &[Token]) -> Result<Program> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::token::Tokenizer;
+    use crate::lex::Tokenizer;
 
     #[test]
     fn test_parse_statement() {
