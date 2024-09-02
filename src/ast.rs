@@ -3,7 +3,7 @@ use std::io::{ErrorKind, Result};
 
 #[derive(Debug, PartialEq)]
 pub struct Program {
-    pub functions: Function,
+    pub function: Function,
 }
 
 #[derive(Debug, PartialEq)]
@@ -79,7 +79,7 @@ pub fn parse_program(tokens: &[Token]) -> Result<Program> {
     if !rest.is_empty() {
         return Err(ErrorKind::InvalidInput.into());
     }
-    Ok(Program { functions: function })
+    Ok(Program { function: function })
 }
 
 #[cfg(test)]

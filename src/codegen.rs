@@ -9,7 +9,7 @@ enum Operand {
 impl Operand {
     fn to_string(&self) -> String {
         match self {
-            Operand::Register => "eax".to_string(),
+            Operand::Register => "%eax".to_string(),
             Operand::Immediate { imm } => format!("${}", imm.to_string()),
         }
     }
@@ -36,10 +36,36 @@ struct Function {
 impl Function {
     fn to_string(&self) -> String {
         let mut body = String::new();
+        body.push_str(&format!("    .globl {}\n", self.name));
+        body.push_str(&format!("{}:\n", self.name));
         for instruction in &self.body {
             body.push_str(&format!("    {}\n", instruction.to_string()));
         }
         body
+    }
+}
+
+impl TryFrom<ast::Function> for Function {
+    type Error = &'static str;
+
+    fn try_from(ast: ast::Function) -> Result<Self, Self::Error> {
+        let mut body = Vec::new();
+        for statement in ast.body {
+            match statement {
+                ast::Statement::Return(expression) => {
+                    let operand = match expression {
+                        ast::Expression::Int(i) => Operand::Immediate { imm: i },
+                        ast::Expression::Identifier(_) => Operand::Register,
+                    };
+                    body.push(Instruction::Mov { src: operand, dst: Operand::Register });
+                    body.push(Instruction::Ret);
+                }
+            }
+        }
+        Ok(Function {
+            name: ast.name,
+            body,
+        })
     }
 }
 
@@ -52,7 +78,7 @@ pub struct Program {
 
 impl Program {
     pub fn to_string(&self) -> String {
-        format!(".globl main\nmain:\n{}", self.function.to_string())
+        self.function.to_string()
     }
 }
 
@@ -60,16 +86,7 @@ impl TryFrom<ast::Program> for Program {
     type Error = &'static str;
 
     fn try_from(ast: ast::Program) -> Result<Self, Self::Error> {
-        let function = Function {
-            name: "main".to_string(),
-            body: vec![
-                Instruction::Mov {
-                    src: Operand::Immediate { imm: 2 },
-                    dst: Operand::Register,
-                },
-                Instruction::Ret,
-            ],
-        };
+        let function = Function::try_from(ast.function)?;
         Ok(Program { function })
     }
 }
