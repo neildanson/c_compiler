@@ -37,7 +37,7 @@ struct AsmFunction {
 
 impl Display for AsmFunction {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        writeln!(f, ".globl {}", self.name)?;
+        writeln!(f, "   .globl {}", self.name)?;
         writeln!(f, "{}:", self.name)?;
         for instruction in &self.body {
             writeln!(f, "    {}", instruction)?;

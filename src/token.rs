@@ -16,6 +16,9 @@ pub enum Token {
     LBrace,             //{
     RBrace,             //}
     SemiColon,          //;
+    Tilde,              //~
+    Negation,           //-
+    DoubleNegation,     //--
 }
 
 pub struct Tokenizer {
@@ -31,6 +34,10 @@ pub struct Tokenizer {
     lbrace: Regex,
     rbrace: Regex,
     semicolon: Regex,
+    tilde: Regex,
+    negation: Regex,
+    double_negation: Regex,
+
 }
 
 impl Default for Tokenizer {
@@ -54,6 +61,9 @@ impl Tokenizer {
             lbrace: Regex::new(r"^\{").unwrap(),
             rbrace: Regex::new(r"^\}").unwrap(),
             semicolon: Regex::new(r"^;").unwrap(),
+            tilde: Regex::new(r"^~").unwrap(),
+            negation: Regex::new(r"^-").unwrap(),
+            double_negation: Regex::new(r"^--").unwrap(),
         }
     }
 
@@ -104,6 +114,15 @@ impl Tokenizer {
             } else if let Some((token, rest)) = tokenizer.constant(input) {
                 tokens.push(token);
                 input = rest;
+            } else if let Some((token, rest)) = tokenizer.tilde(input) {
+                tokens.push(token);
+                input = rest;
+            } else if let Some((token, rest)) = tokenizer.double_negation(input) {
+                tokens.push(token);
+                input = rest;
+            } else if let Some((token, rest)) = tokenizer.negation(input) {
+                tokens.push(token);
+                input = rest;            
             } else {
                 println!("Failed to lex {}", input);
                 return Err(CompilerError::Lex.into());
@@ -176,6 +195,18 @@ impl Tokenizer {
 
     fn semicolon<'a>(&self, input: &'a str) -> Option<(Token, &'a str)> {
         Self::parse(input, &self.semicolon, |_| Token::SemiColon)
+    }
+
+    fn tilde<'a>(&self, input: &'a str) -> Option<(Token, &'a str)> {
+        Self::parse(input, &self.tilde, |_| Token::Tilde)
+    }
+
+    fn negation<'a>(&self, input: &'a str) -> Option<(Token, &'a str)> {
+        Self::parse(input, &self.negation, |_| Token::Negation)
+    }
+
+    fn double_negation<'a>(&self, input: &'a str) -> Option<(Token, &'a str)> {
+        Self::parse(input, &self.double_negation, |_| Token::DoubleNegation)
     }
 }
 
