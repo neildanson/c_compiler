@@ -11,7 +11,7 @@ pub enum CompilerError {
 impl Display for CompilerError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            CompilerError::IO(err) => write!(f, "{}", err.to_string()),
+            CompilerError::IO(err) => write!(f, "{}", err),
             CompilerError::Lex => write!(f, "Lexing Error"),
             CompilerError::Parse => write!(f, "Parsing Error"),
             CompilerError::CodeGen => write!(f, "Code Generation Error"),

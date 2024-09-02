@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use crate::{ast::*, error::CompilerError};
 
 enum Operand {
@@ -5,11 +7,12 @@ enum Operand {
     Immediate { imm: i32 },
 }
 
-impl Operand {
-    fn to_string(&self) -> String {
+impl Display for Operand {
+
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Operand::Register => "%eax".to_string(),
-            Operand::Immediate { imm } => format!("${}", imm),
+            Operand::Register => write!(f, "%eax"),
+            Operand::Immediate { imm } => write!(f, "${}", imm),
         }
     }
 }
@@ -18,13 +21,11 @@ enum AsmInstruction {
     Ret,
 }
 
-impl AsmInstruction {
-    fn to_string(&self) -> String {
+impl Display for AsmInstruction {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            AsmInstruction::Mov { src, dst } => {
-                format!("movl {}, {}", src.to_string(), dst.to_string())
-            }
-            AsmInstruction::Ret => "ret".to_string(),
+            AsmInstruction::Mov { src, dst } => write!(f, "movl {}, {}", src, dst),
+            AsmInstruction::Ret => write!(f, "ret"),
         }
     }
 }
@@ -34,17 +35,17 @@ struct AsmFunction {
     body: Vec<AsmInstruction>,
 }
 
-impl AsmFunction {
-    fn to_string(&self) -> String {
-        let mut body = String::new();
-        body.push_str(&format!("    .globl {}\n", self.name));
-        body.push_str(&format!("{}:\n", self.name));
+impl Display for AsmFunction {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        writeln!(f, ".globl {}", self.name)?;
+        writeln!(f, "{}:", self.name)?;
         for instruction in &self.body {
-            body.push_str(&format!("    {}\n", instruction.to_string()));
+            writeln!(f, "    {}", instruction)?;
         }
-        body
+        Ok(())
     }
 }
+
 
 impl TryFrom<Function> for AsmFunction {
     type Error = CompilerError;
@@ -77,9 +78,10 @@ pub struct AsmProgram {
     function: AsmFunction,
 }
 
-impl AsmProgram {
-    pub fn to_string(&self) -> String {
-        self.function.to_string()
+
+impl Display for AsmProgram {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.function)
     }
 }
 
