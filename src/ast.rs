@@ -79,7 +79,7 @@ pub fn parse_program(tokens: &[Token]) -> Result<Program> {
     if !rest.is_empty() {
         return Err(ErrorKind::InvalidInput.into());
     }
-    Ok(Program { function: function })
+    Ok(Program { function })
 }
 
 #[cfg(test)]

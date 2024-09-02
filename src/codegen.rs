@@ -10,7 +10,7 @@ impl Operand {
     fn to_string(&self) -> String {
         match self {
             Operand::Register => "%eax".to_string(),
-            Operand::Immediate { imm } => format!("${}", imm.to_string()),
+            Operand::Immediate { imm } => format!("${}", imm),
         }
     }
 }

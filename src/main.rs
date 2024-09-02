@@ -64,17 +64,17 @@ fn main() -> Result<()> {
     let codegen_file = matches.get_one::<String>("codegen");
 
     if let Some(filename) = lex_file {
-        let tokens = lex(&filename)?;
+        let tokens = lex(filename)?;
         println!("{:#?}", tokens);
     }
 
     if let Some(filename) = parse_file {
-        let ast = parse(&filename)?;
+        let ast = parse(filename)?;
         println!("{:#?}", ast);
     }
 
     if let Some(filename) = codegen_file {
-        codegen(&filename)?;
+        codegen(filename)?;
         
     } 
     Ok(())
