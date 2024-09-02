@@ -4,15 +4,7 @@ use c_compiler::ast::*;
 use clap::{arg, Command};
 use std::io::*;
 
-//gcc asm.s
-//./a.out
-//echo $?
 
-//../writing-a-c-compiler-tests/test_compiler ./target/debug/c_compiler --chapter 1 --stage parse
-
-//Usage : cargo run -- --codegen a.s
-//Usage : cargo run -- --lex main.c
-//Usage : cargo run -- --parse main.c
 fn read_file(filename: &str) -> std::io::Result<String> {
     let file = std::fs::File::open(filename)?;
     let mut buff = std::io::BufReader::new(file);
@@ -20,6 +12,14 @@ fn read_file(filename: &str) -> std::io::Result<String> {
     buff.read_to_string(&mut contents)?;
     Ok(contents)
 }
+
+fn write_file(filename: &str, contents: &str) -> std::io::Result<()> {
+    let file = std::fs::File::create(filename)?;
+    let mut buff = std::io::BufWriter::new(file);
+    buff.write_all(contents.as_bytes())?;
+    Ok(())
+}
+
 
 fn lex(filename: &str) -> Result<Vec<Token>> {
     let tokenizer = Tokenizer::new();
@@ -37,19 +37,20 @@ fn parse(filename: &str) -> Result<Program> {
 fn codegen(filename: &str) -> Result<()> {
     let ast = parse(filename)?;
     let asm : codegen::Program = ast.try_into().unwrap();
-    let file = std::fs::File::create("out.s")?;
-    let mut buff = BufWriter::new(file);
-    write!(
-        buff,
-        "{}", (asm.to_string()))?;
+    write_file("out.s", &asm.to_string())?;
     Ok(())
 }
 
+//gcc asm.s
+//./a.out
+//echo $?
 
+//../writing-a-c-compiler-tests/test_compiler ./target/debug/c_compiler --chapter 1 --stage parse
+
+//Usage : cargo run -- --codegen a.s
+//Usage : cargo run -- --lex main.c
+//Usage : cargo run -- --parse main.c
 fn main() -> Result<()> {
-    //let file = std::fs::File::create("contents.txt")?;
-    //let mut buff = BufWriter::new(file);
-    //write!(buff, "{}", "filename")?;
     let matches = Command::new("C Compiler")
         .version("0.01")
         .about("Does awesome things")
