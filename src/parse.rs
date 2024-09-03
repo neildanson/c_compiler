@@ -25,15 +25,15 @@ pub enum UnaryOperator {
 
 #[derive(Debug, PartialEq)]
 pub enum Expression {
-    Int(i32),
-    Identifier(String),
+    Constant(i32),
+    //Identifier(String),
     Unary(UnaryOperator, Box<Expression>),
 }
 
 fn parse_expression(tokens: &[Token]) -> Result<(Expression, &[Token])> {
     let (expression, tokens) = match tokens {
-        [Token::Constant(c), rest @ ..] => (Expression::Int(c.parse().unwrap()), rest),
-        [Token::Identifier(id), rest @ ..] => (Expression::Identifier(id.clone()), rest),
+        [Token::Constant(c), rest @ ..] => (Expression::Constant(c.parse().unwrap()), rest),
+        //[Token::Identifier(id), rest @ ..] => (Expression::Identifier(id.clone()), rest),
         [Token::Negation, rest @ ..] => {
             let (expression, rest) = parse_expression(rest)?;
             (Expression::Unary(UnaryOperator::Negation, Box::new(expression)), rest)
@@ -116,10 +116,11 @@ mod tests {
         let tokenizer = Tokenizer::new();
         let tokens = tokenizer.tokenize("return 42;").unwrap();
         let (statement, rest) = parse_statement(&tokens).unwrap();
-        assert_eq!(statement, Statement::Return(Expression::Int(42)));
+        assert_eq!(statement, Statement::Return(Expression::Constant(42)));
         assert!(rest.is_empty());
     }
 
+    /*
     #[test]
     fn test_parse_statement_identifier() {
         let tokenizer = Tokenizer::new();
@@ -131,16 +132,18 @@ mod tests {
         );
         assert!(rest.is_empty());
     }
+     */
 
     #[test]
     fn test_parse_expression() {
         let tokenizer = Tokenizer::new();
         let tokens = tokenizer.tokenize("42").unwrap();
         let (expression, rest) = parse_expression(&tokens).unwrap();
-        assert_eq!(expression, Expression::Int(42));
+        assert_eq!(expression, Expression::Constant(42));
         assert!(rest.is_empty());
     }
 
+    /*
     #[test]
     fn test_parse_expression_identifier() {
         let tokenizer = Tokenizer::new();
@@ -149,6 +152,8 @@ mod tests {
         assert_eq!(expression, Expression::Identifier("x".to_string()));
         assert!(rest.is_empty());
     }
+    */
+
 
     #[test]
     fn test_parse_function() {
@@ -159,7 +164,7 @@ mod tests {
             function,
             Function {
                 name: "main".to_string(),
-                body: vec![Statement::Return(Expression::Int(42))]
+                body: vec![Statement::Return(Expression::Constant(42))]
             }
         );
         assert!(rest.is_empty());
@@ -182,7 +187,7 @@ int main(void) {
             function,
             Function {
                 name: "main".to_string(),
-                body: vec![Statement::Return(Expression::Int(100))]
+                body: vec![Statement::Return(Expression::Constant(100))]
             }
         );
         assert!(rest.is_empty());

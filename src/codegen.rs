@@ -54,8 +54,8 @@ impl TryFrom<Function> for AsmFunction {
             match statement {
                 Statement::Return(expression) => {
                     let operand = match expression {
-                        Expression::Int(i) => Operand::Immediate { imm: i },
-                        Expression::Identifier(_) => Operand::Register,
+                        Expression::Constant(i) => Operand::Immediate { imm: i },
+                        //Expression::Identifier(_) => Operand::Register,
                         Expression::Unary(_, _) => unimplemented!(), // TODO Obvs
                     };
                     body.push(AsmInstruction::Mov {
