@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use crate::{parse::*, error::CompilerError};
+use crate::{error::CompilerError, parse::*};
 
 enum Operand {
     Register, //{ reg: u8 },

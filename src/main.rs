@@ -3,10 +3,10 @@ use std::io::{Read, Write};
 use anyhow::Result;
 use clap::{arg, Command};
 
-use c_compiler::parse::parse_program;
-use c_compiler::parse::Program;
 use c_compiler::codegen::AsmProgram;
 use c_compiler::lex::*;
+use c_compiler::parse::parse_program;
+use c_compiler::parse::Program;
 
 fn read_file(filename: &str) -> Result<String> {
     let file = std::fs::File::open(filename)?;

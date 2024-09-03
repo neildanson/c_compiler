@@ -36,11 +36,17 @@ fn parse_expression(tokens: &[Token]) -> Result<(Expression, &[Token])> {
         //[Token::Identifier(id), rest @ ..] => (Expression::Identifier(id.clone()), rest),
         [Token::Negation, rest @ ..] => {
             let (expression, rest) = parse_expression(rest)?;
-            (Expression::Unary(UnaryOperator::Negation, Box::new(expression)), rest)
+            (
+                Expression::Unary(UnaryOperator::Negation, Box::new(expression)),
+                rest,
+            )
         }
         [Token::Tilde, rest @ ..] => {
             let (expression, rest) = parse_expression(rest)?;
-            (Expression::Unary(UnaryOperator::Tilde, Box::new(expression)), rest)
+            (
+                Expression::Unary(UnaryOperator::Tilde, Box::new(expression)),
+                rest,
+            )
         }
         [Token::LParen, rest @ ..] => {
             let (expression, rest) = parse_expression(rest)?;
@@ -153,7 +159,6 @@ mod tests {
         assert!(rest.is_empty());
     }
     */
-
 
     #[test]
     fn test_parse_function() {
