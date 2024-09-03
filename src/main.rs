@@ -39,8 +39,8 @@ fn parse(filename: &str) -> Result<parse::Program> {
 fn tacky(filename: &str) -> Result<()> {
     let ast = parse(filename)?;
     let mut tacky = Tacky::new();
-    let function = tacky.emit_tacky_function(ast.function);
-    println!("{:#?}", function);
+    let tacky = tacky.emit_tacky(ast);
+    println!("{:#?}", tacky);
     Ok(())
 }
 

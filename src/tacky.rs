@@ -51,13 +51,13 @@ impl Tacky {
         name
     }
 
-    fn emit_tacky(&mut self, e: parse::Expression, instructions: &mut Vec<Instruction>) -> Value {
+    fn emit_tacky_expr(&mut self, e: parse::Expression, instructions: &mut Vec<Instruction>) -> Value {
         match e {
             parse::Expression::Constant(c) => {
                 return Value::Constant(c);
             }
             parse::Expression::Unary(op, inner) => {
-                let src = self.emit_tacky(*inner, instructions);
+                let src = self.emit_tacky_expr(*inner, instructions);
                 let dst_name = self.make_name();
                 let dst = Value::Var(dst_name);
                 let tacky_op = convert_unop(op);
@@ -71,12 +71,12 @@ impl Tacky {
         }
     }
 
-    pub fn emit_tacky_function(&mut self, f: parse::Function) -> Function {
+    fn emit_tacky_function(&mut self, f: parse::Function) -> Function {
         let mut body = Vec::new();
         for statement in f.body {
             match statement {
                 parse::Statement::Return(expression) => {
-                    let value = self.emit_tacky(expression, &mut body);
+                    let value = self.emit_tacky_expr(expression, &mut body);
                     body.push(Instruction::Return(value));
                 }
             }
@@ -85,5 +85,10 @@ impl Tacky {
             identifier: f.name,
             body,
         }
+    }
+
+    pub fn emit_tacky(&mut self, p: parse::Program) -> Program {
+        let function = self.emit_tacky_function(p.function);
+        Program { function }
     }
 }
