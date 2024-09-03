@@ -3,21 +3,38 @@ use std::fmt::Display;
 use crate::*;
 use crate::error::CompilerError;
 
+enum Reg {
+    AX, R10
+}
+
 enum Operand {
-    Register, //{ reg: u8 },
+    Register(Reg), 
     Immediate { imm: i32 },
+    Pseudo(String),
+    Stack(i32)
 }
 
 impl Display for Operand {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Operand::Register => write!(f, "%eax"),
+            Operand::Register(_) => write!(f, "%eax"),
             Operand::Immediate { imm } => write!(f, "${}", imm),
+            _ => unimplemented!(),
         }
     }
 }
+
+enum UnaryOp {
+    Neg,
+    Not,
+}
+
+
+
+
 enum Instruction {
     Mov { src: Operand, dst: Operand },
+    Unary { op: UnaryOp, src: Operand, dst: Operand },
     Ret,
 }
 
@@ -26,6 +43,7 @@ impl Display for Instruction {
         match self {
             Instruction::Mov { src, dst } => write!(f, "movl {}, {}", src, dst),
             Instruction::Ret => write!(f, "ret"),
+            _ => unimplemented!(),
         }
     }
 }
@@ -61,7 +79,7 @@ impl TryFrom<parse::Function> for Function {
                     };
                     body.push(Instruction::Mov {
                         src: operand,
-                        dst: Operand::Register,
+                        dst: Operand::Register(Reg::AX),
                     });
                     body.push(Instruction::Ret);
                 }
