@@ -1,6 +1,7 @@
 use std::fmt::Display;
 
-use crate::{error::CompilerError, parse::*};
+use crate::*;
+use crate::error::CompilerError;
 
 enum Operand {
     Register, //{ reg: u8 },
@@ -15,26 +16,26 @@ impl Display for Operand {
         }
     }
 }
-enum AsmInstruction {
+enum Instruction {
     Mov { src: Operand, dst: Operand },
     Ret,
 }
 
-impl Display for AsmInstruction {
+impl Display for Instruction {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            AsmInstruction::Mov { src, dst } => write!(f, "movl {}, {}", src, dst),
-            AsmInstruction::Ret => write!(f, "ret"),
+            Instruction::Mov { src, dst } => write!(f, "movl {}, {}", src, dst),
+            Instruction::Ret => write!(f, "ret"),
         }
     }
 }
 
-struct AsmFunction {
+struct Function {
     name: String,
-    body: Vec<AsmInstruction>,
+    body: Vec<Instruction>,
 }
 
-impl Display for AsmFunction {
+impl Display for Function {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         writeln!(f, "   .globl {}", self.name)?;
         writeln!(f, "{}:", self.name)?;
@@ -45,49 +46,49 @@ impl Display for AsmFunction {
     }
 }
 
-impl TryFrom<Function> for AsmFunction {
+impl TryFrom<parse::Function> for Function {
     type Error = CompilerError;
 
-    fn try_from(ast: Function) -> Result<Self, Self::Error> {
+    fn try_from(ast: parse::Function) -> Result<Self, Self::Error> {
         let mut body = Vec::new();
         for statement in ast.body {
             match statement {
-                Statement::Return(expression) => {
+                parse::Statement::Return(expression) => {
                     let operand = match expression {
-                        Expression::Constant(i) => Operand::Immediate { imm: i },
+                        parse::Expression::Constant(i) => Operand::Immediate { imm: i },
                         //Expression::Identifier(_) => Operand::Register,
-                        Expression::Unary(_, _) => unimplemented!(), // TODO Obvs
+                        parse::Expression::Unary(_, _) => unimplemented!(), // TODO Obvs
                     };
-                    body.push(AsmInstruction::Mov {
+                    body.push(Instruction::Mov {
                         src: operand,
                         dst: Operand::Register,
                     });
-                    body.push(AsmInstruction::Ret);
+                    body.push(Instruction::Ret);
                 }
             }
         }
-        Ok(AsmFunction {
+        Ok(Function {
             name: ast.name,
             body,
         })
     }
 }
 
-pub struct AsmProgram {
-    function: AsmFunction,
+pub struct Program {
+    function: Function,
 }
 
-impl Display for AsmProgram {
+impl Display for Program {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "{}", self.function)
     }
 }
 
-impl TryFrom<Program> for AsmProgram {
+impl TryFrom<parse::Program> for Program {
     type Error = CompilerError;
 
-    fn try_from(ast: Program) -> Result<Self, Self::Error> {
-        let function = AsmFunction::try_from(ast.function)?;
-        Ok(AsmProgram { function })
+    fn try_from(ast: parse::Program) -> Result<Self, Self::Error> {
+        let function = Function::try_from(ast.function)?;
+        Ok(Program { function })
     }
 }

@@ -3,10 +3,9 @@ use std::io::{Read, Write};
 use anyhow::Result;
 use clap::{arg, Command};
 
-use c_compiler::codegen::AsmProgram;
+use c_compiler::*;
 use c_compiler::lex::*;
 use c_compiler::parse::parse_program;
-use c_compiler::parse::Program;
 use c_compiler::tacky::Tacky;
 
 fn read_file(filename: &str) -> Result<String> {
@@ -31,7 +30,7 @@ fn lex(filename: &str) -> Result<Vec<Token>> {
     Ok(tokens)
 }
 
-fn parse(filename: &str) -> Result<Program> {
+fn parse(filename: &str) -> Result<parse::Program> {
     let tokens = lex(filename)?;
     let ast = parse_program(&tokens)?;
     Ok(ast)
@@ -45,13 +44,13 @@ fn tacky(filename: &str) -> Result<()> {
     Ok(())
 }
 
-fn codegen(filename: &str) -> Result<AsmProgram> {
+fn codegen(filename: &str) -> Result<codegen::Program> {
     let ast = parse(filename)?;
     let asm = ast.try_into()?;
     Ok(asm)
 }
 
-fn write_asm(filename: &str, asm: AsmProgram) -> Result<()> {
+fn write_asm(filename: &str, asm: codegen::Program) -> Result<()> {
     let asm = asm.to_string();
     write_file(filename, &asm)?;
     Ok(())
