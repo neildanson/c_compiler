@@ -36,17 +36,17 @@ fn parse(filename: &str) -> Result<parse::Program> {
     Ok(ast)
 }
 
-fn tacky(filename: &str) -> Result<()> {
+fn tacky(filename: &str) -> Result<tacky::Program> {
     let ast = parse(filename)?;
     let mut tacky = Tacky::new();
     let tacky = tacky.emit_tacky(ast);
-    println!("{:#?}", tacky);
-    Ok(())
+    Ok(tacky)
 }
 
 fn codegen(filename: &str) -> Result<codegen::Program> {
-    let ast = parse(filename)?;
-    let asm = ast.try_into()?;
+    let ast = tacky(filename)?;
+    let asm = ast.into();
+    println!("{:#?}", asm);
     Ok(asm)
 }
 

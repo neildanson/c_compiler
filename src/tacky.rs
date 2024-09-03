@@ -2,13 +2,13 @@ use crate::*;
 
 #[derive(Clone, Debug)]
 pub struct Program {
-    function: Function,
+    pub function: Function,
 }
 
 #[derive(Clone, Debug)]
 pub struct Function {
-    identifier: String,
-    body: Vec<Instruction>,
+    pub name: String,
+    pub body: Vec<Instruction>,
 }
 
 #[derive(Clone, Debug)]
@@ -82,7 +82,7 @@ impl Tacky {
             }
         }
         Function {
-            identifier: f.name,
+            name: f.name,
             body,
         }
     }

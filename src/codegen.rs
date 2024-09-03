@@ -3,10 +3,12 @@ use std::fmt::Display;
 use crate::*;
 use crate::error::CompilerError;
 
+#[derive(Debug)]
 enum Reg {
     AX, R10
 }
 
+#[derive(Debug)]
 enum Operand {
     Register(Reg), 
     Immediate { imm: i32 },
@@ -24,14 +26,31 @@ impl Display for Operand {
     }
 }
 
+impl From<tacky::Value> for Operand {
+    fn from(value: tacky::Value) -> Self {
+        match value {
+            tacky::Value::Constant(imm) => Operand::Immediate { imm },
+            tacky::Value::Var(name) => Operand::Pseudo(name),
+        }
+    }
+}
+
+#[derive(Debug)]
 enum UnaryOp {
     Neg,
     Not,
 }
 
+impl From<tacky::UnaryOp> for UnaryOp {
+    fn from(op: tacky::UnaryOp) -> Self {
+        match op {
+            tacky::UnaryOp::Negate => UnaryOp::Neg,
+            tacky::UnaryOp::Complement => UnaryOp::Not,
+        }
+    }
+}
 
-
-
+#[derive(Debug)]
 enum Instruction {
     Mov { src: Operand, dst: Operand },
     Unary { op: UnaryOp, src: Operand, dst: Operand },
@@ -48,6 +67,25 @@ impl Display for Instruction {
     }
 }
 
+impl From <tacky::Instruction> for Instruction {
+    
+    fn from(ast: tacky::Instruction) -> Self {
+        match ast {
+            tacky::Instruction::Return(value) => {
+                let src = value.into();
+                let dst = Operand::Register(Reg::AX);
+                Instruction::Mov { src, dst }
+            },
+            tacky::Instruction::Unary { op, src, dst } => {
+                let src = src.into();
+                let dst = dst.into();
+                Instruction::Unary { op: op.into(), src, dst }
+            },
+        }
+    }
+}
+
+#[derive(Debug)]
 struct Function {
     name: String,
     body: Vec<Instruction>,
@@ -64,34 +102,22 @@ impl Display for Function {
     }
 }
 
-impl TryFrom<parse::Function> for Function {
-    type Error = CompilerError;
-
-    fn try_from(ast: parse::Function) -> Result<Self, Self::Error> {
+impl From<tacky::Function> for Function {
+    fn from(ast: tacky::Function) -> Self {
         let mut body = Vec::new();
         for statement in ast.body {
-            match statement {
-                parse::Statement::Return(expression) => {
-                    let operand = match expression {
-                        parse::Expression::Constant(i) => Operand::Immediate { imm: i },
-                        //Expression::Identifier(_) => Operand::Register,
-                        parse::Expression::Unary(_, _) => unimplemented!(), // TODO Obvs
-                    };
-                    body.push(Instruction::Mov {
-                        src: operand,
-                        dst: Operand::Register(Reg::AX),
-                    });
-                    body.push(Instruction::Ret);
-                }
-            }
+            let instruction = statement.into();
+            body.push(instruction);
         }
-        Ok(Function {
+            
+        Function {
             name: ast.name,
             body,
-        })
+        }
     }
 }
 
+#[derive(Debug)]
 pub struct Program {
     function: Function,
 }
@@ -102,11 +128,9 @@ impl Display for Program {
     }
 }
 
-impl TryFrom<parse::Program> for Program {
-    type Error = CompilerError;
-
-    fn try_from(ast: parse::Program) -> Result<Self, Self::Error> {
-        let function = Function::try_from(ast.function)?;
-        Ok(Program { function })
+impl From<tacky::Program> for Program {
+    fn from(ast: tacky::Program) -> Self {
+        let function = ast.function.into();
+        Program { function }
     }
 }
