@@ -1,29 +1,29 @@
 use crate::*;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Program {
     function: Function,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Function {
     identifier: String,
     body: Vec<Instruction>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Instruction {
     Return(Value),
     Unary { op: UnaryOp, src: Value, dst: Value },
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Value {
     Constant(i32),
     Var(String),
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum UnaryOp {
     Complement,
     Negate,
@@ -51,7 +51,7 @@ impl Tacky {
         name
     }
 
-    pub fn emit_tacky(&mut self, e: parse::Expression, instructions: &mut Vec<Instruction>) -> Value {
+    fn emit_tacky(&mut self, e: parse::Expression, instructions: &mut Vec<Instruction>) -> Value {
         match e {
             parse::Expression::Constant(c) => {
                 return Value::Constant(c);
@@ -68,6 +68,22 @@ impl Tacky {
                 });
                 return dst;
             }
+        }
+    }
+
+    pub fn emit_tacky_function(&mut self, f: parse::Function) -> Function {
+        let mut body = Vec::new();
+        for statement in f.body {
+            match statement {
+                parse::Statement::Return(expression) => {
+                    let value = self.emit_tacky(expression, &mut body);
+                    body.push(Instruction::Return(value));
+                }
+            }
+        }
+        Function {
+            identifier: f.name,
+            body,
         }
     }
 }

@@ -7,6 +7,7 @@ use c_compiler::codegen::AsmProgram;
 use c_compiler::lex::*;
 use c_compiler::parse::parse_program;
 use c_compiler::parse::Program;
+use c_compiler::tacky::Tacky;
 
 fn read_file(filename: &str) -> Result<String> {
     let file = std::fs::File::open(filename)?;
@@ -34,6 +35,14 @@ fn parse(filename: &str) -> Result<Program> {
     let tokens = lex(filename)?;
     let ast = parse_program(&tokens)?;
     Ok(ast)
+}
+
+fn tacky(filename: &str) -> Result<()> {
+    let ast = parse(filename)?;
+    let mut tacky = Tacky::new();
+    let function = tacky.emit_tacky_function(ast.function);
+    println!("{:#?}", function);
+    Ok(())
 }
 
 fn codegen(filename: &str) -> Result<AsmProgram> {
@@ -64,12 +73,14 @@ fn main() -> Result<()> {
         .arg(arg!(--lex <VALUE>).required(false))
         .arg(arg!(--parse <VALUE>).required(false))
         .arg(arg!(--codegen <VALUE>).required(false))
+        .arg(arg!(--tacky <VALUE>).required(false))
         .arg(arg!(--S).required(false))
         .get_matches();
 
     let lex_file = matches.get_one::<String>("lex");
     let parse_file = matches.get_one::<String>("parse");
     let codegen_file = matches.get_one::<String>("codegen");
+    let tacky_file = matches.get_one::<String>("tacky");
     let s_flag = matches.get_flag("S");
 
     if let Some(filename) = lex_file {
@@ -79,6 +90,11 @@ fn main() -> Result<()> {
 
     if let Some(filename) = parse_file {
         let ast = parse(filename)?;
+        println!("{:#?}", ast);
+    }
+
+    if let Some(filename) = tacky_file {
+        let ast = tacky(filename)?;
         println!("{:#?}", ast);
     }
 
