@@ -46,11 +46,10 @@ fn tacky(filename: &str) -> Result<tacky::Program> {
 fn codegen(filename: &str) -> Result<codegen::Program> {
     let ast = tacky(filename)?;
     let asm = ast.into();
-    println!("{:#?}", asm);
     Ok(asm)
 }
 
-fn write_asm(filename: &str, asm: codegen::Program) -> Result<()> {
+fn write_asm(filename: &str, asm: &codegen::Program) -> Result<()> {
     let asm = asm.to_string();
     write_file(filename, &asm)?;
     Ok(())
@@ -65,6 +64,7 @@ fn write_asm(filename: &str, asm: codegen::Program) -> Result<()> {
 //Usage : cargo run -- --codegen a.s
 //Usage : cargo run -- --lex main.c
 //Usage : cargo run -- --parse main.c
+//Usage : cargo run -- --lex main.c --parse main.c --tacky main.c --codegen main.c --verbose
 fn main() -> Result<()> {
     let matches = Command::new("C Compiler")
         .version("0.01")
@@ -73,34 +73,47 @@ fn main() -> Result<()> {
         .arg(arg!(--parse <VALUE>).required(false))
         .arg(arg!(--codegen <VALUE>).required(false))
         .arg(arg!(--tacky <VALUE>).required(false))
+        .arg(arg!(--validate <VALUE>).required(false)) //unused
+        .arg(arg!(--run <VALUE>).required(false)) //unused
         .arg(arg!(--S).required(false))
+        .arg(arg!(--verbose).required(false))
         .get_matches();
 
     let lex_file = matches.get_one::<String>("lex");
     let parse_file = matches.get_one::<String>("parse");
-    let codegen_file = matches.get_one::<String>("codegen");
     let tacky_file = matches.get_one::<String>("tacky");
+    let codegen_file = matches.get_one::<String>("codegen");
     let s_flag = matches.get_flag("S");
+    let verbose_flag = matches.get_flag("verbose");
 
     if let Some(filename) = lex_file {
         let tokens = lex(filename)?;
-        println!("{:#?}", tokens);
+        if verbose_flag {
+            println!("{:#?}", tokens);
+        }
     }
 
     if let Some(filename) = parse_file {
         let ast = parse(filename)?;
-        println!("{:#?}", ast);
+        if verbose_flag {
+            println!("{:#?}", ast);
+        }
     }
 
     if let Some(filename) = tacky_file {
         let ast = tacky(filename)?;
-        println!("{:#?}", ast);
+        if verbose_flag {
+            println!("{:#?}", ast);
+        }
     }
 
     if let Some(filename) = codegen_file {
         let asm = codegen(filename)?;
         if s_flag {
-            write_asm("a.s", asm)?;
+            write_asm("a.s", &asm)?;
+        }
+        if verbose_flag {
+            println!("{:#?}", asm);
         }
     }
 
