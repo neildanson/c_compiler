@@ -83,23 +83,23 @@ impl Display for Instruction {
         match self {
             Instruction::Mov { src, dst } => {
                 writeln!(f, "#Mov")?;
-                write!(f, "movl {}, {}", src, dst)
+                write!(f, "\tmovl {}, {}", src, dst)
             },
             Instruction::Ret => {
                 writeln!(f, "#Return")?;
-                writeln!(f, "movq %rbp, %rsp")?;
-                writeln!(f, "popq %rbp")?;
-                writeln!(f, "ret")
+                writeln!(f, "\tmovq %rbp, %rsp")?;
+                writeln!(f, "\tpopq %rbp")?;
+                writeln!(f, "\tret")
             },
 
 
             Instruction::Unary { op, dst } => {
                 writeln!(f, "#Unary")?;
-                write!(f, "{} {}", op, dst)
+                writeln!(f, "\t{} {}", op, dst)
             },
             Instruction::AllocateStack(size) => {
                 writeln!(f, "#Allocate Stack")?;
-                write!(f, "subq ${}, %rsp", size * 4)
+                writeln!(f, "\tsubq ${}, %rsp", size * 4)
             },
         }
     }
@@ -137,12 +137,12 @@ struct Function {
 
 impl Display for Function {
     fn fmt(&self, f: &mut Formatter) -> Result {
-        writeln!(f, "   .globl {}", self.name)?;
+        writeln!(f, "\t.globl {}", self.name)?;
         writeln!(f, "{}:", self.name)?;
-        writeln!(f, "    pushq {}", "%rbp")?;
-        writeln!(f, "    movq {}, {}", "%rsp", "%rbp")?;
+        writeln!(f, "\tpushq {}", "%rbp")?;
+        writeln!(f, "\tmovq {}, {}", "%rsp", "%rbp")?;
         for instruction in &self.body {
-            writeln!(f, "    {}", instruction)?;
+            writeln!(f, "{}", instruction)?;
         }
         Ok(())
     }
