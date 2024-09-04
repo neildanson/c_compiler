@@ -13,7 +13,7 @@ impl Display for Reg {
     fn fmt(&self, f: &mut Formatter) -> Result {
         match self {
             Reg::AX => write!(f, "%eax"),
-            Reg::R10 => write!(f, "%r10"),
+            Reg::R10 => write!(f, "%r10d"),
         }
     }
 }
@@ -31,7 +31,7 @@ impl Display for Operand {
         match self {
             Operand::Register(reg) => write!(f, "{}", reg),
             Operand::Immediate { imm } => write!(f, "${}", imm),
-            Operand::Stack(offset) => write!(f, "{}(%rbp)", offset),
+            Operand::Stack(offset) => write!(f, "-{}(%rbp)", offset),
             _ => unimplemented!(),
         }
     }
@@ -160,7 +160,7 @@ fn replace_pseudo_with_stack(body: Vec<Instruction>) -> (Vec<Instruction>, usize
                         if let Some(offset) = stack.get(&name) {
                             Operand::Stack(*offset)
                         } else {
-                            let offset = stack.len() as i32 * 4;
+                            let offset = (stack.len() + 1) as i32 * 4;
                             stack.insert(name, offset);
                             Operand::Stack(offset)
                         }
@@ -172,7 +172,7 @@ fn replace_pseudo_with_stack(body: Vec<Instruction>) -> (Vec<Instruction>, usize
                         if let Some(offset) = stack.get(&name) {
                             Operand::Stack(*offset)
                         } else {
-                            let offset = stack.len() as i32 * 4;
+                            let offset = (stack.len() + 1) as i32 * 4;
                             stack.insert(name, offset);
                             Operand::Stack(offset)
                         }

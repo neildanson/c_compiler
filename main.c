@@ -2,5 +2,5 @@ int main ( void ) {
     //This is a comment
     /* Also a 
     comment*/
-    return ~(-244);
+    return ~(-50);
 }
