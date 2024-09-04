@@ -37,6 +37,11 @@ pub struct Tokenizer {
     tilde: Regex,
     negation: Regex,
     double_negation: Regex,
+    plus: Regex,
+    minus: Regex,
+    star: Regex,
+    slash: Regex,
+    percent: Regex,
 }
 
 impl Default for Tokenizer {
@@ -63,6 +68,11 @@ impl Tokenizer {
             tilde: Regex::new(r"^~").unwrap(),
             negation: Regex::new(r"^-").unwrap(),
             double_negation: Regex::new(r"^--").unwrap(),
+            plus: Regex::new(r"^\+").unwrap(),
+            minus: Regex::new(r"^-").unwrap(),
+            star: Regex::new(r"^\*").unwrap(),
+            slash: Regex::new(r"^/").unwrap(),
+            percent: Regex::new(r"^%").unwrap(),
         }
     }
 
@@ -120,6 +130,21 @@ impl Tokenizer {
                 tokens.push(token);
                 input = rest;
             } else if let Some((token, rest)) = tokenizer.negation(input) {
+                tokens.push(token);
+                input = rest;
+            } else if let Some((token, rest)) = tokenizer.plus(input) {
+                tokens.push(token);
+                input = rest;
+            } else if let Some((token, rest)) = tokenizer.minus(input) {
+                tokens.push(token);
+                input = rest;
+            } else if let Some((token, rest)) = tokenizer.star(input) {
+                tokens.push(token);
+                input = rest;
+            } else if let Some((token, rest)) = tokenizer.slash(input) {
+                tokens.push(token);
+                input = rest;
+            } else if let Some((token, rest)) = tokenizer.percent(input) {
                 tokens.push(token);
                 input = rest;
             } else {
@@ -206,6 +231,26 @@ impl Tokenizer {
 
     fn double_negation<'a>(&self, input: &'a str) -> Option<(Token, &'a str)> {
         Self::parse(input, &self.double_negation, |_| Token::DoubleNegation)
+    }
+
+    fn plus<'a>(&self, input: &'a str) -> Option<(Token, &'a str)> {
+        Self::parse(input, &self.plus, |_| Token::Negation)
+    }
+
+    fn minus<'a>(&self, input: &'a str) -> Option<(Token, &'a str)> {
+        Self::parse(input, &self.minus, |_| Token::Negation)
+    }
+
+    fn star<'a>(&self, input: &'a str) -> Option<(Token, &'a str)> {
+        Self::parse(input, &self.star, |_| Token::Negation)
+    }
+
+    fn slash<'a>(&self, input: &'a str) -> Option<(Token, &'a str)> {
+        Self::parse(input, &self.slash, |_| Token::Negation)
+    }
+
+    fn percent<'a>(&self, input: &'a str) -> Option<(Token, &'a str)> {
+        Self::parse(input, &self.percent, |_| Token::Negation)
     }
 }
 
