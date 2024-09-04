@@ -1,15 +1,24 @@
 use std::collections::HashMap;
-use std::fmt::Display;
+use std::fmt::{Display, Formatter, Result};
 
 use crate::*;
 use crate::error::CompilerError;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
 enum Reg {
     AX, R10
 }
 
-#[derive(Debug)]
+impl Display for Reg {
+    fn fmt(&self, f: &mut Formatter) -> Result {
+        match self {
+            Reg::AX => write!(f, "%eax"),
+            Reg::R10 => write!(f, "%r10"),
+        }
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
 enum Operand {
     Register(Reg), 
     Immediate { imm: i32 },
@@ -18,10 +27,11 @@ enum Operand {
 }
 
 impl Display for Operand {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter) -> Result {
         match self {
-            Operand::Register(_) => write!(f, "%eax"),
+            Operand::Register(reg) => write!(f, "{}", reg),
             Operand::Immediate { imm } => write!(f, "${}", imm),
+            Operand::Stack(offset) => write!(f, "{}(%rbp)", offset),
             _ => unimplemented!(),
         }
     }
@@ -36,10 +46,19 @@ impl From<tacky::Value> for Operand {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
 enum UnaryOp {
     Neg,
     Not,
+}
+
+impl Display for UnaryOp {
+    fn fmt(&self, f: &mut Formatter) -> Result {
+        match self {
+            UnaryOp::Neg => write!(f, "negl"),
+            UnaryOp::Not => write!(f, "notl"),
+        }
+    }
 }
 
 impl From<tacky::UnaryOp> for UnaryOp {
@@ -51,51 +70,77 @@ impl From<tacky::UnaryOp> for UnaryOp {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
 enum Instruction {
     Mov { src: Operand, dst: Operand },
-    Unary { op: UnaryOp, src: Operand, dst: Operand },
+    Unary { op: UnaryOp, dst: Operand },
+    AllocateStack(usize),
     Ret,
 }
 
 impl Display for Instruction {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter) -> Result {
         match self {
-            Instruction::Mov { src, dst } => write!(f, "movl {}, {}", src, dst),
-            Instruction::Ret => write!(f, "ret"),
-            _ => unimplemented!(),
+            Instruction::Mov { src, dst } => {
+                writeln!(f, "#Mov")?;
+                write!(f, "movl {}, {}", src, dst)
+            },
+            Instruction::Ret => {
+                writeln!(f, "#Return")?;
+                writeln!(f, "movq %rbp, %rsp")?;
+                writeln!(f, "popq %rbp")?;
+                writeln!(f, "ret")
+            },
+
+
+            Instruction::Unary { op, dst } => {
+                writeln!(f, "#Unary")?;
+                write!(f, "{} {}", op, dst)
+            },
+            Instruction::AllocateStack(size) => {
+                writeln!(f, "#Allocate Stack")?;
+                write!(f, "subq ${}, %rsp", size * 4)
+            },
         }
     }
 }
 
-impl From <tacky::Instruction> for Instruction {
+impl From <tacky::Instruction> for Vec<Instruction> {
     
     fn from(ast: tacky::Instruction) -> Self {
         match ast {
             tacky::Instruction::Return(value) => {
                 let src = value.into();
                 let dst = Operand::Register(Reg::AX);
-                Instruction::Mov { src, dst }
+                vec![
+                    Instruction::Mov { src, dst },
+                    Instruction::Ret
+                ]
             },
             tacky::Instruction::Unary { op, src, dst } => {
                 let src = src.into();
-                let dst = dst.into();
-                Instruction::Unary { op: op.into(), src, dst }
+                let dst :Operand = dst.into();
+                vec![
+                    Instruction::Mov { src, dst: dst.clone() },
+                    Instruction::Unary { op: op.into(), dst }
+                ]
             },
         }
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 struct Function {
     name: String,
     body: Vec<Instruction>,
 }
 
 impl Display for Function {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter) -> Result {
         writeln!(f, "   .globl {}", self.name)?;
         writeln!(f, "{}:", self.name)?;
+        writeln!(f, "    pushq {}", "%rbp")?;
+        writeln!(f, "    movq {}, {}", "%rsp", "%rbp")?;
         for instruction in &self.body {
             writeln!(f, "    {}", instruction)?;
         }
@@ -104,7 +149,7 @@ impl Display for Function {
 }
 
 
-fn replace_pseudo_with_stack(body: Vec<Instruction>) -> Vec<Instruction> {
+fn replace_pseudo_with_stack(body: Vec<Instruction>) -> (Vec<Instruction>, usize) {
     let mut stack = HashMap::new();
     let mut new_body = Vec::new();
     for instruction in body {
@@ -136,19 +181,7 @@ fn replace_pseudo_with_stack(body: Vec<Instruction>) -> Vec<Instruction> {
                 };
                 new_body.push(Instruction::Mov { src, dst });
             },
-            Instruction::Unary { op, src, dst } => {
-                let src = match src {
-                    Operand::Pseudo(name) => {
-                        if let Some(offset) = stack.get(&name) {
-                            Operand::Stack(*offset)
-                        } else {
-                            let offset = stack.len() as i32 * 4;
-                            stack.insert(name, offset);
-                            Operand::Stack(offset)
-                        }
-                    },
-                    _ => src,
-                };
+            Instruction::Unary { op, dst } => {
                 let dst = match dst {
                     Operand::Pseudo(name) => {
                         if let Some(offset) = stack.get(&name) {
@@ -161,9 +194,29 @@ fn replace_pseudo_with_stack(body: Vec<Instruction>) -> Vec<Instruction> {
                     },
                     _ => dst,
                 };
-                new_body.push(Instruction::Unary { op, src, dst });
+                new_body.push(Instruction::Unary { op,  dst });
             },
             any_other => new_body.push(any_other),
+        }
+    }
+    (new_body, stack.len())
+}
+
+fn fixup_stack_operations(body: Vec<Instruction>) -> Vec<Instruction> {
+    let mut new_body = Vec::new();
+    for instruction in body {
+        match instruction.clone() {
+            Instruction::Mov { src, dst } => {
+                if let Operand::Stack(_) = src {
+                    if let Operand::Stack(_) = dst {
+                        new_body.push(Instruction::Mov { src, dst: Operand::Register(Reg::R10) });
+                        new_body.push(Instruction::Mov { src: Operand::Register(Reg::R10), dst });
+                        continue;
+                    }
+                }
+                new_body.push(instruction.clone());
+            },
+            _ => new_body.push(instruction),
         }
     }
     new_body
@@ -174,12 +227,13 @@ impl From<tacky::Function> for Function {
     fn from(ast: tacky::Function) -> Self {
         let mut body = Vec::new();
         for statement in ast.body {
-            let instruction = statement.into();
-            body.push(instruction);
+            let mut instructions :Vec<_> = statement.into();
+            body.append(&mut instructions);
         }
         
-        let body = replace_pseudo_with_stack(body);
-
+        let (mut body, stack_size) = replace_pseudo_with_stack(body);
+        body.insert(0, Instruction::AllocateStack(stack_size));
+        let body = fixup_stack_operations(body);
         Function {
             name: ast.name,
             body,
@@ -187,7 +241,7 @@ impl From<tacky::Function> for Function {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Program {
     function: Function,
 }
@@ -203,4 +257,41 @@ impl From<tacky::Program> for Program {
         let function = ast.function.into();
         Program { function }
     }
+}
+
+//Todo write tests for psuedo to stack
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_replace_pseudo_with_stack() {
+        let body = vec![
+            Instruction::Mov { src: Operand::Pseudo("a".to_string()), dst: Operand::Register(Reg::AX) },
+            Instruction::Mov { src: Operand::Pseudo("b".to_string()), dst: Operand::Register(Reg::AX) },
+            Instruction::Mov { src: Operand::Pseudo("a".to_string()), dst: Operand::Register(Reg::AX) },
+        ];
+        let (new_body, stack_size) = replace_pseudo_with_stack(body);
+        assert_eq!(new_body, vec![
+            Instruction::Mov { src: Operand::Stack(0), dst: Operand::Register(Reg::AX) },
+            Instruction::Mov { src: Operand::Stack(4), dst: Operand::Register(Reg::AX) },
+            Instruction::Mov { src: Operand::Stack(0), dst: Operand::Register(Reg::AX) },
+        ]);
+        assert_eq!(stack_size, 2);
+    }
+
+    #[test]
+    fn test_fixup_invalid_instructions() {
+        let body = vec![
+            Instruction::Mov { src: Operand::Stack (0), dst: Operand::Stack (1) },
+        ];
+        let new_body = fixup_stack_operations(body);
+        assert_eq!(new_body, vec![
+            Instruction::Mov { src: Operand::Stack (0), dst: Operand::Register(Reg::R10) },
+            Instruction::Mov { src: Operand::Register (Reg::R10), dst: Operand::Stack (1) },
+        ]);
+    }
+
+    
 }
