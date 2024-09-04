@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fmt::Display;
 
 use crate::*;
@@ -102,6 +103,73 @@ impl Display for Function {
     }
 }
 
+
+fn replace_pseudo_with_stack(body: Vec<Instruction>) -> Vec<Instruction> {
+    let mut stack = HashMap::new();
+    let mut new_body = Vec::new();
+    for instruction in body {
+        match instruction {
+            Instruction::Mov { src, dst } => {
+                let src = match src {
+                    Operand::Pseudo(name) => {
+                        if let Some(offset) = stack.get(&name) {
+                            Operand::Stack(*offset)
+                        } else {
+                            let offset = stack.len() as i32 * 4;
+                            stack.insert(name, offset);
+                            Operand::Stack(offset)
+                        }
+                    },
+                    _ => src,
+                };
+                let dst = match dst {
+                    Operand::Pseudo(name) => {
+                        if let Some(offset) = stack.get(&name) {
+                            Operand::Stack(*offset)
+                        } else {
+                            let offset = stack.len() as i32 * 4;
+                            stack.insert(name, offset);
+                            Operand::Stack(offset)
+                        }
+                    },
+                    _ => dst,
+                };
+                new_body.push(Instruction::Mov { src, dst });
+            },
+            Instruction::Unary { op, src, dst } => {
+                let src = match src {
+                    Operand::Pseudo(name) => {
+                        if let Some(offset) = stack.get(&name) {
+                            Operand::Stack(*offset)
+                        } else {
+                            let offset = stack.len() as i32 * 4;
+                            stack.insert(name, offset);
+                            Operand::Stack(offset)
+                        }
+                    },
+                    _ => src,
+                };
+                let dst = match dst {
+                    Operand::Pseudo(name) => {
+                        if let Some(offset) = stack.get(&name) {
+                            Operand::Stack(*offset)
+                        } else {
+                            let offset = stack.len() as i32 * 4;
+                            stack.insert(name, offset);
+                            Operand::Stack(offset)
+                        }
+                    },
+                    _ => dst,
+                };
+                new_body.push(Instruction::Unary { op, src, dst });
+            },
+            any_other => new_body.push(any_other),
+        }
+    }
+    new_body
+}
+
+
 impl From<tacky::Function> for Function {
     fn from(ast: tacky::Function) -> Self {
         let mut body = Vec::new();
@@ -109,7 +177,9 @@ impl From<tacky::Function> for Function {
             let instruction = statement.into();
             body.push(instruction);
         }
-            
+        
+        let body = replace_pseudo_with_stack(body);
+
         Function {
             name: ast.name,
             body,

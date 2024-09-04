@@ -71,8 +71,8 @@ fn main() -> Result<()> {
         .about("Does awesome things")
         .arg(arg!(--lex <VALUE>).required(false))
         .arg(arg!(--parse <VALUE>).required(false))
-        .arg(arg!(--codegen <VALUE>).required(false))
         .arg(arg!(--tacky <VALUE>).required(false))
+        .arg(arg!(--codegen <VALUE>).required(false))
         .arg(arg!(--validate <VALUE>).required(false)) //unused
         .arg(arg!(--run <VALUE>).required(false)) //unused
         .arg(arg!(--S).required(false))
