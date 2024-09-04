@@ -83,7 +83,7 @@ impl Display for Instruction {
         match self {
             Instruction::Mov { src, dst } => {
                 writeln!(f, "#Mov")?;
-                write!(f, "\tmovl {}, {}", src, dst)
+                writeln!(f, "\tmovl {}, {}", src, dst)
             },
             Instruction::Ret => {
                 writeln!(f, "#Return")?;
