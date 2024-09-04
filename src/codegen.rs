@@ -259,8 +259,6 @@ impl From<tacky::Program> for Program {
     }
 }
 
-//Todo write tests for psuedo to stack
-
 #[cfg(test)]
 mod tests {
     use super::*;

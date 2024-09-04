@@ -10,9 +10,9 @@ Test Suite here
 
 ## Running Test Suite
 
-`./writing-a-c-compiler-tests/test_compiler --check-setup`
+`../writing-a-c-compiler-tests/test_compiler --check-setup`
 
-`./writing-a-c-compiler-tests/test_compiler ./c_compiler/target/debug/c_compiler --chapter 1 --stage lex`
+`../writing-a-c-compiler-tests/test_compiler ./target/debug/c_compiler --chapter 1 --stage lex`
 
 ## Example commands (WIP)
 
@@ -26,7 +26,11 @@ Run Parser (turn text into Tokens, parse into AST)
 
 Generate Code
 
-`cargo run -- --codegen a.s`
+`cargo run -- --codegen main.c --S`
+
+Verbose 
+
+`cargo run -- --lex main.c --parse main.c --tacky main.c --codegen main.c --verbose --S`
 
 ## Other commands
 
@@ -35,4 +39,5 @@ Compile ASM to Executable code using gcc
 ```
 gcc asm.s
 ./a.out
-echo $?```
+echo $?
+```
