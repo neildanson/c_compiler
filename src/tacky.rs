@@ -36,26 +36,25 @@ fn convert_unop(op: parse::UnaryOperator) -> UnaryOp {
     }
 }
 
+#[derive(Default)]
 pub struct Tacky {
     counter: u32,
 }
 
 impl Tacky {
-    pub fn new() -> Self {
-        Tacky { counter: 0 }
-    }
-
     fn make_name(&mut self) -> String {
         let name = format!("tacky{}", self.counter);
         self.counter += 1;
         name
     }
 
-    fn emit_tacky_expr(&mut self, e: parse::Expression, instructions: &mut Vec<Instruction>) -> Value {
+    fn emit_tacky_expr(
+        &mut self,
+        e: parse::Expression,
+        instructions: &mut Vec<Instruction>,
+    ) -> Value {
         match e {
-            parse::Expression::Constant(c) => {
-                return Value::Constant(c);
-            }
+            parse::Expression::Constant(c) => Value::Constant(c),
             parse::Expression::Unary(op, inner) => {
                 let src = self.emit_tacky_expr(*inner, instructions);
                 let dst_name = self.make_name();
@@ -66,7 +65,7 @@ impl Tacky {
                     src,
                     dst: dst.clone(),
                 });
-                return dst;
+                dst
             }
         }
     }
@@ -81,10 +80,7 @@ impl Tacky {
                 }
             }
         }
-        Function {
-            name: f.name,
-            body,
-        }
+        Function { name: f.name, body }
     }
 
     pub fn emit_tacky(&mut self, p: parse::Program) -> Program {
