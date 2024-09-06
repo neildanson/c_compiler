@@ -4,7 +4,7 @@ use std::{error::Error, fmt::Display};
 pub enum CompilerError {
     IO(std::io::Error),
     Lex,
-    Parse,
+    Parse(String),
     CodeGen,
 }
 
@@ -13,19 +13,12 @@ impl Display for CompilerError {
         match self {
             CompilerError::IO(err) => write!(f, "{}", err),
             CompilerError::Lex => write!(f, "Lexing Error"),
-            CompilerError::Parse => write!(f, "Parsing Error"),
+            CompilerError::Parse(s) => write!(f, "Parsing Error : {}", s),
             CompilerError::CodeGen => write!(f, "Code Generation Error"),
         }
     }
 }
 
 impl Error for CompilerError {
-    fn description(&self) -> &str {
-        match self {
-            CompilerError::IO(_) => "File Things",
-            CompilerError::Lex => "Lexing Error",
-            CompilerError::Parse => "Parsing Error",
-            CompilerError::CodeGen => "Code Generation Error",
-        }
-    }
+   
 }

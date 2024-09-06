@@ -19,6 +19,11 @@ pub enum Token {
     Tilde,              //~
     Negation,           //-
     DoubleNegation,     //--
+    Plus,               //+
+    Minus,              //-
+    Asterisk,           //*
+    Slash,              // /   
+    Percent,            //%
 }
 
 pub struct Tokenizer {
@@ -234,23 +239,23 @@ impl Tokenizer {
     }
 
     fn plus<'a>(&self, input: &'a str) -> Option<(Token, &'a str)> {
-        Self::parse(input, &self.plus, |_| Token::Negation)
+        Self::parse(input, &self.plus, |_| Token::Plus)
     }
 
     fn minus<'a>(&self, input: &'a str) -> Option<(Token, &'a str)> {
-        Self::parse(input, &self.minus, |_| Token::Negation)
+        Self::parse(input, &self.minus, |_| Token::Minus)
     }
 
     fn star<'a>(&self, input: &'a str) -> Option<(Token, &'a str)> {
-        Self::parse(input, &self.star, |_| Token::Negation)
+        Self::parse(input, &self.star, |_| Token::Asterisk)
     }
 
     fn slash<'a>(&self, input: &'a str) -> Option<(Token, &'a str)> {
-        Self::parse(input, &self.slash, |_| Token::Negation)
+        Self::parse(input, &self.slash, |_| Token::Slash)
     }
 
     fn percent<'a>(&self, input: &'a str) -> Option<(Token, &'a str)> {
-        Self::parse(input, &self.percent, |_| Token::Negation)
+        Self::parse(input, &self.percent, |_| Token::Percent)
     }
 }
 

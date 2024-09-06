@@ -54,9 +54,9 @@ impl Tacky {
         instructions: &mut Vec<Instruction>,
     ) -> Value {
         match e {
-            parse::Expression::Constant(c) => Value::Constant(c),
-            parse::Expression::Unary(op, inner) => {
-                let src = self.emit_tacky_expr(*inner, instructions);
+            parse::Expression::Factor(parse::Factor::Int(c)) => Value::Constant(c),
+            parse::Expression::Factor(parse::Factor::Unary(op, inner)) => {
+                let src = self.emit_tacky_factor(*inner, instructions);
                 let dst_name = self.make_name();
                 let dst = Value::Var(dst_name);
                 let tacky_op = convert_unop(op);
@@ -66,7 +66,32 @@ impl Tacky {
                     dst: dst.clone(),
                 });
                 dst
-            }
+            },
+            parse::Expression::Factor(f) => self.emit_tacky_factor(f, instructions),
+            _ => unimplemented!()
+        }
+    }
+
+    fn emit_tacky_factor(
+        &mut self,
+        f: parse::Factor,
+        instructions: &mut Vec<Instruction>,
+    ) -> Value {
+        match f {
+            parse::Factor::Int(i) => Value::Constant(i),
+            parse::Factor::Unary(op, inner) => {
+                let src = self.emit_tacky_factor(*inner, instructions);
+                let dst_name = self.make_name();
+                let dst = Value::Var(dst_name);
+                let tacky_op = convert_unop(op);
+                instructions.push(Instruction::Unary {
+                    op: tacky_op,
+                    src,
+                    dst: dst.clone(),
+                });
+                dst
+            },
+            parse::Factor::Expression(e) => self.emit_tacky_expr(*e, instructions),
         }
     }
 

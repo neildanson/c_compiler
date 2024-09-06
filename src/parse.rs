@@ -25,26 +25,40 @@ pub enum UnaryOperator {
 
 #[derive(Debug, PartialEq)]
 pub enum Expression {
-    Constant(i32),
-    //Identifier(String),
-    Unary(UnaryOperator, Box<Expression>),
+    Factor(Factor),
+    Expression(BinaryOperator, Box<Expression>, Box<Expression>),
 }
 
-fn parse_expression(tokens: &[Token]) -> Result<(Expression, &[Token])> {
-    let (expression, tokens) = match tokens {
-        [Token::Constant(c), rest @ ..] => (Expression::Constant(c.parse().unwrap()), rest),
-        //[Token::Identifier(id), rest @ ..] => (Expression::Identifier(id.clone()), rest),
+#[derive(Debug, PartialEq)]
+pub enum Factor {
+    Int(i32),
+    Unary(UnaryOperator, Box<Factor>),
+    Expression(Box<Expression>),
+}
+
+#[derive(Debug, PartialEq)]
+pub enum BinaryOperator {
+    Add,
+    Sub,
+    Mul,
+    Div,
+    Mod,
+}
+
+fn parse_factor(tokens:&[Token]) -> Result<(Factor, &[Token])> {
+    let (factor, tokens) = match tokens {
+        [Token::Constant(c), rest @ ..] => (Factor::Int(c.parse().unwrap()), rest),
         [Token::Negation, rest @ ..] => {
-            let (expression, rest) = parse_expression(rest)?;
+            let (factor, rest) = parse_factor(rest)?;
             (
-                Expression::Unary(UnaryOperator::Negation, Box::new(expression)),
+                Factor::Unary(UnaryOperator::Negation, Box::new(factor)),
                 rest,
             )
         }
         [Token::Tilde, rest @ ..] => {
-            let (expression, rest) = parse_expression(rest)?;
+            let (factor, rest) = parse_factor(rest)?;
             (
-                Expression::Unary(UnaryOperator::Tilde, Box::new(expression)),
+                Factor::Unary(UnaryOperator::Tilde, Box::new(factor)),
                 rest,
             )
         }
@@ -52,13 +66,44 @@ fn parse_expression(tokens: &[Token]) -> Result<(Expression, &[Token])> {
             let (expression, rest) = parse_expression(rest)?;
             let rest = match rest {
                 [Token::RParen, rest @ ..] => rest,
-                _ => return Err(CompilerError::Parse.into()),
+                _ => return Err(CompilerError::Parse("LParen".to_string()).into()),
             };
-            (expression, rest)
+            (Factor::Expression(Box::new(expression)), rest)
         }
-        _ => return Err(CompilerError::Parse.into()),
+        toks => return Err(CompilerError::Parse(format!("Factor Unexpected Tokens {:?}", toks)).into()),
     };
-    Ok((expression, tokens))
+    Ok((factor, tokens))
+}
+
+fn parse_binop(tokens: &[Token]) -> Result<(BinaryOperator, &[Token])> {
+    let (binop, tokens) = match tokens {
+        [Token::Plus, rest @ ..] => (BinaryOperator::Add, rest),
+        [Token::Minus, rest @ ..] => (BinaryOperator::Sub, rest),
+        [Token::Asterisk, rest @ ..] => (BinaryOperator::Mul, rest),
+        [Token::Slash, rest @ ..] => (BinaryOperator::Div, rest),
+        [Token::Percent, rest @ ..] => (BinaryOperator::Mod, rest),
+        toks => return Err(CompilerError::Parse(format!("BinOp Unexpected Tokens {:?}", toks).to_string()).into()),
+    };
+    Ok((binop, tokens))
+}
+
+fn parse_expression(tokens: &[Token]) -> Result<(Expression, &[Token])> {
+    let left = parse_factor(tokens)?;
+    let (left, mut tokens) = left;
+    let mut left_expr = Expression::Factor(left);
+    //TODO we need to check if the token is + or 
+    while let Some(next_token) = tokens.iter().next() {
+        if *next_token != Token::Plus && *next_token != Token::Minus {
+            break;
+        }
+        let (binop, rest) = parse_binop(tokens)?;
+        let right = parse_factor(rest)?;
+        let (right, new_tokens) = right;
+        let right_expr = Expression::Factor(right);
+        tokens = new_tokens;    
+        left_expr = Expression::Expression(binop, Box::new(left_expr), Box::new(right_expr));
+    }
+    Ok((left_expr, tokens))
 }
 
 fn parse_statement(tokens: &[Token]) -> Result<(Statement, &[Token])> {
@@ -67,11 +112,11 @@ fn parse_statement(tokens: &[Token]) -> Result<(Statement, &[Token])> {
             let (expression, rest) = parse_expression(rest)?;
             let rest = match rest {
                 [Token::SemiColon, rest @ ..] => rest,
-                _ => return Err(CompilerError::Parse.into()),
+                _ => return Err(CompilerError::Parse("Expected SemiColon".to_string()).into()),
             };
             (Statement::Return(expression), rest)
         }
-        _ => return Err(CompilerError::Parse.into()),
+        tok => return Err(CompilerError::Parse(format!("Statement Unexpected Tokens {:?}", tok)).into()),
     };
     Ok((statement, tokens))
 }
@@ -89,7 +134,7 @@ fn parse_function(tokens: &[Token]) -> Result<(Function, &[Token])> {
             }
             let rest = match rest {
                 [Token::RBrace, rest @ ..] => rest,
-                _ => return Err(CompilerError::Parse.into()),
+                _ => return Err(CompilerError::Parse("Expected RBrace".to_string()).into()),
             };
             (
                 Function {
@@ -99,7 +144,7 @@ fn parse_function(tokens: &[Token]) -> Result<(Function, &[Token])> {
                 rest,
             )
         }
-        _ => return Err(CompilerError::Parse.into()),
+        toks => return Err(CompilerError::Parse(format!("Function Unexpected Tokens {:?}", toks)).into()),
     };
     Ok((function, tokens))
 }
@@ -107,7 +152,7 @@ fn parse_function(tokens: &[Token]) -> Result<(Function, &[Token])> {
 pub fn parse_program(tokens: &[Token]) -> Result<Program> {
     let (function, rest) = parse_function(tokens)?;
     if !rest.is_empty() {
-        return Err(CompilerError::Parse.into());
+        return Err(CompilerError::Parse("Garbage found after function".to_string()).into());
     }
     Ok(Program { function })
 }
@@ -122,7 +167,7 @@ mod tests {
         let tokenizer = Tokenizer::new();
         let tokens = tokenizer.tokenize("return 42;").unwrap();
         let (statement, rest) = parse_statement(&tokens).unwrap();
-        assert_eq!(statement, Statement::Return(Expression::Constant(42)));
+        assert_eq!(statement, Statement::Return(Expression::Factor(Factor::Int(42))));
         assert!(rest.is_empty());
     }
 
@@ -145,7 +190,7 @@ mod tests {
         let tokenizer = Tokenizer::new();
         let tokens = tokenizer.tokenize("42").unwrap();
         let (expression, rest) = parse_expression(&tokens).unwrap();
-        assert_eq!(expression, Expression::Constant(42));
+        assert_eq!(expression, Expression::Factor(Factor::Int(42)));
         assert!(rest.is_empty());
     }
 
@@ -169,7 +214,7 @@ mod tests {
             function,
             Function {
                 name: "main".to_string(),
-                body: vec![Statement::Return(Expression::Constant(42))]
+                body: vec![Statement::Return(Expression::Factor(Factor::Int(42)))]
             }
         );
         assert!(rest.is_empty());
@@ -192,7 +237,7 @@ int main(void) {
             function,
             Function {
                 name: "main".to_string(),
-                body: vec![Statement::Return(Expression::Constant(100))]
+                body: vec![Statement::Return(Expression::Factor(Factor::Int(100)))]
             }
         );
         assert!(rest.is_empty());
