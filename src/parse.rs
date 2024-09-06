@@ -242,4 +242,24 @@ int main(void) {
         );
         assert!(rest.is_empty());
     }
+
+    #[test]
+    fn test_parse_function_with_addition() {
+        let tokenizer = Tokenizer::new();
+        let tokens = tokenizer.tokenize("int main(void) { return 42 + 12; }").unwrap();
+        let (function, rest) = parse_function(&tokens).unwrap();
+        assert_eq!(
+            function,
+            Function {
+                name: "main".to_string(),
+                body: vec![
+                    Statement::Return(
+                        Expression::Expression(
+                            BinaryOperator::Add, 
+                            Box::new(Expression::Factor(Factor::Int(42))),
+                            Box::new(Expression::Factor(Factor::Int(12)))))]
+            }
+        );
+        assert!(rest.is_empty());
+    }
 }
