@@ -134,9 +134,6 @@ impl Tokenizer {
             } else if let Some((token, rest)) = tokenizer.double_negation(input) {
                 tokens.push(token);
                 input = rest;
-            } else if let Some((token, rest)) = tokenizer.negation(input) {
-                tokens.push(token);
-                input = rest;
             } else if let Some((token, rest)) = tokenizer.plus(input) {
                 tokens.push(token);
                 input = rest;
@@ -150,6 +147,9 @@ impl Tokenizer {
                 tokens.push(token);
                 input = rest;
             } else if let Some((token, rest)) = tokenizer.percent(input) {
+                tokens.push(token);
+                input = rest;
+            } else if let Some((token, rest)) = tokenizer.negation(input) {
                 tokens.push(token);
                 input = rest;
             } else {
