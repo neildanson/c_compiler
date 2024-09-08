@@ -40,7 +40,6 @@ pub struct Tokenizer {
     rbrace: Regex,
     semicolon: Regex,
     tilde: Regex,
-    negation: Regex,
     double_negation: Regex,
     plus: Regex,
     minus: Regex,
@@ -71,7 +70,6 @@ impl Tokenizer {
             rbrace: Regex::new(r"^\}").unwrap(),
             semicolon: Regex::new(r"^;").unwrap(),
             tilde: Regex::new(r"^~").unwrap(),
-            negation: Regex::new(r"^-").unwrap(),
             double_negation: Regex::new(r"^--").unwrap(),
             plus: Regex::new(r"^\+").unwrap(),
             minus: Regex::new(r"^-").unwrap(),
@@ -147,9 +145,6 @@ impl Tokenizer {
                 tokens.push(token);
                 input = rest;
             } else if let Some((token, rest)) = tokenizer.percent(input) {
-                tokens.push(token);
-                input = rest;
-            } else if let Some((token, rest)) = tokenizer.negation(input) {
                 tokens.push(token);
                 input = rest;
             } else {
@@ -228,10 +223,6 @@ impl Tokenizer {
 
     fn tilde<'a>(&self, input: &'a str) -> Option<(Token, &'a str)> {
         Self::parse(input, &self.tilde, |_| Token::Tilde)
-    }
-
-    fn negation<'a>(&self, input: &'a str) -> Option<(Token, &'a str)> {
-        Self::parse(input, &self.negation, |_| Token::Negation)
     }
 
     fn double_negation<'a>(&self, input: &'a str) -> Option<(Token, &'a str)> {
