@@ -7,14 +7,18 @@ use crate::*;
 #[derive(Debug, PartialEq, Clone)]
 enum Reg {
     AX,
+    DX,
     R10,
+    R11,
 }
 
 impl Display for Reg {
     fn fmt(&self, f: &mut Formatter) -> Result {
         match self {
             Reg::AX => write!(f, "%eax"),
+            Reg::DX => write!(f, "%edx"),
             Reg::R10 => write!(f, "%r10d"),
+            Reg::R11 => write!(f, "%r11d"),
         }
     }
 }
@@ -71,10 +75,43 @@ impl From<tacky::UnaryOp> for UnaryOp {
     }
 }
 
+
+#[derive(Debug, PartialEq, Clone)]
+enum BinaryOp { 
+    Add, 
+    Sub, 
+    Mult
+}
+
+impl Display for BinaryOp {
+    //TODO
+    fn fmt(&self, f: &mut Formatter) -> Result {
+        match self {
+            BinaryOp::Add => write!(f, "add"),
+            BinaryOp::Sub => write!(f, "sub"),
+            BinaryOp::Mult => write!(f, "imul"),
+        }
+    }
+}
+
+impl From<tacky::BinaryOp> for BinaryOp {
+    fn from(op: tacky::BinaryOp) -> Self {
+        match op {
+            tacky::BinaryOp::Add => BinaryOp::Add,
+            tacky::BinaryOp::Subtract => BinaryOp::Sub,
+            tacky::BinaryOp::Multiply => BinaryOp::Mult,
+            _ => unimplemented!("BinaryOp not implemented"),
+        }
+    }
+}
+
 #[derive(Debug, PartialEq, Clone)]
 enum Instruction {
     Mov { src: Operand, dst: Operand },
     Unary { op: UnaryOp, dst: Operand },
+    Binary { op: BinaryOp, src2: Operand, dst: Operand },
+    Idiv { src: Operand },
+    Cdq,
     AllocateStack(usize),
     Ret,
 }
@@ -97,10 +134,20 @@ impl Display for Instruction {
                 writeln!(f, "#Unary")?;
                 writeln!(f, "\t{} {}", op, dst)
             }
+
             Instruction::AllocateStack(size) => {
                 writeln!(f, "#Allocate Stack")?;
                 writeln!(f, "\tsubq ${}, %rsp", size * 4)
+            },
+            Instruction::Idiv { src } => {
+                writeln!(f, "#Idiv")?;
+                writeln!(f, "\tidivl {}", src)
             }
+            Instruction::Cdq => {
+                writeln!(f, "#Cdq")?;
+                writeln!(f, "\tcdq")
+            }
+            _ => unimplemented!("Instruction Display not implemented"),
         }
     }
 }
@@ -124,7 +171,53 @@ impl From<tacky::Instruction> for Vec<Instruction> {
                     Instruction::Unary { op: op.into(), dst },
                 ]
             }, 
-            tacky::Instruction::Binary { .. } => unimplemented!("Unsupported Binary Operation"),
+            tacky::Instruction::Binary { op, src1, src2, dst } if op == tacky::BinaryOp::Divide => {
+                let src1 = src1.into();
+                let src2 = src2.into();
+                let dst = dst.into();
+                vec![
+                    Instruction::Mov {
+                        src: src1,
+                        dst: Operand::Register(Reg::AX),
+                    },
+                    Instruction::Cdq,
+                    Instruction::Idiv { src: src2 },
+                    Instruction::Mov {
+                        src: Operand::Register(Reg::AX),
+                        dst,
+                    },
+                ]
+            },
+            tacky::Instruction::Binary { op, src1, src2, dst } if op == tacky::BinaryOp::Remainder => {
+                let src1 = src1.into();
+                let src2 = src2.into();
+                let dst = dst.into();
+                vec![
+                    Instruction::Mov {
+                        src: src1,
+                        dst: Operand::Register(Reg::AX),
+                    },
+                    Instruction::Cdq,
+                    Instruction::Idiv { src: src2 },
+                    Instruction::Mov {
+                        src: Operand::Register(Reg::DX),
+                        dst,
+                    },
+                ]
+            },
+            tacky::Instruction::Binary { op, src1, src2, dst } => {
+                let src1 = src1.into();
+                let src2 = src2.into();
+                let dst = dst.into();
+                let op = op.into();
+                vec![
+                    Instruction::Mov {
+                        src: src1,
+                        dst: Operand::Register(Reg::AX),
+                    },
+                    Instruction::Binary { op, src2, dst }
+                ]
+            }
         }
     }
 }

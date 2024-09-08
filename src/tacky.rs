@@ -30,7 +30,7 @@ pub enum UnaryOp {
     Negate,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum BinaryOp {
     Add,
     Subtract,
