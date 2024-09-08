@@ -63,7 +63,7 @@ fn is_binop(tok: &Token) -> bool {
 fn parse_factor(tokens:&[Token]) -> Result<(Factor, &[Token])> {
     let (factor, tokens) = match tokens {
         [Token::Constant(c), rest @ ..] => (Factor::Int(c.parse().unwrap()), rest),
-        [Token::Negation, rest @ ..] => {
+        [Token::Minus, rest @ ..] => {
             let (factor, rest) = parse_factor(rest)?;
             (
                 Factor::Unary(UnaryOperator::Negation, Box::new(factor)),

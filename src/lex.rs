@@ -17,7 +17,6 @@ pub enum Token {
     RBrace,             //}
     SemiColon,          //;
     Tilde,              //~
-    Negation,           //-
     DoubleNegation,     //--
     Plus,               //+
     Minus,              //-
