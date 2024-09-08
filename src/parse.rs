@@ -45,6 +45,21 @@ pub enum BinaryOperator {
     Mod,
 }
 
+fn precedence(tok: &Token) -> u8 {
+    match tok {
+        Token::Plus | Token::Minus => 1,
+        Token::Asterisk | Token::Slash | Token::Percent => 2,
+        _ => 0,
+    }
+}
+
+fn is_binop(tok: &Token) -> bool {
+    match tok {
+        Token::Plus | Token::Minus | Token::Asterisk | Token::Slash | Token::Percent => true,
+        _ => false,
+    }
+}
+
 fn parse_factor(tokens:&[Token]) -> Result<(Factor, &[Token])> {
     let (factor, tokens) = match tokens {
         [Token::Constant(c), rest @ ..] => (Factor::Int(c.parse().unwrap()), rest),
@@ -63,7 +78,7 @@ fn parse_factor(tokens:&[Token]) -> Result<(Factor, &[Token])> {
             )
         }
         [Token::LParen, rest @ ..] => {
-            let (expression, rest) = parse_expression(rest)?;
+            let (expression, rest) = parse_expression(rest,0)?;
             let rest = match rest {
                 [Token::RParen, rest @ ..] => rest,
                 _ => return Err(CompilerError::Parse("LParen".to_string()).into()),
@@ -87,29 +102,29 @@ fn parse_binop(tokens: &[Token]) -> Result<(BinaryOperator, &[Token])> {
     Ok((binop, tokens))
 }
 
-fn parse_expression(tokens: &[Token]) -> Result<(Expression, &[Token])> {
+fn parse_expression(tokens: &[Token], min_precedence : u8) -> Result<(Expression, &[Token])> {
     let left = parse_factor(tokens)?;
     let (left, mut tokens) = left;
     let mut left_expr = Expression::Factor(left);
-    //TODO we need to check if the token is + or 
+    //Perhaps just use shunting algorithm here?
     while let Some(next_token) = tokens.iter().next() {
-        if *next_token != Token::Plus && *next_token != Token::Minus {
+        if !is_binop(next_token) || precedence(next_token) < min_precedence {
             break;
         }
         let (binop, rest) = parse_binop(tokens)?;
-        let right = parse_factor(rest)?;
-        let (right, new_tokens) = right;
-        let right_expr = Expression::Factor(right);
+        
+        let (right_expr, new_tokens) = parse_expression(rest, precedence(next_token) + 1)?;
         tokens = new_tokens;    
         left_expr = Expression::Expression(binop, Box::new(left_expr), Box::new(right_expr));
     }
-    Ok((left_expr, tokens))
+    let result = (left_expr, tokens);
+    Ok(result)
 }
 
 fn parse_statement(tokens: &[Token]) -> Result<(Statement, &[Token])> {
     let (statement, tokens) = match tokens {
         [Token::Return, rest @ ..] => {
-            let (expression, rest) = parse_expression(rest)?;
+            let (expression, rest) = parse_expression(rest, 0)?;
             let rest = match rest {
                 [Token::SemiColon, rest @ ..] => rest,
                 _ => return Err(CompilerError::Parse("Expected SemiColon".to_string()).into()),
@@ -189,7 +204,7 @@ mod tests {
     fn test_parse_expression() {
         let tokenizer = Tokenizer::new();
         let tokens = tokenizer.tokenize("42").unwrap();
-        let (expression, rest) = parse_expression(&tokens).unwrap();
+        let (expression, rest) = parse_expression(&tokens, 0).unwrap();
         assert_eq!(expression, Expression::Factor(Factor::Int(42)));
         assert!(rest.is_empty());
     }
