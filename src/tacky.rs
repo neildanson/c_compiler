@@ -39,14 +39,14 @@ pub enum BinaryOp {
     Remainder,
 }
 
-fn convert_unop(op: parse::UnaryOperator) -> UnaryOp {
+fn convert_unop(op: &parse::UnaryOperator) -> UnaryOp {
     match op {
         parse::UnaryOperator::Negation => UnaryOp::Negate,
         parse::UnaryOperator::Tilde => UnaryOp::Complement,
     }
 }
 
-fn convert_binop(op: parse::BinaryOperator) -> BinaryOp {
+fn convert_binop(op: &parse::BinaryOperator) -> BinaryOp {
     match op {
         parse::BinaryOperator::Add => BinaryOp::Add,
         parse::BinaryOperator::Sub => BinaryOp::Subtract,
@@ -70,38 +70,34 @@ impl Tacky {
 
     fn emit_tacky_expr(
         &mut self,
-        e: parse::Expression,
+        e: &parse::Expression,
         instructions: &mut Vec<Instruction>,
     ) -> Value {
         match e {
             parse::Expression::Factor(f) => self.emit_tacky_factor(f, instructions),
-            parse::Expression::BinOp(op,e1, e2) => {
-                let src1 = self.emit_tacky_expr(*e1, instructions);
-                let src2 = self.emit_tacky_expr(*e2, instructions);
-                let dst_name = self.make_name();
-                let dst = Value::Var(dst_name);
-                let tacky_op = convert_binop(op);
-                instructions.push(Instruction::Binary {
-                    op: tacky_op,
-                    src1,
-                    src2,
-                    dst: dst.clone(),
-                });
-                dst
-            },
-            _ => unimplemented!()
+            parse::Expression::BinOp(op,e1, e2) => self.emit_tacky_binop(op, e1, e2, instructions),
         }
     }
 
     fn emit_tacky_factor(
         &mut self,
-        f: parse::Factor,
+        f: &parse::Factor,
         instructions: &mut Vec<Instruction>,
     ) -> Value {
         match f {
-            parse::Factor::Int(i) => Value::Constant(i),
-            parse::Factor::Unary(op, inner) => {
-                let src = self.emit_tacky_factor(*inner, instructions);
+            parse::Factor::Int(i) => Value::Constant(*i),
+            parse::Factor::Unary(op, inner) => self.emit_tacky_unaryop(op, &inner, instructions),
+            parse::Factor::Expression(e) => self.emit_tacky_expr(e, instructions),
+        }
+    }
+
+    fn emit_tacky_unaryop(
+        &mut self,
+        op: &parse::UnaryOperator,
+        inner: &parse::Factor,
+        instructions: &mut Vec<Instruction>,
+    ) -> Value {
+        let src = self.emit_tacky_factor(&inner, instructions);
                 let dst_name = self.make_name();
                 let dst = Value::Var(dst_name);
                 let tacky_op = convert_unop(op);
@@ -111,9 +107,27 @@ impl Tacky {
                     dst: dst.clone(),
                 });
                 dst
-            },
-            parse::Factor::Expression(e) => self.emit_tacky_expr(*e, instructions),
-        }
+    }
+
+    fn emit_tacky_binop(
+        &mut self,
+        op: &parse::BinaryOperator,
+        e1: &parse::Expression,
+        e2: &parse::Expression,
+        instructions: &mut Vec<Instruction>,
+    ) -> Value {
+        let src1 = self.emit_tacky_expr(e1, instructions);
+        let src2 = self.emit_tacky_expr(e2, instructions);
+        let dst_name = self.make_name();
+        let dst = Value::Var(dst_name);
+        let tacky_op = convert_binop(op);
+        instructions.push(Instruction::Binary {
+            op: tacky_op,
+            src1,
+            src2,
+            dst: dst.clone(),
+        });
+        dst
     }
 
     fn emit_tacky_function(&mut self, f: parse::Function) -> Function {
@@ -121,7 +135,7 @@ impl Tacky {
         for statement in f.body {
             match statement {
                 parse::Statement::Return(expression) => {
-                    let value = self.emit_tacky_expr(expression, &mut body);
+                    let value = self.emit_tacky_expr(&expression, &mut body);
                     body.push(Instruction::Return(value));
                 }
             }
