@@ -123,7 +123,8 @@ impl From<tacky::Instruction> for Vec<Instruction> {
                     },
                     Instruction::Unary { op: op.into(), dst },
                 ]
-            }
+            }, 
+            tacky::Instruction::Binary { .. } => unimplemented!(),
         }
     }
 }

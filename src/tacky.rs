@@ -15,6 +15,7 @@ pub struct Function {
 pub enum Instruction {
     Return(Value),
     Unary { op: UnaryOp, src: Value, dst: Value },
+    Binary { op: BinaryOp, src1: Value, src2: Value, dst: Value },
 }
 
 #[derive(Clone, Debug)]
@@ -29,10 +30,29 @@ pub enum UnaryOp {
     Negate,
 }
 
+#[derive(Clone, Debug)]
+pub enum BinaryOp {
+    Add,
+    Subtract,
+    Multiply,
+    Divide,
+    Remainder,
+}
+
 fn convert_unop(op: parse::UnaryOperator) -> UnaryOp {
     match op {
         parse::UnaryOperator::Negation => UnaryOp::Negate,
         parse::UnaryOperator::Tilde => UnaryOp::Complement,
+    }
+}
+
+fn convert_binop(op: parse::BinaryOperator) -> BinaryOp {
+    match op {
+        parse::BinaryOperator::Add => BinaryOp::Add,
+        parse::BinaryOperator::Sub => BinaryOp::Subtract,
+        parse::BinaryOperator::Mul => BinaryOp::Multiply,
+        parse::BinaryOperator::Div => BinaryOp::Divide,
+        parse::BinaryOperator::Mod => BinaryOp::Remainder,
     }
 }
 
@@ -54,20 +74,21 @@ impl Tacky {
         instructions: &mut Vec<Instruction>,
     ) -> Value {
         match e {
-            parse::Expression::Factor(parse::Factor::Int(c)) => Value::Constant(c),
-            parse::Expression::Factor(parse::Factor::Unary(op, inner)) => {
-                let src = self.emit_tacky_factor(*inner, instructions);
+            parse::Expression::Factor(f) => self.emit_tacky_factor(f, instructions),
+            parse::Expression::BinOp(op,e1, e2) => {
+                let src1 = self.emit_tacky_expr(*e1, instructions);
+                let src2 = self.emit_tacky_expr(*e2, instructions);
                 let dst_name = self.make_name();
                 let dst = Value::Var(dst_name);
-                let tacky_op = convert_unop(op);
-                instructions.push(Instruction::Unary {
+                let tacky_op = convert_binop(op);
+                instructions.push(Instruction::Binary {
                     op: tacky_op,
-                    src,
+                    src1,
+                    src2,
                     dst: dst.clone(),
                 });
                 dst
             },
-            parse::Expression::Factor(f) => self.emit_tacky_factor(f, instructions),
             _ => unimplemented!()
         }
     }

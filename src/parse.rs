@@ -26,7 +26,7 @@ pub enum UnaryOperator {
 #[derive(Debug, PartialEq)]
 pub enum Expression {
     Factor(Factor),
-    Expression(BinaryOperator, Box<Expression>, Box<Expression>),
+    BinOp(BinaryOperator, Box<Expression>, Box<Expression>),
 }
 
 #[derive(Debug, PartialEq)]
@@ -115,7 +115,7 @@ fn parse_expression(tokens: &[Token], min_precedence : u16) -> Result<(Expressio
         
         let (right_expr, new_tokens) = parse_expression(rest, precedence(next_token) + 1)?;
         tokens = new_tokens;    
-        left_expr = Expression::Expression(binop, Box::new(left_expr), Box::new(right_expr));
+        left_expr = Expression::BinOp(binop, Box::new(left_expr), Box::new(right_expr));
     }
     let result = (left_expr, tokens);
     Ok(result)
@@ -269,7 +269,7 @@ int main(void) {
                 name: "main".to_string(),
                 body: vec![
                     Statement::Return(
-                        Expression::Expression(
+                        Expression::BinOp(
                             BinaryOperator::Add, 
                             Box::new(Expression::Factor(Factor::Int(42))),
                             Box::new(Expression::Factor(Factor::Int(12)))))]
