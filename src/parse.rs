@@ -45,7 +45,7 @@ pub enum BinaryOperator {
     Mod,
 }
 
-fn precedence(tok: &Token) -> u8 {
+fn precedence(tok: &Token) -> u16 {
     match tok {
         Token::Plus | Token::Minus => 1,
         Token::Asterisk | Token::Slash | Token::Percent => 2,
@@ -102,7 +102,7 @@ fn parse_binop(tokens: &[Token]) -> Result<(BinaryOperator, &[Token])> {
     Ok((binop, tokens))
 }
 
-fn parse_expression(tokens: &[Token], min_precedence : u8) -> Result<(Expression, &[Token])> {
+fn parse_expression(tokens: &[Token], min_precedence : u16) -> Result<(Expression, &[Token])> {
     let left = parse_factor(tokens)?;
     let (left, mut tokens) = left;
     let mut left_expr = Expression::Factor(left);
