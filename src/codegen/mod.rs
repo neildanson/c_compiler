@@ -13,3 +13,7 @@ pub use operand::*;
 pub use instruction::*;
 pub use function::*;
 pub use program::*;
+
+
+#[cfg(test)]
+pub mod tests;

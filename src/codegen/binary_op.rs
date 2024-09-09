@@ -7,8 +7,6 @@ pub enum BinaryOp {
     Add,
     Sub,
     Mult,
-    Div,
-    Rem,
 }
 
 impl Display for BinaryOp {
@@ -18,8 +16,6 @@ impl Display for BinaryOp {
             BinaryOp::Add => write!(f, "addl"),
             BinaryOp::Sub => write!(f, "subl"),
             BinaryOp::Mult => write!(f, "imull"),
-            BinaryOp::Div => write!(f, "idivl"),
-            BinaryOp::Rem => write!(f, "idivl"),
         }
     }
 }
@@ -30,8 +26,7 @@ impl From<tacky::BinaryOp> for BinaryOp {
             tacky::BinaryOp::Add => BinaryOp::Add,
             tacky::BinaryOp::Subtract => BinaryOp::Sub,
             tacky::BinaryOp::Multiply => BinaryOp::Mult,
-            tacky::BinaryOp::Divide => BinaryOp::Div,
-            tacky::BinaryOp::Remainder => BinaryOp::Rem,
+            _ => unimplemented!("BinaryOp From not implemented"),
         }
     }
 }

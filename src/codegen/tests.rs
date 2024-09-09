@@ -1,6 +1,3 @@
-
-#[cfg(test)]
-mod tests {
     use super::*;
 
     #[test]
@@ -175,4 +172,3 @@ mod tests {
             ]
         );
     }
-}
