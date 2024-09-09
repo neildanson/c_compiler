@@ -1,4 +1,4 @@
-use super::function::Function;
+use super::Function;
 use crate::tacky;
 use std::fmt::Display;
 
