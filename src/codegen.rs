@@ -381,15 +381,15 @@ mod tests {
             new_body,
             vec![
                 Instruction::Mov {
-                    src: Operand::Stack(0),
-                    dst: Operand::Register(Reg::AX)
-                },
-                Instruction::Mov {
                     src: Operand::Stack(4),
                     dst: Operand::Register(Reg::AX)
                 },
                 Instruction::Mov {
-                    src: Operand::Stack(0),
+                    src: Operand::Stack(8),
+                    dst: Operand::Register(Reg::AX)
+                },
+                Instruction::Mov {
+                    src: Operand::Stack(4),
                     dst: Operand::Register(Reg::AX)
                 },
             ]
