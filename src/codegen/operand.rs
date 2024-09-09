@@ -1,5 +1,5 @@
-use std::fmt::{Display, Formatter, Result};
 use crate::tacky;
+use std::fmt::{Display, Formatter, Result};
 
 use super::Reg;
 
@@ -30,4 +30,3 @@ impl From<tacky::Value> for Operand {
         }
     }
 }
-

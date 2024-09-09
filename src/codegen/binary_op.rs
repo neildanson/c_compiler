@@ -1,6 +1,5 @@
-use std::fmt::{Display, Formatter, Result};
 use crate::tacky;
-
+use std::fmt::{Display, Formatter, Result};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum BinaryOp {

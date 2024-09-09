@@ -1,5 +1,5 @@
-use std::fmt::{Display, Formatter, Result};
 use crate::tacky;
+use std::fmt::{Display, Formatter, Result};
 
 use super::*;
 

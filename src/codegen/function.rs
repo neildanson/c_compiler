@@ -24,7 +24,7 @@ impl Display for Function {
     }
 }
 
-pub (crate) fn fixup_pseudo(name: String, stack: &mut HashMap<String, i32>) -> Operand {
+pub(crate) fn fixup_pseudo(name: String, stack: &mut HashMap<String, i32>) -> Operand {
     if let Some(offset) = stack.get(&name) {
         Operand::Stack(*offset)
     } else {
@@ -34,7 +34,7 @@ pub (crate) fn fixup_pseudo(name: String, stack: &mut HashMap<String, i32>) -> O
     }
 }
 
-pub (crate) fn replace_pseudo_with_stack(body: Vec<Instruction>) -> (Vec<Instruction>, usize) {
+pub(crate) fn replace_pseudo_with_stack(body: Vec<Instruction>) -> (Vec<Instruction>, usize) {
     let mut stack = HashMap::new();
     let mut new_body = Vec::new();
     for instruction in body {
@@ -74,7 +74,7 @@ pub (crate) fn replace_pseudo_with_stack(body: Vec<Instruction>) -> (Vec<Instruc
     (new_body, stack.len())
 }
 
-pub (crate) fn fixup_stack_operations(body: Vec<Instruction>) -> Vec<Instruction> {
+pub(crate) fn fixup_stack_operations(body: Vec<Instruction>) -> Vec<Instruction> {
     let mut new_body = Vec::new();
     for instruction in body {
         match instruction.clone() {
@@ -135,7 +135,7 @@ pub (crate) fn fixup_stack_operations(body: Vec<Instruction>) -> Vec<Instruction
                 new_body.push(instruction.clone());
             }
             Instruction::Idiv { src } => {
-                if let Operand::Immediate { imm : _ } = src {
+                if let Operand::Immediate { imm: _ } = src {
                     new_body.push(Instruction::Mov {
                         src,
                         dst: Operand::Register(Reg::R10),

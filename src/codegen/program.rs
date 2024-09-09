@@ -1,6 +1,6 @@
-use std::fmt::Display;
 use super::function::Function;
 use crate::tacky;
+use std::fmt::Display;
 
 #[derive(Debug, PartialEq)]
 pub struct Program {
