@@ -41,3 +41,7 @@ gcc asm.s
 ./a.out
 echo $?
 ```
+
+A Convenience script called `compile_and_run.sh` will compile `a.s` into `a.out` and run and echo the result. 
+
+`chmod u+x compile_and_run.sh`
