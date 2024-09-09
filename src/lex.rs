@@ -282,4 +282,32 @@ mod tests {
             vec![Token::DoubleNegation, Token::Constant("42".to_string())]
         );
     }
+
+    #[test]
+    fn test_tilde() {
+        let tokenizer = Tokenizer::new();
+        let tokens = tokenizer.tokenize("~42").unwrap();
+        assert_eq!(tokens, vec![Token::Tilde, Token::Constant("42".to_string())]);
+    }
+
+    #[test]
+    fn test_plus() {
+        let tokenizer = Tokenizer::new();
+        let tokens = tokenizer.tokenize("+42").unwrap();
+        assert_eq!(tokens, vec![Token::Plus, Token::Constant("42".to_string())]);
+    }
+
+    #[test]
+    fn test_minus() {
+        let tokenizer = Tokenizer::new();
+        let tokens = tokenizer.tokenize("-42").unwrap();
+        assert_eq!(tokens, vec![Token::Minus, Token::Constant("42".to_string())]);
+    }
+
+    #[test]
+    fn test_star() {
+        let tokenizer = Tokenizer::new();
+        let tokens = tokenizer.tokenize("*42").unwrap();
+        assert_eq!(tokens, vec![Token::Asterisk, Token::Constant("42".to_string())]);
+    }
 }
