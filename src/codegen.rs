@@ -340,6 +340,23 @@ fn fixup_stack_operations(body: Vec<Instruction>) -> Vec<Instruction> {
                 }
                 new_body.push(instruction.clone());
             }
+            Instruction::Binary { op, src2, dst } => {
+                if let Operand::Stack(_) = src2 {
+                    if let Operand::Stack(_) = dst {
+                        new_body.push(Instruction::Mov {
+                            src: src2,
+                            dst: Operand::Register(Reg::R11),
+                        });
+                        new_body.push(Instruction::Binary {
+                            op,
+                            src2: Operand::Register(Reg::R11),
+                            dst,
+                        });
+                        continue;
+                    }
+                }
+                new_body.push(instruction.clone());
+            }
             _ => new_body.push(instruction),
         }
     }
@@ -435,6 +452,74 @@ mod tests {
             new_body,
             vec![
                 Instruction::Binary { op : BinaryOp::Add, src2: Operand::Stack(4), dst: Operand::Stack(8) }
+            ]
+        );
+    }
+
+    #[test]
+    fn fixup_idiv_stack(){
+        let body = vec![Instruction::Idiv {
+            src: Operand::Immediate { imm: 3 },
+        }];
+        let new_body = fixup_stack_operations(body);
+        assert_eq!(
+            new_body,
+            vec![
+                Instruction::Mov { src: Operand::Immediate { imm: 3 }, dst: Operand::Register(Reg::R10) },
+                Instruction::Idiv { src: Operand::Register(Reg::R10) }
+            ]
+        );
+    }
+
+    #[test]
+    fn fixup_mul_stack() {
+        let body = vec![Instruction::Binary {
+            op: BinaryOp::Mult,
+            src2: Operand::Immediate { imm: 3 },
+            dst: Operand::Stack(4),
+        }];
+        let new_body = fixup_stack_operations(body);
+        assert_eq!(
+            new_body,
+            vec![
+                Instruction::Mov { src: Operand::Stack(4), dst: Operand::Register(Reg::R11) },
+                Instruction::Binary { op: BinaryOp::Mult, src2: Operand::Immediate { imm: 3 }, dst: Operand::Register(Reg::R11) },
+                Instruction::Mov { src: Operand::Register(Reg::R11), dst: Operand::Stack(4) }
+            ]
+        );
+    }
+
+
+    #[test]
+    fn fixup_add_stack() {
+        let body = vec![Instruction::Binary {
+            op: BinaryOp::Add,
+            src2: Operand::Stack(4),
+            dst: Operand::Stack(8),
+        }];
+        let new_body = fixup_stack_operations(body);
+        assert_eq!(
+            new_body,
+            vec![
+                Instruction::Mov { src: Operand::Stack(4), dst: Operand::Register(Reg::R10) },
+                Instruction::Binary { op: BinaryOp::Add, src2: Operand::Register(Reg::R10), dst: Operand::Stack(8) },
+            ]
+        );
+    }
+
+    #[test]
+    fn fixup_sub_stack() {
+        let body = vec![Instruction::Binary {
+            op: BinaryOp::Sub,
+            src2: Operand::Stack(4),
+            dst: Operand::Stack(8),
+        }];
+        let new_body = fixup_stack_operations(body);
+        assert_eq!(
+            new_body,
+            vec![
+                Instruction::Mov { src: Operand::Stack(4), dst: Operand::Register(Reg::R10) },
+                Instruction::Binary { op: BinaryOp::Sub, src2: Operand::Register(Reg::R10), dst: Operand::Stack(8) },
             ]
         );
     }
