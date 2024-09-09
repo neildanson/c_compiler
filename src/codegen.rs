@@ -87,9 +87,9 @@ impl Display for BinaryOp {
     //TODO
     fn fmt(&self, f: &mut Formatter) -> Result {
         match self {
-            BinaryOp::Add => write!(f, "add"),
-            BinaryOp::Sub => write!(f, "sub"),
-            BinaryOp::Mult => write!(f, "imul"),
+            BinaryOp::Add => write!(f, "addl"),
+            BinaryOp::Sub => write!(f, "subl"),
+            BinaryOp::Mult => write!(f, "imull"),
         }
     }
 }
@@ -142,12 +142,16 @@ impl Display for Instruction {
             Instruction::Idiv { src } => {
                 writeln!(f, "#Idiv")?;
                 writeln!(f, "\tidivl {}", src)
-            }
+            },
             Instruction::Cdq => {
                 writeln!(f, "#Cdq")?;
                 writeln!(f, "\tcdq")
+            },
+            Instruction::Binary { op, src2, dst } => {
+                writeln!(f, "#Binary")?;
+                writeln!(f, "\t{} {}, {}", op, src2, dst)
             }
-            _ => unimplemented!("Instruction Display not implemented"),
+            //_ => unimplemented!("Instruction Display not implemented"),
         }
     }
 }
