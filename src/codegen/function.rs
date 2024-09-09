@@ -135,7 +135,6 @@ pub (crate) fn fixup_stack_operations(body: Vec<Instruction>) -> Vec<Instruction
                 new_body.push(instruction.clone());
             }
             Instruction::Idiv { src } => {
-                println!("{:?}", src);
                 if let Operand::Immediate { imm : _ } = src {
                     new_body.push(Instruction::Mov {
                         src,
