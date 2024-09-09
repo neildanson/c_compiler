@@ -21,7 +21,7 @@ pub enum Token {
     Plus,               //+
     Minus,              //-
     Asterisk,           //*
-    Slash,              // /   
+    Slash,              // /
     Percent,            //%
 }
 

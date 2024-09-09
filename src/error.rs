@@ -19,6 +19,4 @@ impl Display for CompilerError {
     }
 }
 
-impl Error for CompilerError {
-   
-}
+impl Error for CompilerError {}

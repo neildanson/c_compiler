@@ -75,12 +75,11 @@ impl From<tacky::UnaryOp> for UnaryOp {
     }
 }
 
-
 #[derive(Debug, PartialEq, Clone)]
-enum BinaryOp { 
-    Add, 
-    Sub, 
-    Mult
+enum BinaryOp {
+    Add,
+    Sub,
+    Mult,
 }
 
 impl Display for BinaryOp {
@@ -107,10 +106,22 @@ impl From<tacky::BinaryOp> for BinaryOp {
 
 #[derive(Debug, PartialEq, Clone)]
 enum Instruction {
-    Mov { src: Operand, dst: Operand },
-    Unary { op: UnaryOp, dst: Operand },
-    Binary { op: BinaryOp, src2: Operand, dst: Operand },
-    Idiv { src: Operand },
+    Mov {
+        src: Operand,
+        dst: Operand,
+    },
+    Unary {
+        op: UnaryOp,
+        dst: Operand,
+    },
+    Binary {
+        op: BinaryOp,
+        src2: Operand,
+        dst: Operand,
+    },
+    Idiv {
+        src: Operand,
+    },
     Cdq,
     AllocateStack(usize),
     Ret,
@@ -138,20 +149,19 @@ impl Display for Instruction {
             Instruction::AllocateStack(size) => {
                 writeln!(f, "#Allocate Stack")?;
                 writeln!(f, "\tsubq ${}, %rsp", size * 4)
-            },
+            }
             Instruction::Idiv { src } => {
                 writeln!(f, "#Idiv")?;
                 writeln!(f, "\tidivl {}", src)
-            },
+            }
             Instruction::Cdq => {
                 writeln!(f, "#Cdq")?;
                 writeln!(f, "\tcdq")
-            },
+            }
             Instruction::Binary { op, src2, dst } => {
                 writeln!(f, "#Binary")?;
                 writeln!(f, "\t{} {}, {}", op, src2, dst)
-            }
-            //_ => unimplemented!("Instruction Display not implemented"),
+            } //_ => unimplemented!("Instruction Display not implemented"),
         }
     }
 }
@@ -174,8 +184,13 @@ impl From<tacky::Instruction> for Vec<Instruction> {
                     },
                     Instruction::Unary { op: op.into(), dst },
                 ]
-            }, 
-            tacky::Instruction::Binary { op, src1, src2, dst } if op == tacky::BinaryOp::Divide => {
+            }
+            tacky::Instruction::Binary {
+                op,
+                src1,
+                src2,
+                dst,
+            } if op == tacky::BinaryOp::Divide => {
                 let src1 = src1.into();
                 let src2 = src2.into();
                 let dst = dst.into();
@@ -191,8 +206,13 @@ impl From<tacky::Instruction> for Vec<Instruction> {
                         dst,
                     },
                 ]
-            },
-            tacky::Instruction::Binary { op, src1, src2, dst } if op == tacky::BinaryOp::Remainder => {
+            }
+            tacky::Instruction::Binary {
+                op,
+                src1,
+                src2,
+                dst,
+            } if op == tacky::BinaryOp::Remainder => {
                 let src1 = src1.into();
                 let src2 = src2.into();
                 let dst = dst.into();
@@ -208,8 +228,13 @@ impl From<tacky::Instruction> for Vec<Instruction> {
                         dst,
                     },
                 ]
-            },
-            tacky::Instruction::Binary { op, src1, src2, dst } => {
+            }
+            tacky::Instruction::Binary {
+                op,
+                src1,
+                src2,
+                dst,
+            } => {
                 let src1 = src1.into();
                 let src2 = src2.into();
                 let dst = dst.into();
@@ -219,7 +244,7 @@ impl From<tacky::Instruction> for Vec<Instruction> {
                         src: src1,
                         dst: Operand::Register(Reg::AX),
                     },
-                    Instruction::Binary { op, src2, dst }
+                    Instruction::Binary { op, src2, dst },
                 ]
             }
         }
@@ -245,6 +270,16 @@ impl Display for Function {
     }
 }
 
+fn fixup_pseudo(name: String, stack: &mut HashMap<String, i32>) -> Operand {
+    if let Some(offset) = stack.get(&name) {
+        Operand::Stack(*offset)
+    } else {
+        let offset = (stack.len() + 1) as i32 * 4;
+        stack.insert(name, offset);
+        Operand::Stack(offset)
+    }
+}
+
 fn replace_pseudo_with_stack(body: Vec<Instruction>) -> (Vec<Instruction>, usize) {
     let mut stack = HashMap::new();
     let mut new_body = Vec::new();
@@ -252,45 +287,32 @@ fn replace_pseudo_with_stack(body: Vec<Instruction>) -> (Vec<Instruction>, usize
         match instruction {
             Instruction::Mov { src, dst } => {
                 let src = match src {
-                    Operand::Pseudo(name) => {
-                        if let Some(offset) = stack.get(&name) {
-                            Operand::Stack(*offset)
-                        } else {
-                            let offset = (stack.len() + 1) as i32 * 4;
-                            stack.insert(name, offset);
-                            Operand::Stack(offset)
-                        }
-                    }
+                    Operand::Pseudo(name) => fixup_pseudo(name, &mut stack),
                     _ => src,
                 };
                 let dst = match dst {
-                    Operand::Pseudo(name) => {
-                        if let Some(offset) = stack.get(&name) {
-                            Operand::Stack(*offset)
-                        } else {
-                            let offset = (stack.len() + 1) as i32 * 4;
-                            stack.insert(name, offset);
-                            Operand::Stack(offset)
-                        }
-                    }
+                    Operand::Pseudo(name) => fixup_pseudo(name, &mut stack),
                     _ => dst,
                 };
                 new_body.push(Instruction::Mov { src, dst });
             }
             Instruction::Unary { op, dst } => {
                 let dst = match dst {
-                    Operand::Pseudo(name) => {
-                        if let Some(offset) = stack.get(&name) {
-                            Operand::Stack(*offset)
-                        } else {
-                            let offset = stack.len() as i32 * 4;
-                            stack.insert(name, offset);
-                            Operand::Stack(offset)
-                        }
-                    }
+                    Operand::Pseudo(name) => fixup_pseudo(name, &mut stack),
                     _ => dst,
                 };
                 new_body.push(Instruction::Unary { op, dst });
+            }
+            Instruction::Binary { op, src2, dst } => {
+                let src2 = match src2 {
+                    Operand::Pseudo(name) => fixup_pseudo(name, &mut stack),
+                    _ => src2,
+                };
+                let dst = match dst {
+                    Operand::Pseudo(name) => fixup_pseudo(name, &mut stack),
+                    _ => dst,
+                };
+                new_body.push(Instruction::Binary { op, src2, dst });
             }
             any_other => new_body.push(any_other),
         }
@@ -399,6 +421,22 @@ mod tests {
             ]
         );
         assert_eq!(stack_size, 2);
+    }
+
+    #[test]
+    fn fixup_binary_pseudo_with_stack() {
+        let body = vec![Instruction::Binary {
+            op: BinaryOp::Add,
+            src2: Operand::Pseudo("a".to_string()),
+            dst: Operand::Pseudo("b".to_string()),
+        }];
+        let (new_body, _) = replace_pseudo_with_stack(body);
+        assert_eq!(
+            new_body,
+            vec![
+                Instruction::Binary { op : BinaryOp::Add, src2: Operand::Stack(4), dst: Operand::Stack(8) }
+            ]
+        );
     }
 
     #[test]

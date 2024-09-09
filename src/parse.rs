@@ -60,7 +60,7 @@ fn is_binop(tok: &Token) -> bool {
     }
 }
 
-fn parse_factor(tokens:&[Token]) -> Result<(Factor, &[Token])> {
+fn parse_factor(tokens: &[Token]) -> Result<(Factor, &[Token])> {
     let (factor, tokens) = match tokens {
         [Token::Constant(c), rest @ ..] => (Factor::Int(c.parse().unwrap()), rest),
         [Token::Minus, rest @ ..] => {
@@ -72,20 +72,19 @@ fn parse_factor(tokens:&[Token]) -> Result<(Factor, &[Token])> {
         }
         [Token::Tilde, rest @ ..] => {
             let (factor, rest) = parse_factor(rest)?;
-            (
-                Factor::Unary(UnaryOperator::Tilde, Box::new(factor)),
-                rest,
-            )
+            (Factor::Unary(UnaryOperator::Tilde, Box::new(factor)), rest)
         }
         [Token::LParen, rest @ ..] => {
-            let (expression, rest) = parse_expression(rest,0)?;
+            let (expression, rest) = parse_expression(rest, 0)?;
             let rest = match rest {
                 [Token::RParen, rest @ ..] => rest,
                 _ => return Err(CompilerError::Parse("LParen".to_string()).into()),
             };
             (Factor::Expression(Box::new(expression)), rest)
         }
-        toks => return Err(CompilerError::Parse(format!("Factor Unexpected Tokens {:?}", toks)).into()),
+        toks => {
+            return Err(CompilerError::Parse(format!("Factor Unexpected Tokens {:?}", toks)).into())
+        }
     };
     Ok((factor, tokens))
 }
@@ -97,12 +96,17 @@ fn parse_binop(tokens: &[Token]) -> Result<(BinaryOperator, &[Token])> {
         [Token::Asterisk, rest @ ..] => (BinaryOperator::Mul, rest),
         [Token::Slash, rest @ ..] => (BinaryOperator::Div, rest),
         [Token::Percent, rest @ ..] => (BinaryOperator::Mod, rest),
-        toks => return Err(CompilerError::Parse(format!("BinOp Unexpected Tokens {:?}", toks).to_string()).into()),
+        toks => {
+            return Err(CompilerError::Parse(
+                format!("BinOp Unexpected Tokens {:?}", toks).to_string(),
+            )
+            .into())
+        }
     };
     Ok((binop, tokens))
 }
 
-fn parse_expression(tokens: &[Token], min_precedence : u16) -> Result<(Expression, &[Token])> {
+fn parse_expression(tokens: &[Token], min_precedence: u16) -> Result<(Expression, &[Token])> {
     let left = parse_factor(tokens)?;
     let (left, mut tokens) = left;
     let mut left_expr = Expression::Factor(left);
@@ -112,9 +116,9 @@ fn parse_expression(tokens: &[Token], min_precedence : u16) -> Result<(Expressio
             break;
         }
         let (binop, rest) = parse_binop(tokens)?;
-        
+
         let (right_expr, new_tokens) = parse_expression(rest, precedence(next_token) + 1)?;
-        tokens = new_tokens;    
+        tokens = new_tokens;
         left_expr = Expression::BinOp(binop, Box::new(left_expr), Box::new(right_expr));
     }
     let result = (left_expr, tokens);
@@ -131,7 +135,11 @@ fn parse_statement(tokens: &[Token]) -> Result<(Statement, &[Token])> {
             };
             (Statement::Return(expression), rest)
         }
-        tok => return Err(CompilerError::Parse(format!("Statement Unexpected Tokens {:?}", tok)).into()),
+        tok => {
+            return Err(
+                CompilerError::Parse(format!("Statement Unexpected Tokens {:?}", tok)).into(),
+            )
+        }
     };
     Ok((statement, tokens))
 }
@@ -159,7 +167,11 @@ fn parse_function(tokens: &[Token]) -> Result<(Function, &[Token])> {
                 rest,
             )
         }
-        toks => return Err(CompilerError::Parse(format!("Function Unexpected Tokens {:?}", toks)).into()),
+        toks => {
+            return Err(
+                CompilerError::Parse(format!("Function Unexpected Tokens {:?}", toks)).into(),
+            )
+        }
     };
     Ok((function, tokens))
 }
@@ -182,7 +194,10 @@ mod tests {
         let tokenizer = Tokenizer::new();
         let tokens = tokenizer.tokenize("return 42;").unwrap();
         let (statement, rest) = parse_statement(&tokens).unwrap();
-        assert_eq!(statement, Statement::Return(Expression::Factor(Factor::Int(42))));
+        assert_eq!(
+            statement,
+            Statement::Return(Expression::Factor(Factor::Int(42)))
+        );
         assert!(rest.is_empty());
     }
 
@@ -261,18 +276,19 @@ int main(void) {
     #[test]
     fn test_parse_function_with_addition() {
         let tokenizer = Tokenizer::new();
-        let tokens = tokenizer.tokenize("int main(void) { return 42 + 12; }").unwrap();
+        let tokens = tokenizer
+            .tokenize("int main(void) { return 42 + 12; }")
+            .unwrap();
         let (function, rest) = parse_function(&tokens).unwrap();
         assert_eq!(
             function,
             Function {
                 name: "main".to_string(),
-                body: vec![
-                    Statement::Return(
-                        Expression::BinOp(
-                            BinaryOperator::Add, 
-                            Box::new(Expression::Factor(Factor::Int(42))),
-                            Box::new(Expression::Factor(Factor::Int(12)))))]
+                body: vec![Statement::Return(Expression::BinOp(
+                    BinaryOperator::Add,
+                    Box::new(Expression::Factor(Factor::Int(42))),
+                    Box::new(Expression::Factor(Factor::Int(12)))
+                ))]
             }
         );
         assert!(rest.is_empty());

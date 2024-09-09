@@ -14,8 +14,17 @@ pub struct Function {
 #[derive(Clone, Debug)]
 pub enum Instruction {
     Return(Value),
-    Unary { op: UnaryOp, src: Value, dst: Value },
-    Binary { op: BinaryOp, src1: Value, src2: Value, dst: Value },
+    Unary {
+        op: UnaryOp,
+        src: Value,
+        dst: Value,
+    },
+    Binary {
+        op: BinaryOp,
+        src1: Value,
+        src2: Value,
+        dst: Value,
+    },
 }
 
 #[derive(Clone, Debug)]
@@ -75,7 +84,7 @@ impl Tacky {
     ) -> Value {
         match e {
             parse::Expression::Factor(f) => self.emit_tacky_factor(f, instructions),
-            parse::Expression::BinOp(op,e1, e2) => self.emit_tacky_binop(op, e1, e2, instructions),
+            parse::Expression::BinOp(op, e1, e2) => self.emit_tacky_binop(op, e1, e2, instructions),
         }
     }
 
@@ -98,15 +107,15 @@ impl Tacky {
         instructions: &mut Vec<Instruction>,
     ) -> Value {
         let src = self.emit_tacky_factor(&inner, instructions);
-                let dst_name = self.make_name();
-                let dst = Value::Var(dst_name);
-                let tacky_op = convert_unop(op);
-                instructions.push(Instruction::Unary {
-                    op: tacky_op,
-                    src,
-                    dst: dst.clone(),
-                });
-                dst
+        let dst_name = self.make_name();
+        let dst = Value::Var(dst_name);
+        let tacky_op = convert_unop(op);
+        instructions.push(Instruction::Unary {
+            op: tacky_op,
+            src,
+            dst: dst.clone(),
+        });
+        dst
     }
 
     fn emit_tacky_binop(
