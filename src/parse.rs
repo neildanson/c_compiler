@@ -223,17 +223,17 @@ mod tests {
         assert_eq!(expression, Expression::Factor(Factor::Int(42)));
         assert!(rest.is_empty());
     }
-
-    /*
+    
+    
     #[test]
-    fn test_parse_expression_identifier() {
+    fn test_parse_expression_unary() {
         let tokenizer = Tokenizer::new();
-        let tokens = tokenizer.tokenize("x").unwrap();
-        let (expression, rest) = parse_expression(&tokens).unwrap();
-        assert_eq!(expression, Expression::Identifier("x".to_string()));
+        let tokens = tokenizer.tokenize("-42").unwrap();
+        let (expression, rest) = parse_expression(&tokens, 0).unwrap();
+        assert_eq!(expression, Expression::Factor(Factor::Unary(UnaryOperator::Negation, Box::new(Factor::Int(42)))));
         assert!(rest.is_empty());
     }
-    */
+    
 
     #[test]
     fn test_parse_function() {
