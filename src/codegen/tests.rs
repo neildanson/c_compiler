@@ -17,7 +17,7 @@ fn test_replace_pseudo_with_stack() {
             dst: Operand::Register(Reg::AX),
         },
     ];
-    let (new_body, stack_size) = replace_pseudo_with_stack(body);
+    let (new_body, stack_size) = rewrite_pseudo_with_stack(body);
     assert_eq!(
         new_body,
         vec![
@@ -45,7 +45,7 @@ fn fixup_binary_pseudo_with_stack() {
         src2: Operand::Pseudo("a".to_string()),
         dst: Operand::Pseudo("b".to_string()),
     }];
-    let (new_body, _) = replace_pseudo_with_stack(body);
+    let (new_body, _) = rewrite_pseudo_with_stack(body);
     assert_eq!(
         new_body,
         vec![Instruction::Binary {

@@ -2,8 +2,7 @@ use std::collections::HashMap;
 
 use super::*;
 
-
-pub(crate) fn fixup_pseudo(name: String, stack: &mut HashMap<String, i32>) -> Operand {
+fn fixup_pseudo(name: String, stack: &mut HashMap<String, i32>) -> Operand {
     if let Some(offset) = stack.get(&name) {
         Operand::Stack(*offset)
     } else {
@@ -13,7 +12,7 @@ pub(crate) fn fixup_pseudo(name: String, stack: &mut HashMap<String, i32>) -> Op
     }
 }
 
-pub(crate) fn replace_pseudo_with_stack(body: Vec<Instruction>) -> (Vec<Instruction>, usize) {
+pub(crate) fn rewrite_pseudo_with_stack(body: Vec<Instruction>) -> (Vec<Instruction>, usize) {
     let mut stack = HashMap::new();
     let mut new_body = Vec::new();
     for instruction in body {
@@ -73,6 +72,27 @@ pub(crate) fn fixup_stack_operations(body: Vec<Instruction>) -> Vec<Instruction>
                 }
                 new_body.push(instruction.clone());
             }
+            Instruction::Binary { op, src2, dst } if op == BinaryOp::Mult => {
+                println!("dst: {:?}", dst);
+                if let Operand::Stack(_) = dst {
+                    new_body.push(Instruction::Mov {
+                        src: dst.clone(),
+                        dst: Operand::Register(Reg::R11),
+                    });
+                    new_body.push(Instruction::Binary {
+                        op,
+                        src2,
+                        dst: Operand::Register(Reg::R11),
+                    });
+                    new_body.push(Instruction::Mov {
+                        src: Operand::Register(Reg::R11),
+                        dst,
+                    });
+                    continue;
+                }
+                new_body.push(instruction.clone());
+            }
+
             Instruction::Binary { op, src2, dst } => {
                 if let Operand::Stack(_) = dst {
                     if let Operand::Stack(_) = src2 {
@@ -92,24 +112,7 @@ pub(crate) fn fixup_stack_operations(body: Vec<Instruction>) -> Vec<Instruction>
 
                             _ => continue,
                         }
-                    } else {
-                        if op == BinaryOp::Mult {
-                            new_body.push(Instruction::Mov {
-                                src: dst.clone(),
-                                dst: Operand::Register(Reg::R11),
-                            });
-                            new_body.push(Instruction::Binary {
-                                op,
-                                src2,
-                                dst: Operand::Register(Reg::R11),
-                            });
-                            new_body.push(Instruction::Mov {
-                                src: Operand::Register(Reg::R11),
-                                dst,
-                            });
-                            continue;
-                        }
-                    }
+                    } 
                 }
                 new_body.push(instruction.clone());
             }

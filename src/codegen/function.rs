@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::fmt::{Display, Formatter, Result};
 
 use crate::tacky;
@@ -32,7 +31,7 @@ impl From<tacky::Function> for Function {
             body.append(&mut instructions);
         }
 
-        let (mut body, stack_size) = replace_pseudo_with_stack(body);
+        let (mut body, stack_size) = rewrite_pseudo_with_stack(body);
         body.insert(0, Instruction::AllocateStack(stack_size));
         let body = fixup_stack_operations(body);
         Function {
