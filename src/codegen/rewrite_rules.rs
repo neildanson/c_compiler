@@ -73,7 +73,6 @@ pub(crate) fn fixup_stack_operations(body: Vec<Instruction>) -> Vec<Instruction>
                 new_body.push(instruction.clone());
             }
             Instruction::Binary { op, src2, dst } if op == BinaryOp::Mult => {
-                println!("dst: {:?}", dst);
                 if let Operand::Stack(_) = dst {
                     new_body.push(Instruction::Mov {
                         src: dst.clone(),
