@@ -7,4 +7,8 @@ cargo build
 
 gcc a.s
 ./a.out
-echo $?
+echo "My Code : $?"
+
+gcc -o b.out main.c
+./b.out
+echo "GCC Code : $?"
