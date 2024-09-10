@@ -43,6 +43,11 @@ pub enum BinaryOperator {
     Mul,
     Div,
     Mod,
+    ShiftLeft,
+    ShiftRight,
+    BitwiseAnd,
+    BitwiseOr,
+    BitwiseXor,
 }
 
 fn precedence(tok: &Token) -> u16 {
@@ -101,11 +106,11 @@ fn parse_binop(tokens: &[Token]) -> Result<(BinaryOperator, &[Token])> {
         [Token::Asterisk, rest @ ..] => (BinaryOperator::Mul, rest),
         [Token::Slash, rest @ ..] => (BinaryOperator::Div, rest),
         [Token::Percent, rest @ ..] => (BinaryOperator::Mod, rest),
-        [Token::ShiftLeft, rest @ ..] => (BinaryOperator::Add, rest), //TODO BinOp
-        [Token::ShiftRight, rest @ ..] => (BinaryOperator::Add, rest), //TODO BinOp
-        [Token::BitwiseAnd, rest @ ..] => (BinaryOperator::Add, rest), //TODO BinOp
-        [Token::BitwiseOr, rest @ ..] => (BinaryOperator::Add, rest), //TODO BinOp
-        [Token::BitwiseXor, rest @ ..] => (BinaryOperator::Add, rest), //TODO BinOp
+        [Token::ShiftLeft, rest @ ..] => (BinaryOperator::ShiftLeft, rest), 
+        [Token::ShiftRight, rest @ ..] => (BinaryOperator::ShiftRight, rest), 
+        [Token::BitwiseAnd, rest @ ..] => (BinaryOperator::BitwiseAnd, rest), 
+        [Token::BitwiseOr, rest @ ..] => (BinaryOperator::BitwiseOr, rest), 
+        [Token::BitwiseXor, rest @ ..] => (BinaryOperator::BitwiseXor, rest), 
         toks => {
             return Err(CompilerError::Parse(
                 format!("BinOp Unexpected Tokens {:?}", toks).to_string(),

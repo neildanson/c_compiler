@@ -113,7 +113,7 @@ impl Tokenizer {
             } else if let Some((_token, rest)) = tokenizer.single_line_comment(input) {
                 //tokens.push(token);
                 input = rest;
-            } else if let Some((token, rest)) = tokenizer.preprocessor_directive(input) {
+            } else if let Some((_token, rest)) = tokenizer.preprocessor_directive(input) {
                 //tokens.push(token);
                 input = rest;
             } else if let Some((token, rest)) = tokenizer.void(input) {

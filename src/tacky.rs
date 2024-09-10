@@ -46,6 +46,11 @@ pub enum BinaryOp {
     Multiply,
     Divide,
     Remainder,
+    ShiftLeft,
+    ShiftRight,
+    BitwiseAnd,
+    BitwiseOr,
+    BitwiseXor,
 }
 
 fn convert_unop(op: &parse::UnaryOperator) -> UnaryOp {
@@ -62,6 +67,11 @@ fn convert_binop(op: &parse::BinaryOperator) -> BinaryOp {
         parse::BinaryOperator::Mul => BinaryOp::Multiply,
         parse::BinaryOperator::Div => BinaryOp::Divide,
         parse::BinaryOperator::Mod => BinaryOp::Remainder,
+        parse::BinaryOperator::ShiftLeft => BinaryOp::ShiftLeft,
+        parse::BinaryOperator::ShiftRight => BinaryOp::ShiftRight,
+        parse::BinaryOperator::BitwiseAnd => BinaryOp::BitwiseAnd,
+        parse::BinaryOperator::BitwiseOr => BinaryOp::BitwiseOr,
+        parse::BinaryOperator::BitwiseXor => BinaryOp::BitwiseXor,
     }
 }
 

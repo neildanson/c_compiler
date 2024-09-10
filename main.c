@@ -1,5 +1,5 @@
 #pragma HELP
 
 int main ( void ) {
-    return -1;
+    return 2 >> 2;
 }
