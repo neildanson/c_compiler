@@ -6,6 +6,7 @@ use crate::error::CompilerError;
 #[derive(Debug, PartialEq)]
 pub enum Token {
     Comment(String),
+    PreProcessorDirective(String), //#[a-zA-Z_]\w*\b
     Identifier(String), //[a-zA-Z_]\w*\b
     Constant(String),   //[0-9]+\b
     Int,                //int\b
@@ -23,11 +24,17 @@ pub enum Token {
     Asterisk,           //*
     Slash,              // /
     Percent,            //%
+    ShiftLeft,          //<<
+    ShiftRight,         //>>
+    BitwiseXor,         //^
+    BitwiseOr,          //|
+    BitwiseAnd,         //&
 }
 
 pub struct Tokenizer {
     multi_line_comment: Regex,
     single_line_comment: Regex,
+    preprocessor_directive: Regex,
     constant: Regex,
     identifier: Regex,
     int: Regex,
@@ -45,6 +52,11 @@ pub struct Tokenizer {
     star: Regex,
     slash: Regex,
     percent: Regex,
+    shift_left: Regex,
+    shift_right: Regex,
+    bitwise_xor: Regex,
+    bitwise_or: Regex,
+    bitwise_and: Regex,
 }
 
 impl Default for Tokenizer {
@@ -58,6 +70,7 @@ impl Tokenizer {
         Tokenizer {
             multi_line_comment: Regex::new(r"^/[*]([^*]|([*][^/]))*[*]/").unwrap(),
             single_line_comment: Regex::new(r"^//(.*)").unwrap(),
+            preprocessor_directive: Regex::new(r"^#(.*)").unwrap(),
             constant: Regex::new(r"^[0-9]+\b").unwrap(),
             identifier: Regex::new(r"^[a-zA-Z_]\w*\b").unwrap(),
             int: Regex::new(r"^int\b").unwrap(),
@@ -75,6 +88,11 @@ impl Tokenizer {
             star: Regex::new(r"^\*").unwrap(),
             slash: Regex::new(r"^/").unwrap(),
             percent: Regex::new(r"^%").unwrap(),
+            shift_left: Regex::new(r"^<<").unwrap(),
+            shift_right: Regex::new(r"^>>").unwrap(),
+            bitwise_xor: Regex::new(r"^\^").unwrap(),
+            bitwise_or: Regex::new(r"^\|").unwrap(),
+            bitwise_and: Regex::new(r"^&").unwrap(),
         }
     }
 
@@ -93,6 +111,9 @@ impl Tokenizer {
                 //tokens.push(token);
                 input = rest;
             } else if let Some((_token, rest)) = tokenizer.single_line_comment(input) {
+                //tokens.push(token);
+                input = rest;
+            } else if let Some((token, rest)) = tokenizer.preprocessor_directive(input) {
                 //tokens.push(token);
                 input = rest;
             } else if let Some((token, rest)) = tokenizer.void(input) {
@@ -146,6 +167,21 @@ impl Tokenizer {
             } else if let Some((token, rest)) = tokenizer.percent(input) {
                 tokens.push(token);
                 input = rest;
+            } else if let Some((token, rest)) = tokenizer.shift_left(input) {
+                tokens.push(token);
+                input = rest;
+            } else if let Some((token, rest)) = tokenizer.shift_right(input) {
+                tokens.push(token);
+                input = rest;
+            } else if let Some((token, rest)) = tokenizer.bitwise_xor(input) {
+                tokens.push(token);
+                input = rest;
+            } else if let Some((token, rest)) = tokenizer.bitwise_or(input) {
+                tokens.push(token);
+                input = rest;
+            } else if let Some((token, rest)) = tokenizer.bitwise_and(input) {
+                tokens.push(token);
+                input = rest;
             } else {
                 println!("Failed to lex {}", input);
                 return Err(CompilerError::Lex.into());
@@ -175,6 +211,12 @@ impl Tokenizer {
     fn single_line_comment<'a>(&self, input: &'a str) -> Option<(Token, &'a str)> {
         Self::parse(input, &self.single_line_comment, |s| {
             Token::Comment(s.to_string())
+        })
+    }
+
+    fn preprocessor_directive<'a>(&self, input: &'a str) -> Option<(Token, &'a str)> {
+        Self::parse(input, &self.preprocessor_directive, |s| {
+            Token::PreProcessorDirective(s.to_string())
         })
     }
 
@@ -246,6 +288,26 @@ impl Tokenizer {
 
     fn percent<'a>(&self, input: &'a str) -> Option<(Token, &'a str)> {
         Self::parse(input, &self.percent, |_| Token::Percent)
+    }
+
+    fn shift_left<'a>(&self, input: &'a str) -> Option<(Token, &'a str)> {
+        Self::parse(input, &self.shift_left, |_| Token::ShiftLeft)
+    }
+
+    fn shift_right<'a>(&self, input: &'a str) -> Option<(Token, &'a str)> {
+        Self::parse(input, &self.shift_right, |_| Token::ShiftRight)
+    }
+
+    fn bitwise_xor<'a>(&self, input: &'a str) -> Option<(Token, &'a str)> {
+        Self::parse(input, &self.bitwise_xor, |_| Token::BitwiseXor)
+    }
+
+    fn bitwise_or<'a>(&self, input: &'a str) -> Option<(Token, &'a str)> {
+        Self::parse(input, &self.bitwise_or, |_| Token::BitwiseOr)
+    }
+
+    fn bitwise_and<'a>(&self, input: &'a str) -> Option<(Token, &'a str)> {
+        Self::parse(input, &self.bitwise_and, |_| Token::BitwiseAnd)
     }
 }
 

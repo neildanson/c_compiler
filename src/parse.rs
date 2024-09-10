@@ -47,15 +47,20 @@ pub enum BinaryOperator {
 
 fn precedence(tok: &Token) -> u16 {
     match tok {
-        Token::Plus | Token::Minus => 1,
-        Token::Asterisk | Token::Slash | Token::Percent => 2,
+        Token::ShiftLeft | Token::ShiftRight => 1,
+        Token::BitwiseAnd | Token::BitwiseOr | Token::BitwiseXor => 1,
+        Token::Plus | Token::Minus => 2,
+        Token::Asterisk | Token::Slash | Token::Percent => 3,
         _ => 0,
     }
 }
 
 fn is_binop(tok: &Token) -> bool {
     match tok {
-        Token::Plus | Token::Minus | Token::Asterisk | Token::Slash | Token::Percent => true,
+        Token::Plus | Token::Minus | Token::Asterisk | Token::Slash | Token::Percent
+        | Token::ShiftLeft | Token::ShiftRight | Token::BitwiseAnd | Token::BitwiseOr
+        | Token::BitwiseXor
+         => true,
         _ => false,
     }
 }
@@ -96,6 +101,11 @@ fn parse_binop(tokens: &[Token]) -> Result<(BinaryOperator, &[Token])> {
         [Token::Asterisk, rest @ ..] => (BinaryOperator::Mul, rest),
         [Token::Slash, rest @ ..] => (BinaryOperator::Div, rest),
         [Token::Percent, rest @ ..] => (BinaryOperator::Mod, rest),
+        [Token::ShiftLeft, rest @ ..] => (BinaryOperator::Add, rest), //TODO BinOp
+        [Token::ShiftRight, rest @ ..] => (BinaryOperator::Add, rest), //TODO BinOp
+        [Token::BitwiseAnd, rest @ ..] => (BinaryOperator::Add, rest), //TODO BinOp
+        [Token::BitwiseOr, rest @ ..] => (BinaryOperator::Add, rest), //TODO BinOp
+        [Token::BitwiseXor, rest @ ..] => (BinaryOperator::Add, rest), //TODO BinOp
         toks => {
             return Err(CompilerError::Parse(
                 format!("BinOp Unexpected Tokens {:?}", toks).to_string(),
