@@ -2,7 +2,7 @@
 cargo test
 cargo build
 
-../writing-a-c-compiler-tests/test_compiler ./target/debug/c_compiler --chapter 3 --stage codegen --bitwise
+../writing-a-c-compiler-tests/test_compiler ./target/debug/c_compiler --chapter 3 --stage codegen
 
 cargo run -- --codegen main.c --S
 

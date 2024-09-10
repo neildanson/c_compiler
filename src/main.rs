@@ -90,8 +90,11 @@ fn main() -> Result<()> {
     let parse_file = matches.get_flag("parse");
     let tacky_file = matches.get_flag("tacky");
     let codegen_file = matches.get_flag("codegen");
+    let validate_file = matches.get_flag("validate");
     let s_flag = matches.get_flag("S");
     let verbose_flag = matches.get_flag("verbose");
+
+    println!("Filename : {}", filename);
 
     if lex_file {
         let tokens = lex(filename)?;
@@ -105,16 +108,16 @@ fn main() -> Result<()> {
         if verbose_flag {
             println!("{:#?}", ast);
         }
-    }
-
-    if tacky_file {
+    } else if validate_file {
+        let ast = parse(filename)?;
+        let mut tacky = Tacky::default();
+        let _tacky = tacky.emit_tacky(ast);
+    } else  if tacky_file {
         let ast = tacky(filename)?;
         if verbose_flag {
             println!("{:#?}", ast);
         }
-    }
-
-    if codegen_file {
+    } else {
         let asm = codegen(filename)?;
         if s_flag {
             write_asm("a.s", &asm)?;
