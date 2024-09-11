@@ -94,6 +94,13 @@ fn parse_factor(tokens: &[Token]) -> Result<(Factor, &[Token])> {
                 rest,
             )
         }
+        [Token::Not, rest @ ..] => {
+            let (factor, rest) = parse_factor(rest)?;
+            (
+                Factor::Unary(UnaryOperator::Not, Box::new(factor)),
+                rest,
+            )
+        }
         [Token::Tilde, rest @ ..] => {
             let (factor, rest) = parse_factor(rest)?;
             (Factor::Unary(UnaryOperator::Tilde, Box::new(factor)), rest)
