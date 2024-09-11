@@ -57,6 +57,7 @@ fn convert_unop(op: &parse::UnaryOperator) -> UnaryOp {
     match op {
         parse::UnaryOperator::Negation => UnaryOp::Negate,
         parse::UnaryOperator::Tilde => UnaryOp::Complement,
+        _ => unimplemented!(),
     }
 }
 
@@ -72,6 +73,7 @@ fn convert_binop(op: &parse::BinaryOperator) -> BinaryOp {
         parse::BinaryOperator::BitwiseAnd => BinaryOp::BitwiseAnd,
         parse::BinaryOperator::BitwiseOr => BinaryOp::BitwiseOr,
         parse::BinaryOperator::BitwiseXor => BinaryOp::BitwiseXor,
+        _ => unimplemented!(),
     }
 }
 

@@ -21,6 +21,7 @@ pub enum Statement {
 pub enum UnaryOperator {
     Negation,
     Tilde,
+    Not
 }
 
 #[derive(Debug, PartialEq)]
@@ -48,6 +49,14 @@ pub enum BinaryOperator {
     BitwiseAnd,
     BitwiseOr,
     BitwiseXor,
+    And,
+    Or,
+    Equal,
+    NotEqual,
+    LessThan,
+    GreaterThan,
+    LessThanOrEqual,
+    GreaterThanOrEqual,
 }
 
 fn precedence(tok: &Token) -> u16 {
