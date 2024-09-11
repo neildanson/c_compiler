@@ -125,6 +125,14 @@ fn parse_binop(tokens: &[Token]) -> Result<(BinaryOperator, &[Token])> {
         [Token::BitwiseAnd, rest @ ..] => (BinaryOperator::BitwiseAnd, rest), 
         [Token::BitwiseOr, rest @ ..] => (BinaryOperator::BitwiseOr, rest), 
         [Token::BitwiseXor, rest @ ..] => (BinaryOperator::BitwiseXor, rest), 
+        [Token::And, rest @ ..] => (BinaryOperator::And, rest),
+        [Token::Or, rest @ ..] => (BinaryOperator::Or, rest),
+        [Token::Equal, rest @ ..] => (BinaryOperator::Equal, rest),
+        [Token::NotEqual, rest @ ..] => (BinaryOperator::NotEqual, rest),
+        [Token::LessThan, rest @ ..] => (BinaryOperator::LessThan, rest),
+        [Token::GreaterThan, rest @ ..] => (BinaryOperator::GreaterThan, rest),
+        [Token::LessThanOrEqual, rest @ ..] => (BinaryOperator::LessThanOrEqual, rest),
+        [Token::GreaterThanOrEqual, rest @ ..] => (BinaryOperator::GreaterThanOrEqual, rest),
         toks => {
             return Err(CompilerError::Parse(
                 format!("BinOp Unexpected Tokens {:?}", toks).to_string(),
