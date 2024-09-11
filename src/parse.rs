@@ -63,8 +63,12 @@ fn precedence(tok: &Token) -> u16 {
     match tok {
         Token::ShiftLeft | Token::ShiftRight => 1,
         Token::BitwiseAnd | Token::BitwiseOr | Token::BitwiseXor => 1,
-        Token::Plus | Token::Minus => 2,
-        Token::Asterisk | Token::Slash | Token::Percent => 3,
+        Token::Or => 5,
+        Token::And => 10,
+        Token::Equal | Token::NotEqual => 30,
+        Token::LessThan | Token::GreaterThan | Token::LessThanOrEqual | Token::GreaterThanOrEqual => 35,
+        Token::Plus | Token::Minus => 45,
+        Token::Asterisk | Token::Slash | Token::Percent => 50,
         _ => 0,
     }
 }
@@ -73,7 +77,8 @@ fn is_binop(tok: &Token) -> bool {
     match tok {
         Token::Plus | Token::Minus | Token::Asterisk | Token::Slash | Token::Percent
         | Token::ShiftLeft | Token::ShiftRight | Token::BitwiseAnd | Token::BitwiseOr
-        | Token::BitwiseXor
+        | Token::BitwiseXor | Token::And | Token::Or | Token::Equal | Token::NotEqual 
+        | Token::LessThan | Token::GreaterThan | Token::LessThanOrEqual | Token::GreaterThanOrEqual
          => true,
         _ => false,
     }
