@@ -25,6 +25,14 @@ pub enum Instruction {
         src2: Value,
         dst: Value,
     },
+    Copy {
+        src: Value,
+        dst: Value,
+    },
+    Jump { target: String },
+    JumpIfZero { condition: Value, target: String },
+    JumpIfNotZero { condition: Value, target: String },
+    Label { name: String },
 }
 
 #[derive(Clone, Debug)]
@@ -37,6 +45,7 @@ pub enum Value {
 pub enum UnaryOp {
     Complement,
     Negate,
+    Not
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -51,13 +60,20 @@ pub enum BinaryOp {
     BitwiseAnd,
     BitwiseOr,
     BitwiseXor,
+    Equal,
+    NotEqual,
+    LessThan,
+    LessThanOrEqual,
+    GreaterThan,
+    GreaterThanOrEqual,
 }
 
 fn convert_unop(op: &parse::UnaryOperator) -> UnaryOp {
     match op {
         parse::UnaryOperator::Negation => UnaryOp::Negate,
         parse::UnaryOperator::Tilde => UnaryOp::Complement,
-        _ => unimplemented!(),
+        parse::UnaryOperator::Not => UnaryOp::Not,
+        //_ => unimplemented!(),
     }
 }
 
@@ -73,6 +89,13 @@ fn convert_binop(op: &parse::BinaryOperator) -> BinaryOp {
         parse::BinaryOperator::BitwiseAnd => BinaryOp::BitwiseAnd,
         parse::BinaryOperator::BitwiseOr => BinaryOp::BitwiseOr,
         parse::BinaryOperator::BitwiseXor => BinaryOp::BitwiseXor,
+        parse::BinaryOperator::Equal => BinaryOp::Equal,
+        parse::BinaryOperator::NotEqual => BinaryOp::NotEqual,
+        parse::BinaryOperator::LessThan => BinaryOp::LessThan,
+        parse::BinaryOperator::LessThanOrEqual => BinaryOp::LessThanOrEqual,
+        parse::BinaryOperator::GreaterThan => BinaryOp::GreaterThan,
+        parse::BinaryOperator::GreaterThanOrEqual => BinaryOp::GreaterThanOrEqual,
+        //And?
         _ => unimplemented!(),
     }
 }

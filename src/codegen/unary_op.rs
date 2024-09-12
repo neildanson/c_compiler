@@ -22,6 +22,7 @@ impl From<tacky::UnaryOp> for UnaryOp {
         match op {
             tacky::UnaryOp::Negate => UnaryOp::Neg,
             tacky::UnaryOp::Complement => UnaryOp::Not,
+            _ => unimplemented!(),
         }
     }
 }

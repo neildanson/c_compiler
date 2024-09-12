@@ -146,6 +146,7 @@ impl From<tacky::Instruction> for Vec<Instruction> {
                     Instruction::Binary { op, src2, dst },
                 ]
             }
+            _ => unimplemented!(),
         }
     }
 }

@@ -42,6 +42,7 @@ impl From<tacky::BinaryOp> for BinaryOp {
             tacky::BinaryOp::BitwiseAnd => BinaryOp::BitwiseAnd,
             tacky::BinaryOp::BitwiseOr => BinaryOp::BitwiseOr,
             tacky::BinaryOp::BitwiseXor => BinaryOp::BitwiseXor,
+            _ => unimplemented!("BinaryOp From not implemented"),
         }
     }
 }
