@@ -193,7 +193,23 @@ impl Tacky {
                 instructions.push(Instruction::Copy { src: zero, dst: dst.clone() } );
                 instructions.push(Instruction::Label { name: end });
                 dst
-
+            },
+            parse::BinaryOperator::Or => { 
+                let v1 = self.emit_tacky_expr(e1, instructions);
+                let true_label = self.make_label();
+                let end = self.make_label();
+                instructions.push(Instruction::JumpIfNotZero { condition: v1, target: true_label.clone() });
+                let v2 = self.emit_tacky_expr(e2, instructions);
+                instructions.push(Instruction::JumpIfNotZero { condition: v2, target: true_label.clone() });
+                let one = Value::Constant(1);
+                let zero = Value::Constant(0);
+                let dst = Value::Var(self.make_name());
+                instructions.push(Instruction::Copy { src: zero, dst: dst.clone() } );
+                instructions.push(Instruction::Jump { target: end.clone() });
+                instructions.push(Instruction::Label { name: true_label });
+                instructions.push(Instruction::Copy { src: one, dst: dst.clone() } );
+                instructions.push(Instruction::Label { name: end });
+                dst
             }
             _ => {
                 let src1 = self.emit_tacky_expr(e1, instructions);
