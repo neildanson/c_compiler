@@ -111,7 +111,7 @@ pub(crate) fn fixup_stack_operations(body: Vec<Instruction>) -> Vec<Instruction>
 
                             _ => continue,
                         }
-                    } 
+                    }
                 }
                 new_body.push(instruction.clone());
             }

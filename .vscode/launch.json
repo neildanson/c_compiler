@@ -7,8 +7,56 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug",
-            "program": "${workspaceFolder}/<executable file>",
+            "name": "Debug unit tests in library 'c_compiler'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=c_compiler"
+                ],
+                "filter": {
+                    "name": "c_compiler",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug executable 'c_compiler'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=c_compiler",
+                    "--package=c_compiler"
+                ],
+                "filter": {
+                    "name": "c_compiler",
+                    "kind": "bin"
+                }
+            },
+            "args": ["main.c", "--tacky", "--verbose"],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'c_compiler'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=c_compiler",
+                    "--package=c_compiler"
+                ],
+                "filter": {
+                    "name": "c_compiler",
+                    "kind": "bin"
+                }
+            },
             "args": [],
             "cwd": "${workspaceFolder}"
         }

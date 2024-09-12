@@ -136,7 +136,7 @@ impl From<tacky::Instruction> for Vec<Instruction> {
             } => {
                 let src1 = src1.into();
                 let src2 = src2.into();
-                let dst : Operand = dst.into();
+                let dst: Operand = dst.into();
                 let op = op.into();
                 vec![
                     Instruction::Mov {

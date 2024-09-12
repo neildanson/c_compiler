@@ -7,28 +7,28 @@ use crate::error::CompilerError;
 pub enum Token {
     Comment(String),
     PreProcessorDirective(String), //#[a-zA-Z_]\w*\b
-    Identifier(String), //[a-zA-Z_]\w*\b
-    Constant(String),   //[0-9]+\b
-    Int,                //int\b
-    Void,               //void\b
-    Return,             //return\b
-    LParen,             //\(
-    RParen,             //\)
-    LBrace,             //{
-    RBrace,             //}
-    SemiColon,          //;
-    Tilde,              //~
-    DoubleNegation,     //--
-    Plus,               //+
-    Minus,              //-
-    Asterisk,           //*
-    Slash,              // /
-    Percent,            //%
-    ShiftLeft,          //<<
-    ShiftRight,         //>>
-    BitwiseXor,         //^
-    BitwiseOr,          //|
-    BitwiseAnd,         //&
+    Identifier(String),            //[a-zA-Z_]\w*\b
+    Constant(String),              //[0-9]+\b
+    Int,                           //int\b
+    Void,                          //void\b
+    Return,                        //return\b
+    LParen,                        //\(
+    RParen,                        //\)
+    LBrace,                        //{
+    RBrace,                        //}
+    SemiColon,                     //;
+    Tilde,                         //~
+    DoubleNegation,                //--
+    Plus,                          //+
+    Minus,                         //-
+    Asterisk,                      //*
+    Slash,                         // /
+    Percent,                       //%
+    ShiftLeft,                     //<<
+    ShiftRight,                    //>>
+    BitwiseXor,                    //^
+    BitwiseOr,                     //|
+    BitwiseAnd,                    //&
     Not,
     And,
     Or,
@@ -75,47 +75,47 @@ impl TokenMapper {
 
 impl Tokenizer {
     pub fn new() -> Self {
-        let token_mappers = 
-            vec![
-                TokenMapper::new(r"^/[*]([^*]|([*][^/]))*[*]/", Box::new(|s| Token::Comment(s))),
-                TokenMapper::new(r"^//(.*)",  Box::new(|s| Token::Comment(s))),
-                TokenMapper::new(r"^#(.*)",  Box::new(|s| Token::PreProcessorDirective(s))),
-                TokenMapper::new(r"^void\b",  Box::new(|_| Token::Void)),
-                TokenMapper::new(r"^return\b",  Box::new(|_| Token::Return)),
-                TokenMapper::new(r"^int\b",  Box::new(|_| Token::Int)),
-                TokenMapper::new(r"^\(",  Box::new(|_| Token::LParen)),
-                TokenMapper::new(r"^\)",  Box::new(|_| Token::RParen)),
-                TokenMapper::new(r"^\{",  Box::new(|_| Token::LBrace)),
-                TokenMapper::new(r"^\}",  Box::new(|_| Token::RBrace)),
-                TokenMapper::new(r"^;",  Box::new(|_| Token::SemiColon)),
-                TokenMapper::new(r"^[a-zA-Z_]\w*\b",  Box::new(|s| Token::Identifier(s))),
-                TokenMapper::new(r"^[0-9]+\b",  Box::new(|s| Token::Constant(s))),
-                TokenMapper::new(r"^~",  Box::new(|_| Token::Tilde)),
-                TokenMapper::new(r"^--",  Box::new(|_| Token::DoubleNegation)),
-                TokenMapper::new(r"^<=",  Box::new(|_| Token::LessThanOrEqual)),
-                TokenMapper::new(r"^>=",  Box::new(|_| Token::GreaterThanOrEqual)),
-                TokenMapper::new(r"^<<",  Box::new(|_| Token::ShiftLeft)),
-                TokenMapper::new(r"^>>",  Box::new(|_| Token::ShiftRight)),
-                TokenMapper::new(r"^==",  Box::new(|_| Token::Equal)),
-                TokenMapper::new(r"^&&",  Box::new(|_| Token::And)),
-                TokenMapper::new(r"^!=",  Box::new(|_| Token::NotEqual)),
-                TokenMapper::new(r"^\|\|",  Box::new(|_| Token::Or)),
-                TokenMapper::new(r"^\+",  Box::new(|_| Token::Plus)),
-                TokenMapper::new(r"^-",  Box::new(|_| Token::Minus)),
-                TokenMapper::new(r"^\*",  Box::new(|_| Token::Asterisk)),
-                TokenMapper::new(r"^/",  Box::new(|_| Token::Slash)),
-                TokenMapper::new(r"^%",  Box::new(|_| Token::Percent)),
-                TokenMapper::new(r"^\^",  Box::new(|_| Token::BitwiseXor)),
-                TokenMapper::new(r"^\|",  Box::new(|_| Token::BitwiseOr)),
-                TokenMapper::new(r"^&",  Box::new(|_| Token::BitwiseAnd)),
-                TokenMapper::new(r"^!",  Box::new(|_| Token::Not)),
-                TokenMapper::new(r"^<",  Box::new(|_| Token::LessThan)),
-                TokenMapper::new(r"^>",  Box::new(|_| Token::GreaterThan)),
-            ];
+        let token_mappers = vec![
+            TokenMapper::new(
+                r"^/[*]([^*]|([*][^/]))*[*]/",
+                Box::new(|s| Token::Comment(s)),
+            ),
+            TokenMapper::new(r"^//(.*)", Box::new(|s| Token::Comment(s))),
+            TokenMapper::new(r"^#(.*)", Box::new(|s| Token::PreProcessorDirective(s))),
+            TokenMapper::new(r"^void\b", Box::new(|_| Token::Void)),
+            TokenMapper::new(r"^return\b", Box::new(|_| Token::Return)),
+            TokenMapper::new(r"^int\b", Box::new(|_| Token::Int)),
+            TokenMapper::new(r"^\(", Box::new(|_| Token::LParen)),
+            TokenMapper::new(r"^\)", Box::new(|_| Token::RParen)),
+            TokenMapper::new(r"^\{", Box::new(|_| Token::LBrace)),
+            TokenMapper::new(r"^\}", Box::new(|_| Token::RBrace)),
+            TokenMapper::new(r"^;", Box::new(|_| Token::SemiColon)),
+            TokenMapper::new(r"^[a-zA-Z_]\w*\b", Box::new(|s| Token::Identifier(s))),
+            TokenMapper::new(r"^[0-9]+\b", Box::new(|s| Token::Constant(s))),
+            TokenMapper::new(r"^~", Box::new(|_| Token::Tilde)),
+            TokenMapper::new(r"^--", Box::new(|_| Token::DoubleNegation)),
+            TokenMapper::new(r"^<=", Box::new(|_| Token::LessThanOrEqual)),
+            TokenMapper::new(r"^>=", Box::new(|_| Token::GreaterThanOrEqual)),
+            TokenMapper::new(r"^<<", Box::new(|_| Token::ShiftLeft)),
+            TokenMapper::new(r"^>>", Box::new(|_| Token::ShiftRight)),
+            TokenMapper::new(r"^==", Box::new(|_| Token::Equal)),
+            TokenMapper::new(r"^&&", Box::new(|_| Token::And)),
+            TokenMapper::new(r"^!=", Box::new(|_| Token::NotEqual)),
+            TokenMapper::new(r"^\|\|", Box::new(|_| Token::Or)),
+            TokenMapper::new(r"^\+", Box::new(|_| Token::Plus)),
+            TokenMapper::new(r"^-", Box::new(|_| Token::Minus)),
+            TokenMapper::new(r"^\*", Box::new(|_| Token::Asterisk)),
+            TokenMapper::new(r"^/", Box::new(|_| Token::Slash)),
+            TokenMapper::new(r"^%", Box::new(|_| Token::Percent)),
+            TokenMapper::new(r"^\^", Box::new(|_| Token::BitwiseXor)),
+            TokenMapper::new(r"^\|", Box::new(|_| Token::BitwiseOr)),
+            TokenMapper::new(r"^&", Box::new(|_| Token::BitwiseAnd)),
+            TokenMapper::new(r"^!", Box::new(|_| Token::Not)),
+            TokenMapper::new(r"^<", Box::new(|_| Token::LessThan)),
+            TokenMapper::new(r"^>", Box::new(|_| Token::GreaterThan)),
+        ];
 
-        Tokenizer {
-            token_mappers,
-        }
+        Tokenizer { token_mappers }
     }
 
     pub fn tokenize(&self, input: &str) -> Result<Vec<Token>> {
@@ -141,14 +141,17 @@ impl Tokenizer {
                 if !found {
                     println!("Failed to lex {}", input);
                     return Err(CompilerError::Lex.into());
-
+                }
             }
-        }}
-        let tokens = tokens.into_iter().filter(|t| match t {
-            Token::Comment(_) => false,
-            Token::PreProcessorDirective(_) => false,
-            _ => true,
-        }).collect();
+        }
+        let tokens = tokens
+            .into_iter()
+            .filter(|t| match t {
+                Token::Comment(_) => false,
+                Token::PreProcessorDirective(_) => false,
+                _ => true,
+            })
+            .collect();
         Ok(tokens)
     }
 }
@@ -191,7 +194,10 @@ mod tests {
     fn test_tilde() {
         let tokenizer = Tokenizer::new();
         let tokens = tokenizer.tokenize("~42").unwrap();
-        assert_eq!(tokens, vec![Token::Tilde, Token::Constant("42".to_string())]);
+        assert_eq!(
+            tokens,
+            vec![Token::Tilde, Token::Constant("42".to_string())]
+        );
     }
 
     #[test]
@@ -205,13 +211,19 @@ mod tests {
     fn test_minus() {
         let tokenizer = Tokenizer::new();
         let tokens = tokenizer.tokenize("-42").unwrap();
-        assert_eq!(tokens, vec![Token::Minus, Token::Constant("42".to_string())]);
+        assert_eq!(
+            tokens,
+            vec![Token::Minus, Token::Constant("42".to_string())]
+        );
     }
 
     #[test]
     fn test_star() {
         let tokenizer = Tokenizer::new();
         let tokens = tokenizer.tokenize("*42").unwrap();
-        assert_eq!(tokens, vec![Token::Asterisk, Token::Constant("42".to_string())]);
+        assert_eq!(
+            tokens,
+            vec![Token::Asterisk, Token::Constant("42".to_string())]
+        );
     }
 }

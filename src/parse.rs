@@ -21,7 +21,7 @@ pub enum Statement {
 pub enum UnaryOperator {
     Negation,
     Tilde,
-    Not
+    Not,
 }
 
 #[derive(Debug, PartialEq)]
@@ -66,7 +66,10 @@ fn precedence(tok: &Token) -> u16 {
         Token::Or => 5,
         Token::And => 10,
         Token::Equal | Token::NotEqual => 30,
-        Token::LessThan | Token::GreaterThan | Token::LessThanOrEqual | Token::GreaterThanOrEqual => 35,
+        Token::LessThan
+        | Token::GreaterThan
+        | Token::LessThanOrEqual
+        | Token::GreaterThanOrEqual => 35,
         Token::Plus | Token::Minus => 45,
         Token::Asterisk | Token::Slash | Token::Percent => 50,
         _ => 0,
@@ -75,11 +78,24 @@ fn precedence(tok: &Token) -> u16 {
 
 fn is_binop(tok: &Token) -> bool {
     match tok {
-        Token::Plus | Token::Minus | Token::Asterisk | Token::Slash | Token::Percent
-        | Token::ShiftLeft | Token::ShiftRight | Token::BitwiseAnd | Token::BitwiseOr
-        | Token::BitwiseXor | Token::And | Token::Or | Token::Equal | Token::NotEqual 
-        | Token::LessThan | Token::GreaterThan | Token::LessThanOrEqual | Token::GreaterThanOrEqual
-         => true,
+        Token::Plus
+        | Token::Minus
+        | Token::Asterisk
+        | Token::Slash
+        | Token::Percent
+        | Token::ShiftLeft
+        | Token::ShiftRight
+        | Token::BitwiseAnd
+        | Token::BitwiseOr
+        | Token::BitwiseXor
+        | Token::And
+        | Token::Or
+        | Token::Equal
+        | Token::NotEqual
+        | Token::LessThan
+        | Token::GreaterThan
+        | Token::LessThanOrEqual
+        | Token::GreaterThanOrEqual => true,
         _ => false,
     }
 }
@@ -96,10 +112,7 @@ fn parse_factor(tokens: &[Token]) -> Result<(Factor, &[Token])> {
         }
         [Token::Not, rest @ ..] => {
             let (factor, rest) = parse_factor(rest)?;
-            (
-                Factor::Unary(UnaryOperator::Not, Box::new(factor)),
-                rest,
-            )
+            (Factor::Unary(UnaryOperator::Not, Box::new(factor)), rest)
         }
         [Token::Tilde, rest @ ..] => {
             let (factor, rest) = parse_factor(rest)?;
@@ -127,11 +140,11 @@ fn parse_binop(tokens: &[Token]) -> Result<(BinaryOperator, &[Token])> {
         [Token::Asterisk, rest @ ..] => (BinaryOperator::Mul, rest),
         [Token::Slash, rest @ ..] => (BinaryOperator::Div, rest),
         [Token::Percent, rest @ ..] => (BinaryOperator::Mod, rest),
-        [Token::ShiftLeft, rest @ ..] => (BinaryOperator::ShiftLeft, rest), 
-        [Token::ShiftRight, rest @ ..] => (BinaryOperator::ShiftRight, rest), 
-        [Token::BitwiseAnd, rest @ ..] => (BinaryOperator::BitwiseAnd, rest), 
-        [Token::BitwiseOr, rest @ ..] => (BinaryOperator::BitwiseOr, rest), 
-        [Token::BitwiseXor, rest @ ..] => (BinaryOperator::BitwiseXor, rest), 
+        [Token::ShiftLeft, rest @ ..] => (BinaryOperator::ShiftLeft, rest),
+        [Token::ShiftRight, rest @ ..] => (BinaryOperator::ShiftRight, rest),
+        [Token::BitwiseAnd, rest @ ..] => (BinaryOperator::BitwiseAnd, rest),
+        [Token::BitwiseOr, rest @ ..] => (BinaryOperator::BitwiseOr, rest),
+        [Token::BitwiseXor, rest @ ..] => (BinaryOperator::BitwiseXor, rest),
         [Token::And, rest @ ..] => (BinaryOperator::And, rest),
         [Token::Or, rest @ ..] => (BinaryOperator::Or, rest),
         [Token::Equal, rest @ ..] => (BinaryOperator::Equal, rest),
@@ -267,17 +280,21 @@ mod tests {
         assert_eq!(expression, Expression::Factor(Factor::Int(42)));
         assert!(rest.is_empty());
     }
-    
-    
+
     #[test]
     fn test_parse_expression_unary() {
         let tokenizer = Tokenizer::new();
         let tokens = tokenizer.tokenize("-42").unwrap();
         let (expression, rest) = parse_expression(&tokens, 0).unwrap();
-        assert_eq!(expression, Expression::Factor(Factor::Unary(UnaryOperator::Negation, Box::new(Factor::Int(42)))));
+        assert_eq!(
+            expression,
+            Expression::Factor(Factor::Unary(
+                UnaryOperator::Negation,
+                Box::new(Factor::Int(42))
+            ))
+        );
         assert!(rest.is_empty());
     }
-    
 
     #[test]
     fn test_parse_function() {

@@ -4,8 +4,8 @@ pub mod instruction;
 pub mod operand;
 pub mod program;
 pub mod register;
-pub mod unary_op;
 pub mod rewrite_rules;
+pub mod unary_op;
 
 pub use binary_op::*;
 pub use function::*;

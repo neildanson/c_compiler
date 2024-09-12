@@ -21,10 +21,10 @@ impl Display for BinaryOp {
             BinaryOp::Sub => write!(f, "subl"),
             BinaryOp::Mult => write!(f, "imull"),
             BinaryOp::ShiftLeft => write!(f, "shll"),
-            BinaryOp::ShiftRight => write!(f, "shrl"), 
-            BinaryOp::BitwiseAnd => write!(f, "andl"), 
+            BinaryOp::ShiftRight => write!(f, "shrl"),
+            BinaryOp::BitwiseAnd => write!(f, "andl"),
             BinaryOp::BitwiseOr => write!(f, "orl"),
-            BinaryOp::BitwiseXor => write!(f, "xorl"), 
+            BinaryOp::BitwiseXor => write!(f, "xorl"),
         }
     }
 }

@@ -29,10 +29,20 @@ pub enum Instruction {
         src: Value,
         dst: Value,
     },
-    Jump { target: String },
-    JumpIfZero { condition: Value, target: String },
-    JumpIfNotZero { condition: Value, target: String },
-    Label { name: String },
+    Jump {
+        target: String,
+    },
+    JumpIfZero {
+        condition: Value,
+        target: String,
+    },
+    JumpIfNotZero {
+        condition: Value,
+        target: String,
+    },
+    Label {
+        name: String,
+    },
 }
 
 #[derive(Clone, Debug)]
@@ -45,7 +55,7 @@ pub enum Value {
 pub enum UnaryOp {
     Complement,
     Negate,
-    Not
+    Not,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -112,6 +122,12 @@ impl Tacky {
         name
     }
 
+    fn make_label(&mut self) -> String {
+        let name = format!("label{}", self.counter);
+        self.counter += 1;
+        name
+    }
+
     fn emit_tacky_expr(
         &mut self,
         e: &parse::Expression,
@@ -160,18 +176,40 @@ impl Tacky {
         e2: &parse::Expression,
         instructions: &mut Vec<Instruction>,
     ) -> Value {
-        let src1 = self.emit_tacky_expr(e1, instructions);
-        let src2 = self.emit_tacky_expr(e2, instructions);
-        let dst_name = self.make_name();
-        let dst = Value::Var(dst_name);
-        let tacky_op = convert_binop(op);
-        instructions.push(Instruction::Binary {
-            op: tacky_op,
-            src1,
-            src2,
-            dst: dst.clone(),
-        });
-        dst
+        match op {
+            parse::BinaryOperator::And => {
+                let v1 = self.emit_tacky_expr(e1, instructions);
+                let false_label = self.make_label();
+                let end = self.make_label();
+                instructions.push(Instruction::JumpIfZero { condition: v1, target: false_label.clone() });
+                let v2 = self.emit_tacky_expr(e2, instructions);
+                instructions.push(Instruction::JumpIfZero { condition: v2, target: false_label.clone() });
+                let one = Value::Constant(1);
+                let zero = Value::Constant(0);
+                let dst = Value::Var(self.make_name());
+                instructions.push(Instruction::Copy { src: one, dst: dst.clone() } );
+                instructions.push(Instruction::Jump { target: end.clone() });
+                instructions.push(Instruction::Label { name: false_label });
+                instructions.push(Instruction::Copy { src: zero, dst: dst.clone() } );
+                instructions.push(Instruction::Label { name: end });
+                dst
+
+            }
+            _ => {
+                let src1 = self.emit_tacky_expr(e1, instructions);
+                let src2 = self.emit_tacky_expr(e2, instructions);
+                let dst_name = self.make_name();
+                let dst = Value::Var(dst_name);
+                let tacky_op = convert_binop(op);
+                instructions.push(Instruction::Binary {
+                    op: tacky_op,
+                    src1,
+                    src2,
+                    dst: dst.clone(),
+                });
+                dst
+            }
+        }
     }
 
     fn emit_tacky_function(&mut self, f: parse::Function) -> Function {
