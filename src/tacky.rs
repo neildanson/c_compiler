@@ -176,6 +176,16 @@ impl Tacky {
         dst
     }
 
+    fn emit_temp(&mut self, src : Value, instructions: &mut Vec<Instruction>) -> Value {
+        let name = self.make_name();
+        let dst = Value::Var(name.clone());
+        instructions.push(Instruction::Copy {
+            src: src,
+            dst: dst.clone(),
+        });
+        dst
+    }
+
     fn emit_tacky_binop(
         &mut self,
         op: &parse::BinaryOperator,
@@ -186,6 +196,7 @@ impl Tacky {
         match op {
             parse::BinaryOperator::And => {
                 let v1 = self.emit_tacky_expr(e1, instructions);
+                let v1 = self.emit_temp(v1, instructions);
                 let false_label = self.make_label("else".to_string());
                 let end = self.make_label("end".to_string());
                 instructions.push(Instruction::JumpIfZero {
@@ -193,6 +204,7 @@ impl Tacky {
                     target: false_label.clone(),
                 });
                 let v2 = self.emit_tacky_expr(e2, instructions);
+                let v2 = self.emit_temp(v2, instructions);
                 instructions.push(Instruction::JumpIfZero {
                     condition: v2,
                     target: false_label.clone(),
@@ -216,10 +228,8 @@ impl Tacky {
                 dst
             }
             parse::BinaryOperator::Or => {
-                let v1e = self.emit_tacky_expr(e1, instructions);
-                let v1_name = self.make_name();
-                let v1 = Value::Var(v1_name.clone());
-                instructions.push(Instruction::Copy { src: v1e, dst: v1.clone() });
+                let v1 = self.emit_tacky_expr(e1, instructions);
+                let v1 = self.emit_temp(v1, instructions);
 
                 let true_label = self.make_label("if".to_string());
                 let end = self.make_label("end".to_string());
@@ -227,11 +237,9 @@ impl Tacky {
                     condition: v1,
                     target: true_label.clone(),
                 });
-                let v2e = self.emit_tacky_expr(e2, instructions);
-                let v2_name = self.make_name();
-                let v2 = Value::Var(v2_name.clone());
-                instructions.push(Instruction::Copy { src: v2e, dst: v2.clone() });
-                
+                let v2 = self.emit_tacky_expr(e2, instructions);
+                let v2 = self.emit_temp(v2, instructions);
+
                 instructions.push(Instruction::JumpIfNotZero {
                     condition: v2,
                     target: true_label.clone(),

@@ -35,7 +35,7 @@ impl Display for Instruction {
     fn fmt(&self, f: &mut Formatter) -> Result {
         match self {
             Instruction::Mov { src, dst } => {
-                writeln!(f, "\tmovl {}, {}", src, dst)
+                write!(f, "\tmovl {}, {}", src, dst)
             }
             Instruction::Ret => {
                 writeln!(f, "\tmovq %rbp, %rsp")?;
