@@ -1,7 +1,5 @@
 use crate::{error::CompilerError, tacky};
 
-use super::*;
-
 #[derive(Debug, PartialEq, Clone)]
 pub enum ConditionCode {
     E, // Equal
