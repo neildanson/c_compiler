@@ -1,3 +1,5 @@
+use std::fmt::{Display, Formatter,};
+
 use crate::{error::CompilerError, tacky};
 
 #[derive(Debug, PartialEq, Clone)]
@@ -8,6 +10,19 @@ pub enum ConditionCode {
     LE, // Less or Equal
     G, // Greater
     GE, // Greater or Equal
+}
+
+impl Display for ConditionCode {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+        match self {
+            ConditionCode::E => write!(f, "e"),
+            ConditionCode::NE => write!(f, "ne"),
+            ConditionCode::L => write!(f, "l"),
+            ConditionCode::LE => write!(f, "le"),
+            ConditionCode::G => write!(f, "g"),
+            ConditionCode::GE => write!(f, "ge"),
+        }
+    }
 }
 
 //Try from?

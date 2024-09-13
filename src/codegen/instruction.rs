@@ -66,7 +66,27 @@ impl Display for Instruction {
                 writeln!(f, "#Binary")?;
                 writeln!(f, "\t{} {}, {}", op, src2, dst)
             }
-            _ => unimplemented!(), //Add the rest of the instructions
+            Instruction::Cmp(src1, src2) => {
+                writeln!(f, "#Cmp")?;
+                writeln!(f, "\tcmpl {}, {}", src1, src2)
+            }
+            Instruction::Jmp(target) => {
+                writeln!(f, "#Jmp")?;
+                writeln!(f, "\tjmp .L{}", target)
+            }
+            Instruction::JmpCC(cc, target) => {
+                writeln!(f, "#JmpCC")?;
+                writeln!(f, "\tj{} .L{}", cc, target)
+            }
+            Instruction::SetCC(cc, dst) => {
+                writeln!(f, "#SetCC")?;
+                writeln!(f, "\tset{} {}", cc, dst)
+            }
+            Instruction::Label(name) => {
+                writeln!(f, "#Label")?;
+                writeln!(f, "\t.L{}:", name)
+            }
+            //instruction => unimplemented!("Instruction {}", instruction), //Add the rest of the instructions
         }
     }
 }
