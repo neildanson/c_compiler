@@ -183,7 +183,19 @@ impl From<tacky::Instruction> for Vec<Instruction> {
                     Instruction::Cmp(Operand::Immediate { imm: 0 } , condition.into()),
                     Instruction::JmpCC(ConditionCode::NE, target),
                 ],
-            _ => unimplemented!(),
+            tacky::Instruction::Copy { src, dst } => 
+                vec![
+                    Instruction::Mov { src: src.into(), dst: dst.into() },
+                ],
+            tacky::Instruction::Label { name } => 
+                vec![
+                    Instruction::Label(name),
+                ],
+            tacky::Instruction::Jump { target } => 
+                vec![
+                    Instruction::Jmp(target),
+                ],
+            //x => unimplemented!("{:?}", x),
 
         }
     }
