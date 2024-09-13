@@ -81,7 +81,7 @@ impl Display for Instruction {
                 write!(f, "\tset{} {}", cc, dst)
             }
             Instruction::Label(name) => {
-                write!(f, "\t.L{}:", name)
+                write!(f, ".L{}:", name)
             } //instruction => unimplemented!("Instruction {}", instruction), //Add the rest of the instructions
         }
     }
