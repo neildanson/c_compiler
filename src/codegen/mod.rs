@@ -6,6 +6,7 @@ pub mod program;
 pub mod register;
 pub mod rewrite_rules;
 pub mod unary_op;
+pub mod condition_code;
 
 pub use binary_op::*;
 pub use function::*;
@@ -14,6 +15,7 @@ pub use operand::*;
 pub use program::*;
 pub use register::*;
 pub use unary_op::*;
+pub use condition_code::*;
 
 use rewrite_rules::*;
 

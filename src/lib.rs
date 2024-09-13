@@ -1,3 +1,4 @@
+#![feature(if_let_guard)]
 pub mod codegen;
 pub mod error;
 pub mod lex;

@@ -24,6 +24,11 @@ pub enum Instruction {
     Cdq,
     AllocateStack(usize),
     Ret,
+    Cmp(Operand, Operand),
+    Jmp(String),
+    JmpCC(ConditionCode, String),
+    SetCC(ConditionCode, Operand),
+    Label(String),
 }
 
 impl Display for Instruction {
@@ -60,7 +65,8 @@ impl Display for Instruction {
             Instruction::Binary { op, src2, dst } => {
                 writeln!(f, "#Binary")?;
                 writeln!(f, "\t{} {}, {}", op, src2, dst)
-            } //_ => unimplemented!("Instruction Display not implemented"),
+            }
+            _ => unimplemented!(), //Add the rest of the instructions
         }
     }
 }
@@ -133,6 +139,27 @@ impl From<tacky::Instruction> for Vec<Instruction> {
                 src1,
                 src2,
                 dst,
+            } if let Ok(cc) = op.clone().try_into() => {
+                //TODO Extract to function passing in condition code
+                let src1 = src1.into();
+                let src2 = src2.into();
+                let dst : Operand = dst.into();
+                vec![
+                    
+                    Instruction::Cmp(src2, src1),
+                    Instruction::Mov {
+                        src: Operand::Immediate { imm: 0 },
+                        dst: dst.clone(),
+                    },
+                    Instruction::SetCC(cc, dst),
+                ]
+            }
+
+            tacky::Instruction::Binary {
+                op,
+                src1,
+                src2,
+                dst,
             } => {
                 let src1 = src1.into();
                 let src2 = src2.into();
@@ -146,7 +173,18 @@ impl From<tacky::Instruction> for Vec<Instruction> {
                     Instruction::Binary { op, src2, dst },
                 ]
             }
+            tacky::Instruction::JumpIfZero { condition, target } => 
+                vec![
+                    Instruction::Cmp(Operand::Immediate { imm: 0 } , condition.into()),
+                    Instruction::JmpCC(ConditionCode::E, target),
+                ],
+            tacky::Instruction::JumpIfNotZero { condition, target } => 
+                vec![
+                    Instruction::Cmp(Operand::Immediate { imm: 0 } , condition.into()),
+                    Instruction::JmpCC(ConditionCode::NE, target),
+                ],
             _ => unimplemented!(),
+
         }
     }
 }
