@@ -35,56 +35,44 @@ impl Display for Instruction {
     fn fmt(&self, f: &mut Formatter) -> Result {
         match self {
             Instruction::Mov { src, dst } => {
-                writeln!(f, "#Mov")?;
                 writeln!(f, "\tmovl {}, {}", src, dst)
             }
             Instruction::Ret => {
-                writeln!(f, "#Return")?;
                 writeln!(f, "\tmovq %rbp, %rsp")?;
                 writeln!(f, "\tpopq %rbp")?;
-                writeln!(f, "\tret")
+                write!(f, "\tret")
             }
 
             Instruction::Unary { op, dst } => {
-                writeln!(f, "#Unary")?;
-                writeln!(f, "\t{} {}", op, dst)
+                write!(f, "\t{} {}", op, dst)
             }
 
             Instruction::AllocateStack(size) => {
-                writeln!(f, "#Allocate Stack")?;
-                writeln!(f, "\tsubq ${}, %rsp", size * 4)
+                write!(f, "\tsubq ${}, %rsp", size * 4)
             }
             Instruction::Idiv { src } => {
-                writeln!(f, "#Idiv")?;
-                writeln!(f, "\tidivl {}", src)
+                write!(f, "\tidivl {}", src)
             }
             Instruction::Cdq => {
-                writeln!(f, "#Cdq")?;
-                writeln!(f, "\tcdq")
+                write!(f, "\tcdq")
             }
             Instruction::Binary { op, src2, dst } => {
-                writeln!(f, "#Binary")?;
-                writeln!(f, "\t{} {}, {}", op, src2, dst)
+                write!(f, "\t{} {}, {}", op, src2, dst)
             }
             Instruction::Cmp(src1, src2) => {
-                writeln!(f, "#Cmp")?;
-                writeln!(f, "\tcmpl {}, {}", src1, src2)
+                write!(f, "\tcmpl {}, {}", src1, src2)
             }
             Instruction::Jmp(target) => {
-                writeln!(f, "#Jmp")?;
-                writeln!(f, "\tjmp .L{}", target)
+                write!(f, "\tjmp .L{}", target)
             }
             Instruction::JmpCC(cc, target) => {
-                writeln!(f, "#JmpCC")?;
-                writeln!(f, "\tj{} .L{}", cc, target)
+                write!(f, "\tj{} .L{}", cc, target)
             }
             Instruction::SetCC(cc, dst) => {
-                writeln!(f, "#SetCC")?;
-                writeln!(f, "\tset{} {}", cc, dst)
+                write!(f, "\tset{} {}", cc, dst)
             }
             Instruction::Label(name) => {
-                writeln!(f, "#Label")?;
-                writeln!(f, "\t.L{}:", name)
+                write!(f, "\t.L{}:", name)
             }
             //instruction => unimplemented!("Instruction {}", instruction), //Add the rest of the instructions
         }
