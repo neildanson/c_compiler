@@ -69,6 +69,15 @@ impl Display for Instruction {
                 write!(f, "\tj{} .L{}", cc, target)
             }
             Instruction::SetCC(cc, dst) => {
+                let dst = 
+                    match dst {
+                        Operand::Register(Reg::AX) => "al",
+                        Operand::Register(Reg::DX) => "dl",
+                        Operand::Register(Reg::R10)=> "r10b",
+                        Operand::Register(Reg::R11)=> "r11b",
+                        _ => unimplemented!("Operand {:?}", dst),
+                    };
+                    
                 write!(f, "\tset{} {}", cc, dst)
             }
             Instruction::Label(name) => {

@@ -1,10 +1,9 @@
 #!/bin/bash
-arch -x86_64 zsh
 cargo test
 cargo build
 
 ../writing-a-c-compiler-tests/test_compiler ./target/debug/c_compiler --chapter 3 --stage validate
-../writing-a-c-compiler-tests/test_compiler ./target/debug/c_compiler --chapter 4 --stage tacky
+../writing-a-c-compiler-tests/test_compiler ./target/debug/c_compiler --chapter 4 --stage codegen
 
 gcc -E -P main.c -o a.c
 cargo run -- --codegen a.c --S
