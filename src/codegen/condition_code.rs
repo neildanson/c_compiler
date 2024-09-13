@@ -1,14 +1,14 @@
-use std::fmt::{Display, Formatter,};
+use std::fmt::{Display, Formatter};
 
 use crate::{error::CompilerError, tacky};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum ConditionCode {
-    E, // Equal
+    E,  // Equal
     NE, // Not Equal
-    L, // Less
+    L,  // Less
     LE, // Less or Equal
-    G, // Greater
+    G,  // Greater
     GE, // Greater or Equal
 }
 
@@ -26,7 +26,7 @@ impl Display for ConditionCode {
 }
 
 //Try from?
-impl TryFrom <tacky::BinaryOp> for ConditionCode {
+impl TryFrom<tacky::BinaryOp> for ConditionCode {
     type Error = CompilerError;
     fn try_from(cc: tacky::BinaryOp) -> Result<ConditionCode, Self::Error> {
         match cc {
@@ -36,7 +36,7 @@ impl TryFrom <tacky::BinaryOp> for ConditionCode {
             tacky::BinaryOp::LessThanOrEqual => Ok(ConditionCode::LE),
             tacky::BinaryOp::GreaterThan => Ok(ConditionCode::G),
             tacky::BinaryOp::GreaterThanOrEqual => Ok(ConditionCode::GE),
-            _ => Err(CompilerError::CodeGen)
+            _ => Err(CompilerError::CodeGen),
         }
     }
 }

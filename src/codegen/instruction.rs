@@ -73,15 +73,14 @@ impl Display for Instruction {
             }
             Instruction::Label(name) => {
                 write!(f, "\t.L{}:", name)
-            }
-            //instruction => unimplemented!("Instruction {}", instruction), //Add the rest of the instructions
+            } //instruction => unimplemented!("Instruction {}", instruction), //Add the rest of the instructions
         }
     }
 }
 
 impl From<tacky::Instruction> for Vec<Instruction> {
-    fn from(ast: tacky::Instruction) -> Self {
-        match ast {
+    fn from(instruction: tacky::Instruction) -> Self {
+        match instruction {
             tacky::Instruction::Return(value) => {
                 let src = value.into();
                 let dst = Operand::Register(Reg::AX);
@@ -150,9 +149,8 @@ impl From<tacky::Instruction> for Vec<Instruction> {
             } if let Ok(cc) = op.clone().try_into() => {
                 let src1 = src1.into();
                 let src2 = src2.into();
-                let dst : Operand = dst.into();
+                let dst: Operand = dst.into();
                 vec![
-                    
                     Instruction::Cmp(src2, src1),
                     Instruction::Mov {
                         src: Operand::Immediate { imm: 0 },
@@ -180,30 +178,21 @@ impl From<tacky::Instruction> for Vec<Instruction> {
                     Instruction::Binary { op, src2, dst },
                 ]
             }
-            tacky::Instruction::JumpIfZero { condition, target } => 
-                vec![
-                    Instruction::Cmp(Operand::Immediate { imm: 0 } , condition.into()),
-                    Instruction::JmpCC(ConditionCode::E, target),
-                ],
-            tacky::Instruction::JumpIfNotZero { condition, target } => 
-                vec![
-                    Instruction::Cmp(Operand::Immediate { imm: 0 } , condition.into()),
-                    Instruction::JmpCC(ConditionCode::NE, target),
-                ],
-            tacky::Instruction::Copy { src, dst } => 
-                vec![
-                    Instruction::Mov { src: src.into(), dst: dst.into() },
-                ],
-            tacky::Instruction::Label { name } => 
-                vec![
-                    Instruction::Label(name),
-                ],
-            tacky::Instruction::Jump { target } => 
-                vec![
-                    Instruction::Jmp(target),
-                ],
+            tacky::Instruction::JumpIfZero { condition, target } => vec![
+                Instruction::Cmp(Operand::Immediate { imm: 0 }, condition.into()),
+                Instruction::JmpCC(ConditionCode::E, target),
+            ],
+            tacky::Instruction::JumpIfNotZero { condition, target } => vec![
+                Instruction::Cmp(Operand::Immediate { imm: 0 }, condition.into()),
+                Instruction::JmpCC(ConditionCode::NE, target),
+            ],
+            tacky::Instruction::Copy { src, dst } => vec![Instruction::Mov {
+                src: src.into(),
+                dst: dst.into(),
+            }],
+            tacky::Instruction::Label { name } => vec![Instruction::Label(name)],
+            tacky::Instruction::Jump { target } => vec![Instruction::Jmp(target)],
             //x => unimplemented!("{:?}", x),
-
         }
     }
 }

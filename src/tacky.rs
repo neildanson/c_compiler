@@ -115,7 +115,7 @@ fn convert_binop(op: &parse::BinaryOperator) -> BinaryOp {
 #[derive(Default)]
 pub struct Tacky {
     counter: u32,
-    labels: HashMap<String, u32>
+    labels: HashMap<String, u32>,
 }
 
 impl Tacky {
@@ -125,8 +125,12 @@ impl Tacky {
         name
     }
 
-    fn make_label(&mut self, label : String) -> String {
-        let name = format!("{}{}", label.clone(), self.labels.entry(label.clone()).or_insert(0));
+    fn make_label(&mut self, label: String) -> String {
+        let name = format!(
+            "{}{}",
+            label.clone(),
+            self.labels.entry(label.clone()).or_insert(0)
+        );
         self.labels.insert(label.clone(), self.labels[&label] + 1);
         name
     }
@@ -184,33 +188,69 @@ impl Tacky {
                 let v1 = self.emit_tacky_expr(e1, instructions);
                 let false_label = self.make_label("else".to_string());
                 let end = self.make_label("end".to_string());
-                instructions.push(Instruction::JumpIfZero { condition: v1, target: false_label.clone() });
+                instructions.push(Instruction::JumpIfZero {
+                    condition: v1,
+                    target: false_label.clone(),
+                });
                 let v2 = self.emit_tacky_expr(e2, instructions);
-                instructions.push(Instruction::JumpIfZero { condition: v2, target: false_label.clone() });
+                instructions.push(Instruction::JumpIfZero {
+                    condition: v2,
+                    target: false_label.clone(),
+                });
                 let one = Value::Constant(1);
                 let zero = Value::Constant(0);
                 let dst = Value::Var(self.make_name());
-                instructions.push(Instruction::Copy { src: one, dst: dst.clone() } );
-                instructions.push(Instruction::Jump { target: end.clone() });
+                instructions.push(Instruction::Copy {
+                    src: one,
+                    dst: dst.clone(),
+                });
+                instructions.push(Instruction::Jump {
+                    target: end.clone(),
+                });
                 instructions.push(Instruction::Label { name: false_label });
-                instructions.push(Instruction::Copy { src: zero, dst: dst.clone() } );
+                instructions.push(Instruction::Copy {
+                    src: zero,
+                    dst: dst.clone(),
+                });
                 instructions.push(Instruction::Label { name: end });
                 dst
-            },
-            parse::BinaryOperator::Or => { 
-                let v1 = self.emit_tacky_expr(e1, instructions);
+            }
+            parse::BinaryOperator::Or => {
+                let v1e = self.emit_tacky_expr(e1, instructions);
+                let v1_name = self.make_name();
+                let v1 = Value::Var(v1_name.clone());
+                instructions.push(Instruction::Copy { src: v1e, dst: v1.clone() });
+
                 let true_label = self.make_label("if".to_string());
                 let end = self.make_label("end".to_string());
-                instructions.push(Instruction::JumpIfNotZero { condition: v1, target: true_label.clone() });
-                let v2 = self.emit_tacky_expr(e2, instructions);
-                instructions.push(Instruction::JumpIfNotZero { condition: v2, target: true_label.clone() });
+                instructions.push(Instruction::JumpIfNotZero {
+                    condition: v1,
+                    target: true_label.clone(),
+                });
+                let v2e = self.emit_tacky_expr(e2, instructions);
+                let v2_name = self.make_name();
+                let v2 = Value::Var(v2_name.clone());
+                instructions.push(Instruction::Copy { src: v2e, dst: v2.clone() });
+                
+                instructions.push(Instruction::JumpIfNotZero {
+                    condition: v2,
+                    target: true_label.clone(),
+                });
                 let one = Value::Constant(1);
                 let zero = Value::Constant(0);
                 let dst = Value::Var(self.make_name());
-                instructions.push(Instruction::Copy { src: zero, dst: dst.clone() } );
-                instructions.push(Instruction::Jump { target: end.clone() });
+                instructions.push(Instruction::Copy {
+                    src: zero,
+                    dst: dst.clone(),
+                });
+                instructions.push(Instruction::Jump {
+                    target: end.clone(),
+                });
                 instructions.push(Instruction::Label { name: true_label });
-                instructions.push(Instruction::Copy { src: one, dst: dst.clone() } );
+                instructions.push(Instruction::Copy {
+                    src: one,
+                    dst: dst.clone(),
+                });
                 instructions.push(Instruction::Label { name: end });
                 dst
             }
