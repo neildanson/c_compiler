@@ -72,6 +72,19 @@ pub(crate) fn fixup_stack_operations(body: Vec<Instruction>) -> Vec<Instruction>
                 }
                 new_body.push(instruction.clone());
             }
+            Instruction::Cmp(lhs, rhs) => {
+                if let Operand::Stack(_) = lhs {
+                    if let Operand::Stack(_) = rhs {
+                        new_body.push(Instruction::Mov {
+                            src: lhs,
+                            dst: Operand::Register(Reg::R10),
+                        });
+                        new_body.push(Instruction::Cmp(Operand::Register(Reg::R10), rhs));
+                        continue;
+                    }
+                }
+                new_body.push(instruction.clone());
+            }
             Instruction::Binary { op, src2, dst } if op == BinaryOp::Mult => {
                 if let Operand::Stack(_) = dst {
                     new_body.push(Instruction::Mov {
