@@ -1,3 +1,4 @@
 int main(void) {
-    return !(2 != 3);
+    int a = 3;
+    return !(a != 3);
 }

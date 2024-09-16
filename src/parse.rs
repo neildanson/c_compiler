@@ -14,7 +14,7 @@ pub struct Declaration {
 
 #[derive(Debug, PartialEq)]
 pub enum BlockItem {
-    Declaration,
+    Declaration(Declaration),
     Statement(Statement),
 }
 
@@ -51,6 +51,7 @@ pub enum Factor {
     Int(i32),
     Unary(UnaryOperator, Box<Factor>),
     Expression(Box<Expression>),
+    Identifier(String),
 }
 
 #[derive(Debug, PartialEq)]
@@ -142,6 +143,7 @@ fn parse_factor(tokens: &[Token]) -> Result<(Factor, &[Token])> {
             };
             (Factor::Expression(Box::new(expression)), rest)
         }
+        [Token::Identifier(name), rest @ ..] => (Factor::Identifier(name.clone()), rest),
         toks => {
             return Err(CompilerError::Parse(format!("Factor Unexpected Tokens {:?}", toks)).into())
         }
@@ -217,16 +219,65 @@ fn parse_statement(tokens: &[Token]) -> Result<(Statement, &[Token])> {
     Ok((statement, tokens))
 }
 
+fn parse_declaration(tokens : &[Token]) -> Result<(Declaration, &[Token])> {
+    let (declaration, tokens) = match tokens {
+        [Token::Int, Token::Identifier(name), Token::Assignment, rest @ ..] => {
+            let (expression, rest) = parse_expression(rest, 0)?;
+            let rest = match rest {
+                [Token::SemiColon, rest @ ..] => rest,
+                _ => return Err(CompilerError::Parse("Expected SemiColon".to_string()).into()),
+            };
+            (
+                Declaration {
+                    name: name.clone(),
+                    value: expression,
+                },
+                rest,
+            )
+        }
+        toks => {
+            return Err(
+                CompilerError::Parse(format!("Declaration Unexpected Tokens {:?}", toks)).into(),
+            )
+        }
+    };
+    Ok((declaration, tokens))
+}
+
+fn parse_block_item(tokens: &[Token]) -> Result<(BlockItem, &[Token])> {
+
+    let declaration = parse_declaration(tokens);
+    if declaration.is_ok() {
+        let (declaration, tokens) = declaration.unwrap();
+        return Ok((BlockItem::Declaration(declaration), tokens));
+    }
+
+    let statement = parse_statement(tokens);
+    if statement.is_ok() {
+        let (statement, tokens) = statement.unwrap();
+        return Ok((BlockItem::Statement(statement), tokens));
+    }
+    Err(CompilerError::Parse("Unexpected tokens".to_string()).into())
+}
+
 fn parse_function(tokens: &[Token]) -> Result<(Function, &[Token])> {
     let (function, tokens) = match tokens {
         [Token::Int, Token::Identifier(name), Token::LParen, Token::Void, Token::RParen, Token::LBrace, rest @ ..] =>
         {
             let mut statements = Vec::new();
             let mut rest = rest;
-            while let [Token::Return, ..] = rest {
-                let (statement, new_rest) = parse_statement(rest)?;
-                statements.push(BlockItem::Statement(statement)); //TODO: Handle declarations
-                rest = new_rest;
+            let mut is_ok = true;
+            while is_ok {
+                let result = parse_block_item(rest);
+                match result {
+                    Ok((block_item, new_rest)) => {
+                        statements.push(block_item);
+                        rest = new_rest;
+                    }
+                    Err(_) => {
+                        is_ok = false;
+                    }
+                }
             }
             let rest = match rest {
                 [Token::RBrace, rest @ ..] => rest,
@@ -273,20 +324,7 @@ mod tests {
         );
         assert!(rest.is_empty());
     }
-
-    /*
-    #[test]
-    fn test_parse_statement_identifier() {
-        let tokenizer = Tokenizer::new();
-        let tokens = tokenizer.tokenize("return x;").unwrap();
-        let (statement, rest) = parse_statement(&tokens).unwrap();
-        assert_eq!(
-            statement,
-            Statement::Return(Expression::Identifier("x".to_string()))
-        );
-        assert!(rest.is_empty());
-    }
-     */
+     
 
     #[test]
     fn test_parse_expression() {

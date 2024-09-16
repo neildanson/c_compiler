@@ -156,6 +156,7 @@ impl Tacky {
             parse::Factor::Int(i) => Value::Constant(*i),
             parse::Factor::Unary(op, inner) => self.emit_tacky_unaryop(op, &inner, instructions),
             parse::Factor::Expression(e) => self.emit_tacky_expr(e, instructions),
+            f => unimplemented!("Unimplemented Tacky factor{:?}", f),
         }
     }
 
