@@ -75,7 +75,7 @@ impl Display for Instruction {
                         Operand::Register(Reg::DX) => "dl",
                         Operand::Register(Reg::R10)=> "r10b",
                         Operand::Register(Reg::R11)=> "r11b",
-                        _ => unimplemented!("Operand {:?}", dst),
+                        d => &format!("{}", d),
                     };
                     
                 write!(f, "\tset{} {}", cc, dst)

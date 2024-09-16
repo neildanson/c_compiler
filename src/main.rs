@@ -111,11 +111,12 @@ fn main() -> Result<()> {
         }
     } else if codegen_file || validate_file {
         let asm = codegen(filename)?;
-        if s_flag {
-            write_asm("a.s", &asm)?;
-        }
         if verbose_flag {
             println!("{:#?}", asm);
+        }
+
+        if s_flag {
+            write_asm("a.s", &asm)?;
         }
     }
 

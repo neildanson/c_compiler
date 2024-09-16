@@ -16,6 +16,7 @@ impl Display for Function {
         writeln!(f, "{}:", self.name)?;
         writeln!(f, "\tpushq %rbp")?;
         writeln!(f, "\tmovq %rsp, %rbp")?;
+        writeln!(f)?;
         for instruction in &self.body {
             writeln!(f, "{}", instruction)?;
         }
@@ -31,9 +32,9 @@ impl From<tacky::Function> for Function {
             body.append(&mut instructions);
         }
 
+        let body = fixup_stack_operations(body);
         let (mut body, stack_size) = rewrite_pseudo_with_stack(body);
         body.insert(0, Instruction::AllocateStack(stack_size));
-        let body = fixup_stack_operations(body);
         Function {
             name: ast.name,
             body,

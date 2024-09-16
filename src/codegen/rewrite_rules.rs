@@ -57,6 +57,13 @@ pub(crate) fn rewrite_pseudo_with_stack(body: Vec<Instruction>) -> (Vec<Instruct
                 };
                 new_body.push(Instruction::Cmp(lhs, rhs));
             }
+            Instruction::SetCC( cond, operand) => {
+                let operand = match operand {
+                    Operand::Pseudo(name) => fixup_pseudo(name, &mut stack),
+                    _ => operand,
+                };
+                new_body.push(Instruction::SetCC(cond, operand));
+            }
             any_other => new_body.push(any_other),
         }
     }
@@ -93,6 +100,14 @@ pub(crate) fn fixup_stack_operations(body: Vec<Instruction>) -> Vec<Instruction>
                         new_body.push(Instruction::Cmp(Operand::Register(Reg::R10), rhs));
                         continue;
                     }
+                }
+                if let Operand::Immediate { imm: _ } = rhs {
+                    new_body.push(Instruction::Mov {
+                        src: rhs,
+                        dst: Operand::Register(Reg::R10),
+                    });
+                    new_body.push(Instruction::Cmp(lhs, Operand::Register(Reg::R10)));
+                    continue;
                 }
                 new_body.push(instruction.clone());
             }
