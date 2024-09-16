@@ -7,9 +7,9 @@ pub struct Program {
 }
 
 #[derive(Debug, PartialEq)]
-pub struct Declaration {
+pub struct Function {
     pub name: String,
-    pub value: Expression,
+    pub body: Vec<BlockItem>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -19,9 +19,9 @@ pub enum BlockItem {
 }
 
 #[derive(Debug, PartialEq)]
-pub struct Function {
+pub struct Declaration {
     pub name: String,
-    pub body: Vec<BlockItem>,
+    pub value: Expression,
 }
 
 #[derive(Debug, PartialEq)]
@@ -32,27 +32,19 @@ pub enum Statement {
 }
 
 #[derive(Debug, PartialEq)]
-pub enum UnaryOperator {
-    Negation,
-    Tilde,
-    Not,
-}
-
-#[derive(Debug, PartialEq)]
 pub enum Expression {
-    Var(String),
     Factor(Factor),
     BinOp(BinaryOperator, Box<Expression>, Box<Expression>),
     Assignment(Box<Expression>, Box<Expression>),
 }
 
 #[derive(Debug, PartialEq)]
-pub enum Factor {
-    Int(i32),
-    Unary(UnaryOperator, Box<Factor>),
-    Expression(Box<Expression>),
-    Identifier(String),
+pub enum UnaryOperator {
+    Negation,
+    Tilde,
+    Not,
 }
+
 
 #[derive(Debug, PartialEq)]
 pub enum BinaryOperator {
@@ -74,6 +66,15 @@ pub enum BinaryOperator {
     GreaterThan,
     LessThanOrEqual,
     GreaterThanOrEqual,
+}
+
+//This isnt really in AST. Rethink
+#[derive(Debug, PartialEq)]
+pub enum Factor {
+    Int(i32),
+    Unary(UnaryOperator, Box<Factor>),
+    Expression(Box<Expression>),
+    Identifier(String),
 }
 
 fn precedence(tok: &Token) -> u16 {
@@ -222,7 +223,6 @@ fn parse_statement(tokens: &[Token]) -> Result<(Statement, &[Token])> {
 
         tok => {
             let statement = parse_expression(tok, 0)?;
-            println!("Statement {:?}", statement);
             let (expression, rest) = statement;
             (Statement::Expression(expression), rest)
         }
