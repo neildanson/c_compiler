@@ -1,4 +1,5 @@
 int main(void) {
-    int a = 3;
-    return !(a != 3);
+    int a = 1;
+    int b = 2;
+    return a = b = 4;
 }

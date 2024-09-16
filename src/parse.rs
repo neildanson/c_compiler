@@ -80,6 +80,7 @@ fn precedence(tok: &Token) -> u16 {
     match tok {
         Token::ShiftLeft | Token::ShiftRight => 1,
         Token::BitwiseAnd | Token::BitwiseOr | Token::BitwiseXor => 1,
+        Token::Assignment => 1,
         Token::Or => 5,
         Token::And => 10,
         Token::Equal | Token::NotEqual => 30,
@@ -187,6 +188,13 @@ fn parse_expression(tokens: &[Token], min_precedence: u16) -> Result<(Expression
     let mut left_expr = Expression::Factor(left);
     //Perhaps just use shunting algorithm here?
     while let Some(next_token) = tokens.iter().next() {
+        if next_token == &Token::Assignment {
+            let (right_expr, new_tokens) = parse_expression(&tokens[1..], precedence(next_token))?;
+            tokens = new_tokens;
+            left_expr = Expression::Assignment(Box::new(left_expr), Box::new(right_expr));
+            continue;
+        }
+
         if !is_binop(next_token) || precedence(next_token) < min_precedence {
             break;
         }
@@ -257,6 +265,7 @@ fn parse_block_item(tokens: &[Token]) -> Result<(BlockItem, &[Token])> {
         let (statement, tokens) = statement.unwrap();
         return Ok((BlockItem::Statement(statement), tokens));
     }
+    println!("Failed to parse block item {:?}", tokens);
     Err(CompilerError::Parse("Unexpected tokens".to_string()).into())
 }
 
@@ -281,7 +290,7 @@ fn parse_function(tokens: &[Token]) -> Result<(Function, &[Token])> {
             }
             let rest = match rest {
                 [Token::RBrace, rest @ ..] => rest,
-                _ => return Err(CompilerError::Parse("Expected RBrace".to_string()).into()),
+                rest => return Err(CompilerError::Parse(format!("Expected RBrace, got {:?}", rest)).into()),
             };
             (
                 Function {
