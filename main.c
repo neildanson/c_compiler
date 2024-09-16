@@ -1,5 +1,5 @@
 //Hello
 
 int main(void) {
-    return !(3 <= 3);
+    return (2 <= 3);
 }
