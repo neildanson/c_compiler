@@ -96,6 +96,18 @@ impl From<tacky::Instruction> for Vec<Instruction> {
                 let dst = Operand::Register(Reg::AX);
                 vec![Instruction::Mov { src, dst }, Instruction::Ret]
             }
+            tacky::Instruction::Unary { op, src, dst } if op == tacky::UnaryOp::Not => {
+                let src = src.into();
+                let dst: Operand = dst.into();
+                vec![
+                    Instruction::Cmp(Operand::Immediate { imm: 0 }, src),
+                    Instruction::Mov {
+                        src: Operand::Immediate { imm: 0 },
+                        dst: dst.clone(),
+                    },
+                    Instruction::SetCC(ConditionCode::E, dst),
+                ]
+            }
             tacky::Instruction::Unary { op, src, dst } => {
                 let src = src.into();
                 let dst: Operand = dst.into();
