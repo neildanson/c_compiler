@@ -48,7 +48,8 @@ impl Display for Instruction {
             }
 
             Instruction::AllocateStack(size) => {
-                write!(f, "\tsubq ${}, %rsp", size * 4)
+                writeln!(f, "\t# Allocating stack of size {}", size)?;
+                writeln!(f, "\tsubq ${}, %rsp", size * 4)
             }
             Instruction::Idiv { src } => {
                 write!(f, "\tidivl {}", src)

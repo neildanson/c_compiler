@@ -14,6 +14,7 @@ impl Display for Function {
     fn fmt(&self, f: &mut Formatter) -> Result {
         writeln!(f, "\t.globl {}", self.name)?;
         writeln!(f, "{}:", self.name)?;
+        writeln!(f, "\t# Function Preamble")?;
         writeln!(f, "\tpushq %rbp")?;
         writeln!(f, "\tmovq %rsp, %rbp")?;
         writeln!(f)?;
