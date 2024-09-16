@@ -218,10 +218,12 @@ fn parse_statement(tokens: &[Token]) -> Result<(Statement, &[Token])> {
             };
             (Statement::Return(expression), rest)
         }
+        [Token::SemiColon, rest @ ..] => (Statement::Null, rest),
+
         tok => {
-            return Err(
-                CompilerError::Parse(format!("Statement Unexpected Tokens {:?}", tok)).into(),
-            )
+            let statement = parse_expression(tok, 0)?;
+            let (expression, rest) = statement;
+            (Statement::Expression(expression), rest)
         }
     };
     Ok((statement, tokens))
