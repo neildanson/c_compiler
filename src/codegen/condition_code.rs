@@ -25,10 +25,9 @@ impl Display for ConditionCode {
     }
 }
 
-//Try from?
 impl TryFrom<tacky::BinaryOp> for ConditionCode {
     type Error = CompilerError;
-    fn try_from(cc: tacky::BinaryOp) -> Result<ConditionCode, Self::Error> {
+    fn try_from(cc: tacky::BinaryOp) -> Result<Self, Self::Error> {
         match cc {
             tacky::BinaryOp::Equal => Ok(ConditionCode::E),
             tacky::BinaryOp::NotEqual => Ok(ConditionCode::NE),

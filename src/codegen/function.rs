@@ -1,6 +1,6 @@
-use std::fmt::{Display, Formatter, Result};
+use std::fmt::{Display, Formatter};
 
-use crate::tacky;
+use crate::{error::CompilerError, tacky};
 
 use super::*;
 
@@ -11,7 +11,7 @@ pub struct Function {
 }
 
 impl Display for Function {
-    fn fmt(&self, f: &mut Formatter) -> Result {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
         writeln!(f, "\t.globl {}", self.name)?;
         writeln!(f, "{}:", self.name)?;
         writeln!(f, "\t# Function Preamble")?;
@@ -25,20 +25,21 @@ impl Display for Function {
     }
 }
 
-impl From<tacky::Function> for Function {
-    fn from(ast: tacky::Function) -> Self {
+impl TryFrom<tacky::Function> for Function {
+    type Error = CompilerError;
+    fn try_from(ast: tacky::Function) -> Result<Self, Self::Error> {
         let mut body = Vec::new();
         for statement in ast.body {
-            let mut instructions: Vec<_> = statement.into();
+            let mut instructions: Vec<_> = statement.try_into()?;
             body.append(&mut instructions);
         }
 
         let (mut body, stack_size) = rewrite_pseudo_with_stack(body);
         body.insert(0, Instruction::AllocateStack(stack_size));
         let body = fixup_stack_operations(body);
-        Function {
+        Ok(Function {
             name: ast.name,
             body,
-        }
+        })
     }
 }

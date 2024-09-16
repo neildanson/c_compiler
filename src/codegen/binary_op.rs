@@ -1,5 +1,5 @@
-use crate::tacky;
-use std::fmt::{Display, Formatter, Result};
+use crate::{error::CompilerError, tacky};
+use std::fmt::{Display, Formatter};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum BinaryOp {
@@ -14,8 +14,7 @@ pub enum BinaryOp {
 }
 
 impl Display for BinaryOp {
-    //TODO
-    fn fmt(&self, f: &mut Formatter) -> Result {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
         match self {
             BinaryOp::Add => write!(f, "addl"),
             BinaryOp::Sub => write!(f, "subl"),
@@ -29,20 +28,19 @@ impl Display for BinaryOp {
     }
 }
 
-impl From<tacky::BinaryOp> for BinaryOp {
-    fn from(op: tacky::BinaryOp) -> Self {
+impl TryFrom<tacky::BinaryOp> for BinaryOp {
+    type Error = CompilerError;
+    fn try_from(op: tacky::BinaryOp) -> Result<Self, Self::Error> {
         match op {
-            tacky::BinaryOp::Add => BinaryOp::Add,
-            tacky::BinaryOp::Subtract => BinaryOp::Sub,
-            tacky::BinaryOp::Multiply => BinaryOp::Mult,
-            tacky::BinaryOp::Divide => unimplemented!("BinaryOp From not implemented"),
-            tacky::BinaryOp::Remainder => unimplemented!("BinaryOp From not implemented"),
-            tacky::BinaryOp::ShiftLeft => BinaryOp::ShiftLeft,
-            tacky::BinaryOp::ShiftRight => BinaryOp::ShiftRight,
-            tacky::BinaryOp::BitwiseAnd => BinaryOp::BitwiseAnd,
-            tacky::BinaryOp::BitwiseOr => BinaryOp::BitwiseOr,
-            tacky::BinaryOp::BitwiseXor => BinaryOp::BitwiseXor,
-            _ => unimplemented!("BinaryOp From not implemented"),
+            tacky::BinaryOp::Add => Ok(BinaryOp::Add),
+            tacky::BinaryOp::Subtract => Ok(BinaryOp::Sub),
+            tacky::BinaryOp::Multiply => Ok(BinaryOp::Mult),
+            tacky::BinaryOp::ShiftLeft => Ok(BinaryOp::ShiftLeft),
+            tacky::BinaryOp::ShiftRight => Ok(BinaryOp::ShiftRight),
+            tacky::BinaryOp::BitwiseAnd => Ok(BinaryOp::BitwiseAnd),
+            tacky::BinaryOp::BitwiseOr => Ok(BinaryOp::BitwiseOr),
+            tacky::BinaryOp::BitwiseXor => Ok(BinaryOp::BitwiseXor),
+            _ => Err(CompilerError::CodeGen),
         }
     }
 }

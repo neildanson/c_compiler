@@ -1,5 +1,5 @@
 use super::Function;
-use crate::tacky;
+use crate::{error::CompilerError, tacky};
 use std::fmt::Display;
 
 #[derive(Debug, PartialEq)]
@@ -13,9 +13,10 @@ impl Display for Program {
     }
 }
 
-impl From<tacky::Program> for Program {
-    fn from(ast: tacky::Program) -> Self {
-        let function = ast.function.into();
-        Program { function }
+impl TryFrom<tacky::Program> for Program {
+    type Error = CompilerError;
+    fn try_from(ast: tacky::Program) -> Result<Self, Self::Error> {
+        let function = ast.function.try_into()?;
+        Ok(Program { function })
     }
 }

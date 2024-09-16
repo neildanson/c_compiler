@@ -57,7 +57,7 @@ pub(crate) fn rewrite_pseudo_with_stack(body: Vec<Instruction>) -> (Vec<Instruct
                 };
                 new_body.push(Instruction::Cmp(lhs, rhs));
             }
-            Instruction::SetCC( cond, operand) => {
+            Instruction::SetCC(cond, operand) => {
                 let operand = match operand {
                     Operand::Pseudo(name) => fixup_pseudo(name, &mut stack),
                     _ => operand,

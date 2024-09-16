@@ -45,7 +45,7 @@ fn tacky(filename: &str) -> Result<tacky::Program> {
 
 fn codegen(filename: &str) -> Result<codegen::Program> {
     let ast = tacky(filename)?;
-    let asm = ast.into();
+    let asm = ast.try_into()?;
     Ok(asm)
 }
 

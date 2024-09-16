@@ -176,7 +176,7 @@ impl Tacky {
         dst
     }
 
-    fn emit_temp(&mut self, src : Value, instructions: &mut Vec<Instruction>) -> Value {
+    fn emit_temp(&mut self, src: Value, instructions: &mut Vec<Instruction>) -> Value {
         let name = self.make_name();
         let dst = Value::Var(name.clone());
         instructions.push(Instruction::Copy {
