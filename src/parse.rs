@@ -222,6 +222,7 @@ fn parse_statement(tokens: &[Token]) -> Result<(Statement, &[Token])> {
 
         tok => {
             let statement = parse_expression(tok, 0)?;
+            println!("Statement {:?}", statement);
             let (expression, rest) = statement;
             (Statement::Expression(expression), rest)
         }
@@ -267,7 +268,6 @@ fn parse_block_item(tokens: &[Token]) -> Result<(BlockItem, &[Token])> {
         let (statement, tokens) = statement.unwrap();
         return Ok((BlockItem::Statement(statement), tokens));
     }
-    println!("Failed to parse block item {:?}", tokens);
     Err(CompilerError::Parse("Unexpected tokens".to_string()).into())
 }
 
