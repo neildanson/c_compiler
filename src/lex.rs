@@ -27,17 +27,18 @@ pub enum Token {
     ShiftLeft,                     //<<
     ShiftRight,                    //>>
     BitwiseXor,                    //^
-    BitwiseOr,                     //|
-    BitwiseAnd,                    //&
-    Not,
-    And,
-    Or,
-    Equal,
-    NotEqual,
-    LessThan,
-    GreaterThan,
-    LessThanOrEqual,
-    GreaterThanOrEqual,
+    BitwiseOr,                     //^|
+    BitwiseAnd,                    //^&
+    Not,                           //^!
+    And,                           //^&&
+    Or,                            //^||
+    Equal,                         //^==
+    NotEqual,                      //^!=
+    LessThan,                      //<
+    GreaterThan,                   //>
+    LessThanOrEqual,               //<=
+    GreaterThanOrEqual,            //>=
+    Assignment,                    //=
 }
 
 pub struct Tokenizer {
@@ -113,6 +114,7 @@ impl Tokenizer {
             TokenMapper::new(r"^!", Box::new(|_| Token::Not)),
             TokenMapper::new(r"^<", Box::new(|_| Token::LessThan)),
             TokenMapper::new(r"^>", Box::new(|_| Token::GreaterThan)),
+            TokenMapper::new(r"^=", Box::new(|_| Token::Assignment)),
         ];
 
         Tokenizer { token_mappers }

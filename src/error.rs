@@ -29,7 +29,7 @@ impl Display for CompilerError {
             CompilerError::IO(err) => write!(f, "{}", err),
             CompilerError::Lex => write!(f, "Lexing Error"),
             CompilerError::Parse(s) => write!(f, "Parsing Error : {}", s),
-            CompilerError::CodeGen(c) => write!(f, "Code Generation Error"),
+            CompilerError::CodeGen(c) => write!(f, "Code Generation Error : {}", c),
         }
     }
 }
