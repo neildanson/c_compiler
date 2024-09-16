@@ -1,6 +1,6 @@
 use std::fmt::{Display, Formatter};
 
-use crate::{error::CompilerError, tacky};
+use crate::{error::{CodeGenError, CompilerError}, tacky};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum ConditionCode {
@@ -35,7 +35,7 @@ impl TryFrom<tacky::BinaryOp> for ConditionCode {
             tacky::BinaryOp::LessThanOrEqual => Ok(ConditionCode::LE),
             tacky::BinaryOp::GreaterThan => Ok(ConditionCode::G),
             tacky::BinaryOp::GreaterThanOrEqual => Ok(ConditionCode::GE),
-            _ => Err(CompilerError::CodeGen),
+            _ => Err(CompilerError::CodeGen(CodeGenError::InvalidConditionCode)),
         }
     }
 }

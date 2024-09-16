@@ -1,4 +1,4 @@
-use crate::{error::CompilerError, tacky};
+use crate::{error::{CodeGenError, CompilerError}, tacky};
 use std::fmt::{Display, Formatter};
 
 #[derive(Debug, PartialEq, Clone)]
@@ -40,7 +40,7 @@ impl TryFrom<tacky::BinaryOp> for BinaryOp {
             tacky::BinaryOp::BitwiseAnd => Ok(BinaryOp::BitwiseAnd),
             tacky::BinaryOp::BitwiseOr => Ok(BinaryOp::BitwiseOr),
             tacky::BinaryOp::BitwiseXor => Ok(BinaryOp::BitwiseXor),
-            _ => Err(CompilerError::CodeGen),
+            _ => Err(CompilerError::CodeGen(CodeGenError::InvalidBinaryOp)),
         }
     }
 }

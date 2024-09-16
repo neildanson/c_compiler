@@ -12,7 +12,6 @@ impl Display for UnaryOp {
     fn fmt(&self, f: &mut Formatter) -> Result {
         match self {
             UnaryOp::Neg => write!(f, "negl"),
-            //UnaryOp::Not => write!(f, "notl"),
             op => unimplemented!("UnaryOp Display not implemented for {:?}", op),
         }
     }

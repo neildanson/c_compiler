@@ -17,7 +17,7 @@ impl Display for Operand {
             Operand::Register(reg) => write!(f, "{}", reg),
             Operand::Immediate { imm } => write!(f, "${}", imm),
             Operand::Stack(offset) => write!(f, "-{}(%rbp)", offset),
-            _ => unimplemented!("Operand Display not implemented"),
+            op => unimplemented!("Operand Display not implemented for {:?}", op),
         }
     }
 }
