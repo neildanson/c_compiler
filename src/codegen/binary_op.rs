@@ -1,4 +1,7 @@
-use crate::{error::{CodeGenError, CompilerError}, tacky};
+use crate::{
+    error::{CodeGenError, CompilerError},
+    tacky,
+};
 use std::fmt::{Display, Formatter};
 
 #[derive(Debug, PartialEq, Clone)]

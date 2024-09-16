@@ -7,14 +7,28 @@ pub struct Program {
 }
 
 #[derive(Debug, PartialEq)]
+pub struct Declaration {
+    pub name: String,
+    pub value: Expression,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum BlockItem {
+    Declaration,
+    Statement(Statement),
+}
+
+#[derive(Debug, PartialEq)]
 pub struct Function {
     pub name: String,
-    pub body: Vec<Statement>,
+    pub body: Vec<BlockItem>,
 }
 
 #[derive(Debug, PartialEq)]
 pub enum Statement {
     Return(Expression),
+    Expression(Expression),
+    Null,
 }
 
 #[derive(Debug, PartialEq)]
@@ -26,8 +40,10 @@ pub enum UnaryOperator {
 
 #[derive(Debug, PartialEq)]
 pub enum Expression {
+    Var(String),
     Factor(Factor),
     BinOp(BinaryOperator, Box<Expression>, Box<Expression>),
+    Assignment(Box<Expression>, Box<Expression>),
 }
 
 #[derive(Debug, PartialEq)]
@@ -209,7 +225,7 @@ fn parse_function(tokens: &[Token]) -> Result<(Function, &[Token])> {
             let mut rest = rest;
             while let [Token::Return, ..] = rest {
                 let (statement, new_rest) = parse_statement(rest)?;
-                statements.push(statement);
+                statements.push(BlockItem::Statement(statement)); //TODO: Handle declarations
                 rest = new_rest;
             }
             let rest = match rest {
@@ -305,7 +321,9 @@ mod tests {
             function,
             Function {
                 name: "main".to_string(),
-                body: vec![Statement::Return(Expression::Factor(Factor::Int(42)))]
+                body: vec![BlockItem::Statement(Statement::Return(Expression::Factor(
+                    Factor::Int(42)
+                )))]
             }
         );
         assert!(rest.is_empty());
@@ -328,7 +346,9 @@ int main(void) {
             function,
             Function {
                 name: "main".to_string(),
-                body: vec![Statement::Return(Expression::Factor(Factor::Int(100)))]
+                body: vec![BlockItem::Statement(Statement::Return(Expression::Factor(
+                    Factor::Int(100)
+                )))]
             }
         );
         assert!(rest.is_empty());
@@ -345,11 +365,11 @@ int main(void) {
             function,
             Function {
                 name: "main".to_string(),
-                body: vec![Statement::Return(Expression::BinOp(
+                body: vec![BlockItem::Statement(Statement::Return(Expression::BinOp(
                     BinaryOperator::Add,
                     Box::new(Expression::Factor(Factor::Int(42))),
                     Box::new(Expression::Factor(Factor::Int(12)))
-                ))]
+                )))]
             }
         );
         assert!(rest.is_empty());

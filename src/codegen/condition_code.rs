@@ -1,6 +1,9 @@
 use std::fmt::{Display, Formatter};
 
-use crate::{error::{CodeGenError, CompilerError}, tacky};
+use crate::{
+    error::{CodeGenError, CompilerError},
+    tacky,
+};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum ConditionCode {

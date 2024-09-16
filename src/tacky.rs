@@ -143,6 +143,7 @@ impl Tacky {
         match e {
             parse::Expression::Factor(f) => self.emit_tacky_factor(f, instructions),
             parse::Expression::BinOp(op, e1, e2) => self.emit_tacky_binop(op, e1, e2, instructions),
+            e => unimplemented!("Unimplemented Tacky step{:?}", e),
         }
     }
 
@@ -283,10 +284,11 @@ impl Tacky {
         let mut body = Vec::new();
         for statement in f.body {
             match statement {
-                parse::Statement::Return(expression) => {
+                parse::BlockItem::Statement(parse::Statement::Return(expression)) => {
                     let value = self.emit_tacky_expr(&expression, &mut body);
                     body.push(Instruction::Return(value));
                 }
+                s => unimplemented!("Unimplemented Tacky statement{:?}", s),
             }
         }
         Function { name: f.name, body }
