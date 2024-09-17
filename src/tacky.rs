@@ -141,29 +141,27 @@ impl Tacky {
         instructions: &mut Vec<Instruction>,
     ) -> Value {
         match e {
-            parse::Expression::Factor(f) => self.emit_tacky_factor(f, instructions),
             parse::Expression::BinOp(op, e1, e2) => self.emit_tacky_binop(op, e1, e2, instructions),
-            e => unimplemented!("Unimplemented Tacky step{:?}", e),
+            e => self.emit_tacky_factor(e, instructions),
         }
     }
 
     fn emit_tacky_factor(
         &mut self,
-        f: &parse::Factor,
+        f: &parse::Expression,
         instructions: &mut Vec<Instruction>,
     ) -> Value {
         match f {
-            parse::Factor::Int(i) => Value::Constant(*i),
-            parse::Factor::Unary(op, inner) => self.emit_tacky_unaryop(op, &inner, instructions),
-            parse::Factor::Expression(e) => self.emit_tacky_expr(e, instructions),
-            f => unimplemented!("Unimplemented Tacky factor{:?}", f),
+            parse::Expression::Constant(i) => Value::Constant(*i),
+            parse::Expression::Unary(op, inner) => self.emit_tacky_unaryop(op, &inner, instructions),
+            e => self.emit_tacky_expr(e, instructions),
         }
     }
 
     fn emit_tacky_unaryop(
         &mut self,
         op: &parse::UnaryOperator,
-        inner: &parse::Factor,
+        inner: &parse::Expression,
         instructions: &mut Vec<Instruction>,
     ) -> Value {
         let src = self.emit_tacky_factor(&inner, instructions);

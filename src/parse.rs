@@ -33,7 +33,9 @@ pub enum Statement {
 
 #[derive(Debug, PartialEq)]
 pub enum Expression {
-    Factor(Factor),
+    Constant(i32),
+    Var(String),
+    Unary(UnaryOperator, Box<Expression>),
     BinOp(BinaryOperator, Box<Expression>, Box<Expression>),
     Assignment(Box<Expression>, Box<Expression>),
 }
@@ -44,7 +46,6 @@ pub enum UnaryOperator {
     Tilde,
     Not,
 }
-
 
 #[derive(Debug, PartialEq)]
 pub enum BinaryOperator {
@@ -66,15 +67,6 @@ pub enum BinaryOperator {
     GreaterThan,
     LessThanOrEqual,
     GreaterThanOrEqual,
-}
-
-//This isnt really in AST. Rethink
-#[derive(Debug, PartialEq)]
-pub enum Factor {
-    Int(i32),
-    Unary(UnaryOperator, Box<Factor>),
-    Expression(Box<Expression>),
-    Identifier(String),
 }
 
 fn precedence(tok: &Token) -> u16 {
@@ -119,23 +111,30 @@ fn is_binop(tok: &Token) -> bool {
     }
 }
 
-fn parse_factor(tokens: &[Token]) -> Result<(Factor, &[Token])> {
+fn swallow_semicolon(tokens: &[Token]) -> Result<&[Token]> {
+    match tokens {
+        [Token::SemiColon, rest @ ..] => Ok(rest),
+        _ => Err(CompilerError::Parse("Expected SemiColon".to_string()).into()),
+    }
+}
+
+fn parse_factor(tokens: &[Token]) -> Result<(Expression, &[Token])> {
     let (factor, tokens) = match tokens {
-        [Token::Constant(c), rest @ ..] => (Factor::Int(c.parse().unwrap()), rest),
+        [Token::Constant(c), rest @ ..] => (Expression::Constant(c.parse().unwrap()), rest),
         [Token::Minus, rest @ ..] => {
             let (factor, rest) = parse_factor(rest)?;
             (
-                Factor::Unary(UnaryOperator::Negation, Box::new(factor)),
+                Expression::Unary(UnaryOperator::Negation, Box::new(factor)),
                 rest,
             )
         }
         [Token::Not, rest @ ..] => {
             let (factor, rest) = parse_factor(rest)?;
-            (Factor::Unary(UnaryOperator::Not, Box::new(factor)), rest)
+            (Expression::Unary(UnaryOperator::Not, Box::new(factor)), rest)
         }
         [Token::Tilde, rest @ ..] => {
             let (factor, rest) = parse_factor(rest)?;
-            (Factor::Unary(UnaryOperator::Tilde, Box::new(factor)), rest)
+            (Expression::Unary(UnaryOperator::Tilde, Box::new(factor)), rest)
         }
         [Token::LParen, rest @ ..] => {
             let (expression, rest) = parse_expression(rest, 0)?;
@@ -143,9 +142,9 @@ fn parse_factor(tokens: &[Token]) -> Result<(Factor, &[Token])> {
                 [Token::RParen, rest @ ..] => rest,
                 _ => return Err(CompilerError::Parse("LParen".to_string()).into()),
             };
-            (Factor::Expression(Box::new(expression)), rest)
+            (expression, rest)
         }
-        [Token::Identifier(name), rest @ ..] => (Factor::Identifier(name.clone()), rest),
+        [Token::Identifier(name), rest @ ..] => (Expression::Var(name.clone()), rest),
         toks => {
             return Err(CompilerError::Parse(format!("Factor Unexpected Tokens {:?}", toks)).into())
         }
@@ -185,8 +184,7 @@ fn parse_binop(tokens: &[Token]) -> Result<(BinaryOperator, &[Token])> {
 
 fn parse_expression(tokens: &[Token], min_precedence: u16) -> Result<(Expression, &[Token])> {
     let left = parse_factor(tokens)?;
-    let (left, mut tokens) = left;
-    let mut left_expr = Expression::Factor(left);
+    let (mut left_expr, mut tokens) = left;
     //Perhaps just use shunting algorithm here?
     while let Some(next_token) = tokens.iter().next() {
         if next_token == &Token::Assignment {
@@ -213,17 +211,17 @@ fn parse_statement(tokens: &[Token]) -> Result<(Statement, &[Token])> {
     let (statement, tokens) = match tokens {
         [Token::Return, rest @ ..] => {
             let (expression, rest) = parse_expression(rest, 0)?;
-            let rest = match rest {
-                [Token::SemiColon, rest @ ..] => rest,
-                _ => return Err(CompilerError::Parse("Expected SemiColon".to_string()).into()),
-            };
+            let rest = swallow_semicolon(rest)?;
             (Statement::Return(expression), rest)
         }
-        [Token::SemiColon, rest @ ..] => (Statement::Null, rest),
+        [Token::SemiColon, rest @ ..] => {
+            (Statement::Null, rest)
+        },
 
         tok => {
             let statement = parse_expression(tok, 0)?;
             let (expression, rest) = statement;
+            let rest = swallow_semicolon(rest)?;
             (Statement::Expression(expression), rest)
         }
     };
@@ -234,10 +232,7 @@ fn parse_declaration(tokens : &[Token]) -> Result<(Declaration, &[Token])> {
     let (declaration, tokens) = match tokens {
         [Token::Int, Token::Identifier(name), Token::Assignment, rest @ ..] => {
             let (expression, rest) = parse_expression(rest, 0)?;
-            let rest = match rest {
-                [Token::SemiColon, rest @ ..] => rest,
-                _ => return Err(CompilerError::Parse("Expected SemiColon".to_string()).into()),
-            };
+            let rest = swallow_semicolon(rest)?;
             (
                 Declaration {
                     name: name.clone(),
@@ -331,7 +326,7 @@ mod tests {
         let (statement, rest) = parse_statement(&tokens).unwrap();
         assert_eq!(
             statement,
-            Statement::Return(Expression::Factor(Factor::Int(42)))
+            Statement::Return(Expression::Constant(42))
         );
         assert!(rest.is_empty());
     }
@@ -342,7 +337,7 @@ mod tests {
         let tokenizer = Tokenizer::new();
         let tokens = tokenizer.tokenize("42").unwrap();
         let (expression, rest) = parse_expression(&tokens, 0).unwrap();
-        assert_eq!(expression, Expression::Factor(Factor::Int(42)));
+        assert_eq!(expression, Expression::Constant(42));
         assert!(rest.is_empty());
     }
 
@@ -353,10 +348,10 @@ mod tests {
         let (expression, rest) = parse_expression(&tokens, 0).unwrap();
         assert_eq!(
             expression,
-            Expression::Factor(Factor::Unary(
+            Expression::Unary(
                 UnaryOperator::Negation,
-                Box::new(Factor::Int(42))
-            ))
+                Box::new(Expression::Constant(42))
+            )
         );
         assert!(rest.is_empty());
     }
@@ -370,9 +365,7 @@ mod tests {
             function,
             Function {
                 name: "main".to_string(),
-                body: vec![BlockItem::Statement(Statement::Return(Expression::Factor(
-                    Factor::Int(42)
-                )))]
+                body: vec![BlockItem::Statement(Statement::Return(Expression::Constant(42)))]
             }
         );
         assert!(rest.is_empty());
@@ -395,9 +388,7 @@ int main(void) {
             function,
             Function {
                 name: "main".to_string(),
-                body: vec![BlockItem::Statement(Statement::Return(Expression::Factor(
-                    Factor::Int(100)
-                )))]
+                body: vec![BlockItem::Statement(Statement::Return(Expression::Constant(100)))]
             }
         );
         assert!(rest.is_empty());
@@ -416,8 +407,8 @@ int main(void) {
                 name: "main".to_string(),
                 body: vec![BlockItem::Statement(Statement::Return(Expression::BinOp(
                     BinaryOperator::Add,
-                    Box::new(Expression::Factor(Factor::Int(42))),
-                    Box::new(Expression::Factor(Factor::Int(12)))
+                    Box::new(Expression::Constant(42)),
+                    Box::new(Expression::Constant(12))
                 )))]
             }
         );
