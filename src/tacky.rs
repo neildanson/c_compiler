@@ -85,7 +85,6 @@ fn convert_unop(op: &parse::UnaryOperator) -> UnaryOp {
         parse::UnaryOperator::Negation => UnaryOp::Negate,
         parse::UnaryOperator::Tilde => UnaryOp::Complement,
         parse::UnaryOperator::Not => UnaryOp::Not,
-        //_ => unimplemented!(),
     }
 }
 
@@ -107,8 +106,7 @@ fn convert_binop(op: &parse::BinaryOperator) -> BinaryOp {
         parse::BinaryOperator::LessThanOrEqual => BinaryOp::LessThanOrEqual,
         parse::BinaryOperator::GreaterThan => BinaryOp::GreaterThan,
         parse::BinaryOperator::GreaterThanOrEqual => BinaryOp::GreaterThanOrEqual,
-        //And?
-        _ => unimplemented!(),
+        op => unimplemented!("Unimplemented Tacky binary operator {:?}", op),
     }
 }
 
@@ -287,7 +285,7 @@ impl Tacky {
                     let value = self.emit_tacky_expr(&expression, &mut body);
                     body.push(Instruction::Return(value));
                 }
-                s => unimplemented!("Unimplemented Tacky statement{:?}", s),
+                s => unimplemented!("Unimplemented Tacky statement {:?}", s),
             }
         }
         Function { name: f.name, body }
