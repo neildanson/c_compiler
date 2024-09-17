@@ -242,6 +242,7 @@ fn parse_declaration(tokens : &[Token]) -> Result<(Declaration, &[Token])> {
         [Token::Int, Token::Identifier(name), Token::Assignment, rest @ ..] => {
             println!("Declaration: {:?}", rest);
             let (expression, rest) = parse_expression(rest, 0)?;
+            let rest = swallow_semicolon(rest)?;
             (
                 Declaration {
                     name: name.clone(),
