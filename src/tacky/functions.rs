@@ -2,37 +2,6 @@ use crate::parse;
 use std::collections::HashMap;
 use super::*;
 
-
-fn convert_unop(op: &parse::UnaryOperator) -> UnaryOp {
-    match op {
-        parse::UnaryOperator::Negation => UnaryOp::Negate,
-        parse::UnaryOperator::Tilde => UnaryOp::Complement,
-        parse::UnaryOperator::Not => UnaryOp::Not,
-    }
-}
-
-fn convert_binop(op: &parse::BinaryOperator) -> BinaryOp {
-    match op {
-        parse::BinaryOperator::Add => BinaryOp::Add,
-        parse::BinaryOperator::Sub => BinaryOp::Subtract,
-        parse::BinaryOperator::Mul => BinaryOp::Multiply,
-        parse::BinaryOperator::Div => BinaryOp::Divide,
-        parse::BinaryOperator::Mod => BinaryOp::Remainder,
-        parse::BinaryOperator::ShiftLeft => BinaryOp::ShiftLeft,
-        parse::BinaryOperator::ShiftRight => BinaryOp::ShiftRight,
-        parse::BinaryOperator::BitwiseAnd => BinaryOp::BitwiseAnd,
-        parse::BinaryOperator::BitwiseOr => BinaryOp::BitwiseOr,
-        parse::BinaryOperator::BitwiseXor => BinaryOp::BitwiseXor,
-        parse::BinaryOperator::Equal => BinaryOp::Equal,
-        parse::BinaryOperator::NotEqual => BinaryOp::NotEqual,
-        parse::BinaryOperator::LessThan => BinaryOp::LessThan,
-        parse::BinaryOperator::LessThanOrEqual => BinaryOp::LessThanOrEqual,
-        parse::BinaryOperator::GreaterThan => BinaryOp::GreaterThan,
-        parse::BinaryOperator::GreaterThanOrEqual => BinaryOp::GreaterThanOrEqual,
-        op => unimplemented!("Unimplemented Tacky binary operator {:?}", op),
-    }
-}
-
 #[derive(Default)]
 pub struct Tacky {
     counter: u32,
@@ -88,7 +57,7 @@ impl Tacky {
         let src = self.emit_tacky_factor(&inner, instructions);
         let dst_name = self.make_name();
         let dst = Value::Var(dst_name);
-        let tacky_op = convert_unop(op);
+        let tacky_op = op.into();
         instructions.push(Instruction::Unary {
             op: tacky_op,
             src,
@@ -188,7 +157,7 @@ impl Tacky {
                 let src2 = self.emit_tacky_expr(e2, instructions);
                 let dst_name = self.make_name();
                 let dst = Value::Var(dst_name);
-                let tacky_op = convert_binop(op);
+                let tacky_op = op.try_into().unwrap();//TODO
                 instructions.push(Instruction::Binary {
                     op: tacky_op,
                     src1,
