@@ -21,7 +21,7 @@ pub enum BlockItem {
 #[derive(Debug, PartialEq)]
 pub struct Declaration {
     pub name: String,
-    pub value: Expression,
+    pub value: Option<Expression>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -230,13 +230,22 @@ fn parse_statement(tokens: &[Token]) -> Result<(Statement, &[Token])> {
 
 fn parse_declaration(tokens : &[Token]) -> Result<(Declaration, &[Token])> {
     let (declaration, tokens) = match tokens {
-        [Token::Int, Token::Identifier(name), Token::Assignment, rest @ ..] => {
-            let (expression, rest) = parse_expression(rest, 0)?;
-            let rest = swallow_semicolon(rest)?;
+        [Token::Int, Token::Identifier(name), Token::SemiColon, rest @ ..] => {
             (
                 Declaration {
                     name: name.clone(),
-                    value: expression,
+                    value: None,
+                },
+                rest,
+            )
+        }
+        [Token::Int, Token::Identifier(name), Token::Assignment, rest @ ..] => {
+            println!("Declaration: {:?}", rest);
+            let (expression, rest) = parse_expression(rest, 0)?;
+            (
+                Declaration {
+                    name: name.clone(),
+                    value: Some(expression),
                 },
                 rest,
             )
@@ -254,6 +263,7 @@ fn parse_block_item(tokens: &[Token]) -> Result<(BlockItem, &[Token])> {
 
     let declaration = parse_declaration(tokens);
     if declaration.is_ok() {
+        println!("Declaration");
         let (declaration, tokens) = declaration.unwrap();
         return Ok((BlockItem::Declaration(declaration), tokens));
     }
