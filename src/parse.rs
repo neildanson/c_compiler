@@ -113,6 +113,7 @@ fn is_binop(tok: &Token) -> bool {
             | Token::GreaterThan
             | Token::LessThanOrEqual
             | Token::GreaterThanOrEqual
+            | Token::Assignment
     )
 }
 
@@ -198,6 +199,10 @@ fn parse_expression(tokens: &[Token], min_precedence: u16) -> Result<(Expression
     let (mut left_expr, mut tokens) = left;
     //Perhaps just use shunting algorithm here?
     while let Some(next_token) = tokens.iter().next() {
+        if !is_binop(next_token) || precedence(next_token) < min_precedence {
+            break;
+        }
+
         if next_token == &Token::Assignment {
             let (right_expr, new_tokens) = parse_expression(&tokens[1..], precedence(next_token))?;
             tokens = new_tokens;
@@ -205,9 +210,6 @@ fn parse_expression(tokens: &[Token], min_precedence: u16) -> Result<(Expression
             continue;
         }
 
-        if !is_binop(next_token) || precedence(next_token) < min_precedence {
-            break;
-        }
         let (binop, rest) = parse_binop(tokens)?;
 
         let (right_expr, new_tokens) = parse_expression(rest, precedence(next_token) + 1)?;
@@ -352,11 +354,11 @@ fn resolve_expression(
         }
         Expression::BinOp(op, expr1, expr2) => {
             let expr1 = resolve_expression(expr1, variable_map)?;
-            if let Expression::Assignment(_, _) = expr2.as_ref() {
-                return Err(CompilerError::SemanticAnalysis(
-                    SemanticAnalysisError::InvalidLValue,
-                ));
-            }
+            //if let Expression::Assignment(_, _) = expr2.as_ref() {
+            //    return Err(CompilerError::SemanticAnalysis(
+            //        SemanticAnalysisError::InvalidLValue,
+            //    ));
+            //}
             let expr2 = resolve_expression(expr2, variable_map)?;
             Ok(Expression::BinOp(
                 op.clone(),
