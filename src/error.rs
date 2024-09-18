@@ -19,6 +19,7 @@ impl Display for CodeGenError {
 pub enum SemanticAnalysisError {
     VariableAlreadyDeclared(String),
     VariableNotDeclared(String),
+    InvalidLValue,
 }
 
 impl Display for SemanticAnalysisError {
@@ -29,7 +30,8 @@ impl Display for SemanticAnalysisError {
             }
             SemanticAnalysisError::VariableNotDeclared(s) => {
                 write!(f, "Variable {} not declared", s)
-            }
+            },
+            SemanticAnalysisError::InvalidLValue => write!(f, "Invalid LValue"),
         }
     }
 }

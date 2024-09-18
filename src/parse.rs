@@ -270,7 +270,6 @@ fn parse_declaration(tokens: &[Token]) -> Result<(Declaration, &[Token])> {
 fn parse_block_item(tokens: &[Token]) -> Result<(BlockItem, &[Token])> {
     let declaration = parse_declaration(tokens);
     if declaration.is_ok() {
-        println!("Declaration");
         let (declaration, tokens) = declaration.unwrap();
         return Ok((BlockItem::Declaration(declaration), tokens));
     }
@@ -362,9 +361,22 @@ fn resolve_expression(
             ))
         }
         Expression::Assignment(expr1, expr2) => {
-            let expr1 = resolve_expression(expr1, variable_map)?;
-            let expr2 = resolve_expression(expr2, variable_map)?;
-            Ok(Expression::Assignment(Box::new(expr1), Box::new(expr2)))
+            match expr1.as_ref() {
+                Expression::Var(_name) => {
+                    let expr1 = resolve_expression(expr1, variable_map)?;
+                    let expr2 = resolve_expression(expr2, variable_map)?;
+                    return Ok(Expression::Assignment(
+                        Box::new(expr1),
+                        Box::new(expr2),
+                    ));
+                }
+                _ => {
+                    return Err(CompilerError::SemanticAnalysis(SemanticAnalysisError::InvalidLValue));
+                }
+            }
+            //let expr1 = resolve_expression(expr1, variable_map)?;
+            //let expr2 = resolve_expression(expr2, variable_map)?;
+            //Ok(Expression::Assignment(Box::new(expr1), Box::new(expr2)))
         }
         expr => Ok(expr.clone()),
     }
