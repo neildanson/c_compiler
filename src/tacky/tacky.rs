@@ -1,4 +1,4 @@
-use crate::parse;
+use crate::{error::CompilerError, parse};
 use std::collections::HashMap;
 use super::*;
 
@@ -29,7 +29,7 @@ impl Tacky {
         &mut self,
         e: &parse::Expression,
         instructions: &mut Vec<Instruction>,
-    ) -> Value {
+    ) -> Result<Value, CompilerError> {
         match e {
             parse::Expression::BinOp(op, e1, e2) => self.emit_tacky_binop(op, e1, e2, instructions),
             e => self.emit_tacky_factor(e, instructions),
@@ -40,9 +40,9 @@ impl Tacky {
         &mut self,
         f: &parse::Expression,
         instructions: &mut Vec<Instruction>,
-    ) -> Value {
+    ) -> Result<Value, CompilerError> {
         match f {
-            parse::Expression::Constant(i) => Value::Constant(*i),
+            parse::Expression::Constant(i) => Ok(Value::Constant(*i)),
             parse::Expression::Unary(op, inner) => self.emit_tacky_unaryop(op, &inner, instructions),
             e => self.emit_tacky_expr(e, instructions),
         }
@@ -53,8 +53,8 @@ impl Tacky {
         op: &parse::UnaryOperator,
         inner: &parse::Expression,
         instructions: &mut Vec<Instruction>,
-    ) -> Value {
-        let src = self.emit_tacky_factor(&inner, instructions);
+    ) -> Result<Value, CompilerError> {
+        let src = self.emit_tacky_factor(&inner, instructions)?;
         let dst_name = self.make_name();
         let dst = Value::Var(dst_name);
         let tacky_op = op.into();
@@ -63,7 +63,7 @@ impl Tacky {
             src,
             dst: dst.clone(),
         });
-        dst
+        Ok(dst)
     }
 
     fn emit_temp(&mut self, src: Value, instructions: &mut Vec<Instruction>) -> Value {
@@ -82,10 +82,10 @@ impl Tacky {
         e1: &parse::Expression,
         e2: &parse::Expression,
         instructions: &mut Vec<Instruction>,
-    ) -> Value {
+    ) -> Result<Value, CompilerError> {
         match op {
             parse::BinaryOperator::And => {
-                let v1 = self.emit_tacky_expr(e1, instructions);
+                let v1 = self.emit_tacky_expr(e1, instructions)?;
                 let v1 = self.emit_temp(v1, instructions);
                 let false_label = self.make_label("else".to_string());
                 let end = self.make_label("end".to_string());
@@ -93,7 +93,7 @@ impl Tacky {
                     condition: v1,
                     target: false_label.clone(),
                 });
-                let v2 = self.emit_tacky_expr(e2, instructions);
+                let v2 = self.emit_tacky_expr(e2, instructions)?;
                 let v2 = self.emit_temp(v2, instructions);
                 instructions.push(Instruction::JumpIfZero {
                     condition: v2,
@@ -115,10 +115,10 @@ impl Tacky {
                     dst: dst.clone(),
                 });
                 instructions.push(Instruction::Label { name: end });
-                dst
+                Ok(dst)
             }
             parse::BinaryOperator::Or => {
-                let v1 = self.emit_tacky_expr(e1, instructions);
+                let v1 = self.emit_tacky_expr(e1, instructions)?;
                 let v1 = self.emit_temp(v1, instructions);
 
                 let true_label = self.make_label("if".to_string());
@@ -127,7 +127,7 @@ impl Tacky {
                     condition: v1,
                     target: true_label.clone(),
                 });
-                let v2 = self.emit_tacky_expr(e2, instructions);
+                let v2 = self.emit_tacky_expr(e2, instructions)?;
                 let v2 = self.emit_temp(v2, instructions);
 
                 instructions.push(Instruction::JumpIfNotZero {
@@ -150,41 +150,41 @@ impl Tacky {
                     dst: dst.clone(),
                 });
                 instructions.push(Instruction::Label { name: end });
-                dst
+                Ok(dst)
             }
             _ => {
-                let src1 = self.emit_tacky_expr(e1, instructions);
-                let src2 = self.emit_tacky_expr(e2, instructions);
+                let src1 = self.emit_tacky_expr(e1, instructions)?;
+                let src2 = self.emit_tacky_expr(e2, instructions)?;
                 let dst_name = self.make_name();
                 let dst = Value::Var(dst_name);
-                let tacky_op = op.try_into().unwrap();//TODO
+                let tacky_op = op.try_into()?;
                 instructions.push(Instruction::Binary {
                     op: tacky_op,
                     src1,
                     src2,
                     dst: dst.clone(),
                 });
-                dst
+                Ok(dst)
             }
         }
     }
 
-    fn emit_tacky_function(&mut self, f: parse::Function) -> Function {
+    fn emit_tacky_function(&mut self, f: parse::Function) -> Result<Function, CompilerError> {
         let mut body = Vec::new();
         for statement in f.body {
             match statement {
                 parse::BlockItem::Statement(parse::Statement::Return(expression)) => {
-                    let value = self.emit_tacky_expr(&expression, &mut body);
+                    let value = self.emit_tacky_expr(&expression, &mut body)?;
                     body.push(Instruction::Return(value));
                 }
                 s => unimplemented!("Unimplemented Tacky statement {:?}", s),
             }
         }
-        Function { name: f.name, body }
+        Ok(Function { name: f.name, body })
     }
 
-    pub fn emit_tacky(&mut self, p: parse::Program) -> Program {
-        let function = self.emit_tacky_function(p.function);
-        Program { function }
+    pub fn emit_tacky(&mut self, p: parse::Program) -> Result<Program, CompilerError> {
+        let function = self.emit_tacky_function(p.function)?;
+        Ok( Program { function } )
     }
 }

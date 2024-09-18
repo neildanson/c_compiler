@@ -39,7 +39,7 @@ fn parse(filename: &str) -> Result<parse::Program> {
 fn tacky(filename: &str) -> Result<tacky::Program> {
     let ast = parse(filename)?;
     let mut tacky = Tacky::default();
-    let tacky = tacky.emit_tacky(ast);
+    let tacky = tacky.emit_tacky(ast)?;
     Ok(tacky)
 }
 
