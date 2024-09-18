@@ -96,7 +96,11 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
                 let dst = Operand::Register(Reg::AX);
                 Ok(vec![Instruction::Mov { src, dst }, Instruction::Ret])
             }
-            tacky::Instruction::Unary { op : tacky::UnaryOp::Not, src, dst } => {
+            tacky::Instruction::Unary {
+                op: tacky::UnaryOp::Not,
+                src,
+                dst,
+            } => {
                 let src = src.into();
                 let dst: Operand = dst.into();
                 Ok(vec![

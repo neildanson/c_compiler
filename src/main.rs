@@ -43,7 +43,7 @@ fn validate(filename: &str) -> Result<parse::Program> {
 }
 
 fn tacky(filename: &str) -> Result<tacky::Program> {
-    let ast = parse(filename)?;
+    let ast = validate(filename)?;
     let mut tacky = Tacky::default();
     let tacky = tacky.emit_tacky(ast)?;
     Ok(tacky)
@@ -114,11 +114,11 @@ fn main() -> Result<()> {
         let asm = validate(filename)?;
         if verbose_flag {
             println!("{:#?}", asm);
-        } else if tacky_file {
-            let ast = tacky(filename)?;
-            if verbose_flag {
-                println!("{:#?}", ast);
-            }
+        }
+    } else if tacky_file {
+        let ast = tacky(filename)?;
+        if verbose_flag {
+            println!("{:#?}", ast);
         }
     } else if codegen_file {
         let asm = codegen(filename)?;

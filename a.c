@@ -1,5 +1,6 @@
 int main(void) {
-    int a = 1;
-    int b = 2;
-    a = 3 * b == a;
+    int b;
+    int a = 10 + 1;
+    b = a * 2;
+    return b;
 }

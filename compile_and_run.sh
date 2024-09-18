@@ -2,8 +2,8 @@
 cargo test
 cargo build
 
-../writing-a-c-compiler-tests/test_compiler ./target/debug/c_compiler --chapter 4 --stage codegen
-../writing-a-c-compiler-tests/test_compiler ./target/debug/c_compiler --chapter 5 --stage parse 
+../writing-a-c-compiler-tests/test_compiler ./target/debug/c_compiler --chapter 5 --stage validate
+ 
 
 gcc -E -P main.c -o a.c
 cargo run -- --parse a.c
