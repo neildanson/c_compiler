@@ -77,12 +77,9 @@ impl TokenMapper {
 impl Tokenizer {
     pub fn new() -> Self {
         let token_mappers = vec![
-            TokenMapper::new(
-                r"^/[*]([^*]|([*][^/]))*[*]/",
-                Box::new(|s| Token::Comment(s)),
-            ),
-            TokenMapper::new(r"^//(.*)", Box::new(|s| Token::Comment(s))),
-            TokenMapper::new(r"^#(.*)", Box::new(|s| Token::PreProcessorDirective(s))),
+            TokenMapper::new(r"^/[*]([^*]|([*][^/]))*[*]/", Box::new(Token::Comment)),
+            TokenMapper::new(r"^//(.*)", Box::new(Token::Comment)),
+            TokenMapper::new(r"^#(.*)", Box::new(Token::PreProcessorDirective)),
             TokenMapper::new(r"^void\b", Box::new(|_| Token::Void)),
             TokenMapper::new(r"^return\b", Box::new(|_| Token::Return)),
             TokenMapper::new(r"^int\b", Box::new(|_| Token::Int)),
@@ -91,8 +88,8 @@ impl Tokenizer {
             TokenMapper::new(r"^\{", Box::new(|_| Token::LBrace)),
             TokenMapper::new(r"^\}", Box::new(|_| Token::RBrace)),
             TokenMapper::new(r"^;", Box::new(|_| Token::SemiColon)),
-            TokenMapper::new(r"^[a-zA-Z_]\w*\b", Box::new(|s| Token::Identifier(s))),
-            TokenMapper::new(r"^[0-9]+\b", Box::new(|s| Token::Constant(s))),
+            TokenMapper::new(r"^[a-zA-Z_]\w*\b", Box::new(Token::Identifier)),
+            TokenMapper::new(r"^[0-9]+\b", Box::new(Token::Constant)),
             TokenMapper::new(r"^~", Box::new(|_| Token::Tilde)),
             TokenMapper::new(r"^--", Box::new(|_| Token::DoubleNegation)),
             TokenMapper::new(r"^<=", Box::new(|_| Token::LessThanOrEqual)),
@@ -148,11 +145,7 @@ impl Tokenizer {
         }
         let tokens = tokens
             .into_iter()
-            .filter(|t| match t {
-                Token::Comment(_) => false,
-                Token::PreProcessorDirective(_) => false,
-                _ => true,
-            })
+            .filter(|t| !matches!(t, Token::Comment(_) | Token::PreProcessorDirective(_)))
             .collect();
         Ok(tokens)
     }

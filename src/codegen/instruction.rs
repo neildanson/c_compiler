@@ -96,7 +96,7 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
                 let dst = Operand::Register(Reg::AX);
                 Ok(vec![Instruction::Mov { src, dst }, Instruction::Ret])
             }
-            tacky::Instruction::Unary { op, src, dst } if op == tacky::UnaryOp::Not => {
+            tacky::Instruction::Unary { op : tacky::UnaryOp::Not, src, dst } => {
                 let src = src.into();
                 let dst: Operand = dst.into();
                 Ok(vec![
@@ -120,11 +120,11 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
                 ])
             }
             tacky::Instruction::Binary {
-                op,
+                op: tacky::BinaryOp::Divide,
                 src1,
                 src2,
                 dst,
-            } if op == tacky::BinaryOp::Divide => {
+            } => {
                 let src1 = src1.into();
                 let src2 = src2.into();
                 let dst = dst.into();
@@ -142,11 +142,11 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
                 ])
             }
             tacky::Instruction::Binary {
-                op,
+                op: tacky::BinaryOp::Remainder,
                 src1,
                 src2,
                 dst,
-            } if op == tacky::BinaryOp::Remainder => {
+            } => {
                 let src1 = src1.into();
                 let src2 = src2.into();
                 let dst = dst.into();

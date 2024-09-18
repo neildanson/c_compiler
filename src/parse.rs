@@ -93,27 +93,27 @@ fn precedence(tok: &Token) -> u16 {
 }
 
 fn is_binop(tok: &Token) -> bool {
-    match tok {
+    matches!(
+        tok,
         Token::Plus
-        | Token::Minus
-        | Token::Asterisk
-        | Token::Slash
-        | Token::Percent
-        | Token::ShiftLeft
-        | Token::ShiftRight
-        | Token::BitwiseAnd
-        | Token::BitwiseOr
-        | Token::BitwiseXor
-        | Token::And
-        | Token::Or
-        | Token::Equal
-        | Token::NotEqual
-        | Token::LessThan
-        | Token::GreaterThan
-        | Token::LessThanOrEqual
-        | Token::GreaterThanOrEqual => true,
-        _ => false,
-    }
+            | Token::Minus
+            | Token::Asterisk
+            | Token::Slash
+            | Token::Percent
+            | Token::ShiftLeft
+            | Token::ShiftRight
+            | Token::BitwiseAnd
+            | Token::BitwiseOr
+            | Token::BitwiseXor
+            | Token::And
+            | Token::Or
+            | Token::Equal
+            | Token::NotEqual
+            | Token::LessThan
+            | Token::GreaterThan
+            | Token::LessThanOrEqual
+            | Token::GreaterThanOrEqual
+    )
 }
 
 fn swallow_semicolon(tokens: &[Token]) -> Result<&[Token]> {
@@ -360,24 +360,16 @@ fn resolve_expression(
                 Box::new(expr2),
             ))
         }
-        Expression::Assignment(expr1, expr2) => {
-            match expr1.as_ref() {
-                Expression::Var(_name) => {
-                    let expr1 = resolve_expression(expr1, variable_map)?;
-                    let expr2 = resolve_expression(expr2, variable_map)?;
-                    return Ok(Expression::Assignment(
-                        Box::new(expr1),
-                        Box::new(expr2),
-                    ));
-                }
-                _ => {
-                    return Err(CompilerError::SemanticAnalysis(SemanticAnalysisError::InvalidLValue));
-                }
+        Expression::Assignment(expr1, expr2) => match expr1.as_ref() {
+            Expression::Var(_name) => {
+                let expr1 = resolve_expression(expr1, variable_map)?;
+                let expr2 = resolve_expression(expr2, variable_map)?;
+                Ok(Expression::Assignment(Box::new(expr1), Box::new(expr2)))
             }
-            //let expr1 = resolve_expression(expr1, variable_map)?;
-            //let expr2 = resolve_expression(expr2, variable_map)?;
-            //Ok(Expression::Assignment(Box::new(expr1), Box::new(expr2)))
-        }
+            _ => Err(CompilerError::SemanticAnalysis(
+                SemanticAnalysisError::InvalidLValue,
+            )),
+        },
         expr => Ok(expr.clone()),
     }
 }

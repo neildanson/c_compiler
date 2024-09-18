@@ -43,9 +43,7 @@ impl Tacky {
     ) -> Result<Value, CompilerError> {
         match f {
             parse::Expression::Constant(i) => Ok(Value::Constant(*i)),
-            parse::Expression::Unary(op, inner) => {
-                self.emit_tacky_unaryop(op, &inner, instructions)
-            }
+            parse::Expression::Unary(op, inner) => self.emit_tacky_unaryop(op, inner, instructions),
             e => self.emit_tacky_expr(e, instructions),
         }
     }
@@ -56,7 +54,7 @@ impl Tacky {
         inner: &parse::Expression,
         instructions: &mut Vec<Instruction>,
     ) -> Result<Value, CompilerError> {
-        let src = self.emit_tacky_factor(&inner, instructions)?;
+        let src = self.emit_tacky_factor(inner, instructions)?;
         let dst_name = self.make_name();
         let dst = Value::Var(dst_name);
         let tacky_op = op.into();
@@ -72,7 +70,7 @@ impl Tacky {
         let name = self.make_name();
         let dst = Value::Var(name.clone());
         instructions.push(Instruction::Copy {
-            src: src,
+            src,
             dst: dst.clone(),
         });
         dst

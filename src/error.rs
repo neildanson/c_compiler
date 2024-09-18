@@ -30,7 +30,7 @@ impl Display for SemanticAnalysisError {
             }
             SemanticAnalysisError::VariableNotDeclared(s) => {
                 write!(f, "Variable {} not declared", s)
-            },
+            }
             SemanticAnalysisError::InvalidLValue => write!(f, "Invalid LValue"),
         }
     }
