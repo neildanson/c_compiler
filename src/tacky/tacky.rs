@@ -1,5 +1,8 @@
 use super::*;
-use crate::{error::CompilerError, parse};
+use crate::{
+    error::CompilerError,
+    parse::{self},
+};
 use std::collections::HashMap;
 
 #[derive(Default)]
@@ -32,20 +35,18 @@ impl Tacky {
     ) -> Result<Value, CompilerError> {
         match e {
             parse::Expression::BinOp(op, e1, e2) => self.emit_tacky_binop(op, e1, e2, instructions),
-            parse::Expression::Assignment(lhs, rhs) => {
-                match lhs.as_ref() { 
-                    parse::Expression::Var(v) => {
-                        let src = self.emit_tacky_expr(rhs, instructions)?;
-                        instructions.push(Instruction::Copy {
-                            src,
-                            dst: Value::Var(v.clone()),
-                        });
-                        Ok(Value::Var(v.clone()))
-                    }
-                    e => self.emit_tacky_expr(e, instructions)
+            parse::Expression::Assignment(lhs, rhs) => match lhs.as_ref() {
+                parse::Expression::Var(v) => {
+                    let src = self.emit_tacky_expr(rhs, instructions)?;
+                    instructions.push(Instruction::Copy {
+                        src,
+                        dst: Value::Var(v.clone()),
+                    });
+                    Ok(Value::Var(v.clone()))
                 }
-            }
-            e =>  self.emit_tacky_factor(e, instructions)
+                e => self.emit_tacky_expr(e, instructions),
+            },
+            e => self.emit_tacky_factor(e, instructions),
         }
     }
 
@@ -197,14 +198,18 @@ impl Tacky {
                 }
                 parse::BlockItem::Declaration(decl) => {
                     let name = decl.name;
-                    let value = decl.value.map(|e| self.emit_tacky_expr(&e, &mut body)).transpose()?;
+                    let value = decl
+                        .value
+                        .map(|e| self.emit_tacky_expr(&e, &mut body))
+                        .transpose()?;
                     let value = value.unwrap_or(Value::Constant(0));
                     body.push(Instruction::Copy {
                         src: value,
                         dst: Value::Var(name),
                     });
                 }
-                s => unimplemented!("Unimplemented Tacky statement {:?}", s),
+                parse::BlockItem::Statement(parse::Statement::Null) => (),
+                //s => unimplemented!("Unimplemented Tacky statement {:?}", s),
             }
         }
         Ok(Function { name: f.name, body })
