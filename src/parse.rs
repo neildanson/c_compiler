@@ -1,6 +1,9 @@
 use std::collections::HashMap;
 
-use crate::{error::{CompilerError, SemanticAnalysisError}, lex::Token};
+use crate::{
+    error::{CompilerError, SemanticAnalysisError},
+    lex::Token,
+};
 use anyhow::Result;
 
 #[derive(Debug, PartialEq)]
@@ -132,11 +135,17 @@ fn parse_factor(tokens: &[Token]) -> Result<(Expression, &[Token])> {
         }
         [Token::Not, rest @ ..] => {
             let (factor, rest) = parse_factor(rest)?;
-            (Expression::Unary(UnaryOperator::Not, Box::new(factor)), rest)
+            (
+                Expression::Unary(UnaryOperator::Not, Box::new(factor)),
+                rest,
+            )
         }
         [Token::Tilde, rest @ ..] => {
             let (factor, rest) = parse_factor(rest)?;
-            (Expression::Unary(UnaryOperator::Tilde, Box::new(factor)), rest)
+            (
+                Expression::Unary(UnaryOperator::Tilde, Box::new(factor)),
+                rest,
+            )
         }
         [Token::LParen, rest @ ..] => {
             let (expression, rest) = parse_expression(rest, 0)?;
@@ -216,9 +225,7 @@ fn parse_statement(tokens: &[Token]) -> Result<(Statement, &[Token])> {
             let rest = swallow_semicolon(rest)?;
             (Statement::Return(expression), rest)
         }
-        [Token::SemiColon, rest @ ..] => {
-            (Statement::Null, rest)
-        },
+        [Token::SemiColon, rest @ ..] => (Statement::Null, rest),
 
         tok => {
             let statement = parse_expression(tok, 0)?;
@@ -230,17 +237,15 @@ fn parse_statement(tokens: &[Token]) -> Result<(Statement, &[Token])> {
     Ok((statement, tokens))
 }
 
-fn parse_declaration(tokens : &[Token]) -> Result<(Declaration, &[Token])> {
+fn parse_declaration(tokens: &[Token]) -> Result<(Declaration, &[Token])> {
     let (declaration, tokens) = match tokens {
-        [Token::Int, Token::Identifier(name), Token::SemiColon, rest @ ..] => {
-            (
-                Declaration {
-                    name: name.clone(),
-                    value: None,
-                },
-                rest,
-            )
-        }
+        [Token::Int, Token::Identifier(name), Token::SemiColon, rest @ ..] => (
+            Declaration {
+                name: name.clone(),
+                value: None,
+            },
+            rest,
+        ),
         [Token::Int, Token::Identifier(name), Token::Assignment, rest @ ..] => {
             println!("Declaration: {:?}", rest);
             let (expression, rest) = parse_expression(rest, 0)?;
@@ -263,7 +268,6 @@ fn parse_declaration(tokens : &[Token]) -> Result<(Declaration, &[Token])> {
 }
 
 fn parse_block_item(tokens: &[Token]) -> Result<(BlockItem, &[Token])> {
-
     let declaration = parse_declaration(tokens);
     if declaration.is_ok() {
         println!("Declaration");
@@ -300,7 +304,11 @@ fn parse_function(tokens: &[Token]) -> Result<(Function, &[Token])> {
             }
             let rest = match rest {
                 [Token::RBrace, rest @ ..] => rest,
-                rest => return Err(CompilerError::Parse(format!("Expected RBrace, got {:?}", rest)).into()),
+                rest => {
+                    return Err(
+                        CompilerError::Parse(format!("Expected RBrace, got {:?}", rest)).into(),
+                    )
+                }
             };
             (
                 Function {
@@ -327,34 +335,49 @@ pub fn parse_program(tokens: &[Token]) -> Result<Program> {
     Ok(Program { function })
 }
 
-
-fn resolve_expression(expr : &Expression, variable_map: &mut HashMap<String, String>) -> Result<Expression, CompilerError> {
+fn resolve_expression(
+    expr: &Expression,
+    variable_map: &mut HashMap<String, String>,
+) -> Result<Expression, CompilerError> {
     match expr {
         Expression::Var(name) => {
-            let unique_name = variable_map.get(name).ok_or(CompilerError::SemanticAnalysis(SemanticAnalysisError::VariableNotDeclared(name.clone())))?;
+            let unique_name = variable_map
+                .get(name)
+                .ok_or(CompilerError::SemanticAnalysis(
+                    SemanticAnalysisError::VariableNotDeclared(name.clone()),
+                ))?;
             Ok(Expression::Var(unique_name.clone()))
-        },
+        }
         Expression::Unary(op, expr) => {
             let expr = resolve_expression(expr, variable_map)?;
             Ok(Expression::Unary(op.clone(), Box::new(expr)))
-        },
+        }
         Expression::BinOp(op, expr1, expr2) => {
             let expr1 = resolve_expression(expr1, variable_map)?;
             let expr2 = resolve_expression(expr2, variable_map)?;
-            Ok(Expression::BinOp(op.clone(), Box::new(expr1), Box::new(expr2)))
-        },
+            Ok(Expression::BinOp(
+                op.clone(),
+                Box::new(expr1),
+                Box::new(expr2),
+            ))
+        }
         Expression::Assignment(expr1, expr2) => {
             let expr1 = resolve_expression(expr1, variable_map)?;
             let expr2 = resolve_expression(expr2, variable_map)?;
             Ok(Expression::Assignment(Box::new(expr1), Box::new(expr2)))
         }
-        expr => Ok(expr.clone())
+        expr => Ok(expr.clone()),
     }
 }
 
-fn resolve_declatation(decl : Declaration, variable_map: &mut HashMap<String, String>) -> Result<Declaration, CompilerError> {
+fn resolve_declatation(
+    decl: Declaration,
+    variable_map: &mut HashMap<String, String>,
+) -> Result<Declaration, CompilerError> {
     if variable_map.contains_key(&decl.name) {
-        return Err(CompilerError::SemanticAnalysis(crate::error::SemanticAnalysisError::VariableAlreadyDeclared(decl.name)));
+        return Err(CompilerError::SemanticAnalysis(
+            crate::error::SemanticAnalysisError::VariableAlreadyDeclared(decl.name),
+        ));
     }
     let unique_name = format!("__{}", variable_map.len());
     variable_map.insert(decl.name, unique_name.clone());
@@ -362,12 +385,46 @@ fn resolve_declatation(decl : Declaration, variable_map: &mut HashMap<String, St
         Some(expr) => {
             let expression = resolve_expression(&expr, variable_map)?;
             Some(expression)
-        },
-        None => {
-            None
         }
+        None => None,
     };
-    Ok(Declaration { name: unique_name, value: init })
+    Ok(Declaration {
+        name: unique_name,
+        value: init,
+    })
+}
+
+pub fn semantic_validation(program: Program) -> Result<Program, CompilerError> {
+    let mut variable_map = HashMap::new();
+    let mut new_body = Vec::new();
+    for item in program.function.body {
+        match item {
+            BlockItem::Declaration(decl) => {
+                let decl = resolve_declatation(decl, &mut variable_map)?;
+                new_body.push(BlockItem::Declaration(decl));
+            }
+            BlockItem::Statement(stmt) => {
+                let stmt = match stmt {
+                    Statement::Return(expr) => {
+                        let expr = resolve_expression(&expr, &mut variable_map)?;
+                        Statement::Return(expr)
+                    }
+                    Statement::Expression(expr) => {
+                        let expr = resolve_expression(&expr, &mut variable_map)?;
+                        Statement::Expression(expr)
+                    }
+                    Statement::Null => Statement::Null,
+                };
+                new_body.push(BlockItem::Statement(stmt));
+            }
+        }
+    }
+    Ok(Program {
+        function: Function {
+            name: program.function.name,
+            body: new_body,
+        },
+    })
 }
 
 #[cfg(test)]
@@ -380,13 +437,9 @@ mod tests {
         let tokenizer = Tokenizer::new();
         let tokens = tokenizer.tokenize("return 42;").unwrap();
         let (statement, rest) = parse_statement(&tokens).unwrap();
-        assert_eq!(
-            statement,
-            Statement::Return(Expression::Constant(42))
-        );
+        assert_eq!(statement, Statement::Return(Expression::Constant(42)));
         assert!(rest.is_empty());
     }
-     
 
     #[test]
     fn test_parse_expression() {
@@ -404,10 +457,7 @@ mod tests {
         let (expression, rest) = parse_expression(&tokens, 0).unwrap();
         assert_eq!(
             expression,
-            Expression::Unary(
-                UnaryOperator::Negation,
-                Box::new(Expression::Constant(42))
-            )
+            Expression::Unary(UnaryOperator::Negation, Box::new(Expression::Constant(42)))
         );
         assert!(rest.is_empty());
     }
@@ -421,7 +471,9 @@ mod tests {
             function,
             Function {
                 name: "main".to_string(),
-                body: vec![BlockItem::Statement(Statement::Return(Expression::Constant(42)))]
+                body: vec![BlockItem::Statement(Statement::Return(
+                    Expression::Constant(42)
+                ))]
             }
         );
         assert!(rest.is_empty());
@@ -444,7 +496,9 @@ int main(void) {
             function,
             Function {
                 name: "main".to_string(),
-                body: vec![BlockItem::Statement(Statement::Return(Expression::Constant(100)))]
+                body: vec![BlockItem::Statement(Statement::Return(
+                    Expression::Constant(100)
+                ))]
             }
         );
         assert!(rest.is_empty());

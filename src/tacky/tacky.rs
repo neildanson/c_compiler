@@ -1,6 +1,6 @@
+use super::*;
 use crate::{error::CompilerError, parse};
 use std::collections::HashMap;
-use super::*;
 
 #[derive(Default)]
 pub struct Tacky {
@@ -43,7 +43,9 @@ impl Tacky {
     ) -> Result<Value, CompilerError> {
         match f {
             parse::Expression::Constant(i) => Ok(Value::Constant(*i)),
-            parse::Expression::Unary(op, inner) => self.emit_tacky_unaryop(op, &inner, instructions),
+            parse::Expression::Unary(op, inner) => {
+                self.emit_tacky_unaryop(op, &inner, instructions)
+            }
             e => self.emit_tacky_expr(e, instructions),
         }
     }
@@ -185,6 +187,6 @@ impl Tacky {
 
     pub fn emit_tacky(&mut self, p: parse::Program) -> Result<Program, CompilerError> {
         let function = self.emit_tacky_function(p.function)?;
-        Ok( Program { function } )
+        Ok(Program { function })
     }
 }

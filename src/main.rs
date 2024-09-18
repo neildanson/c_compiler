@@ -4,7 +4,7 @@ use anyhow::Result;
 use clap::{arg, Command};
 
 use c_compiler::lex::*;
-use c_compiler::parse::parse_program;
+use c_compiler::parse::{parse_program, semantic_validation};
 use c_compiler::tacky::Tacky;
 use c_compiler::*;
 
@@ -34,6 +34,12 @@ fn parse(filename: &str) -> Result<parse::Program> {
     let tokens = lex(filename)?;
     let ast = parse_program(&tokens)?;
     Ok(ast)
+}
+
+fn validate(filename: &str) -> Result<parse::Program> {
+    let program = parse(filename)?;
+    let program = semantic_validation(program)?;
+    Ok(program)
 }
 
 fn tacky(filename: &str) -> Result<tacky::Program> {
@@ -104,12 +110,17 @@ fn main() -> Result<()> {
         if verbose_flag {
             println!("{:#?}", ast);
         }
-    } else if tacky_file {
-        let ast = tacky(filename)?;
+    } else if validate_file {
+        let asm = validate(filename)?;
         if verbose_flag {
-            println!("{:#?}", ast);
+            println!("{:#?}", asm);
+        } else if tacky_file {
+            let ast = tacky(filename)?;
+            if verbose_flag {
+                println!("{:#?}", ast);
+            }
         }
-    } else if codegen_file || validate_file {
+    } else if codegen_file {
         let asm = codegen(filename)?;
         if verbose_flag {
             println!("{:#?}", asm);

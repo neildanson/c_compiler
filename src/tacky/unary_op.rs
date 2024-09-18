@@ -7,7 +7,7 @@ pub enum UnaryOp {
     Not,
 }
 
-impl From <&parse::UnaryOperator> for UnaryOp {
+impl From<&parse::UnaryOperator> for UnaryOp {
     fn from(op: &parse::UnaryOperator) -> Self {
         match op {
             parse::UnaryOperator::Tilde => UnaryOp::Complement,

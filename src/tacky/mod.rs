@@ -1,15 +1,15 @@
-pub mod program;
+pub mod binary_op;
 pub mod function;
 pub mod instruction;
-pub mod unary_op;
-pub mod binary_op;
-pub mod value;
+pub mod program;
 pub mod tacky;
+pub mod unary_op;
+pub mod value;
 
-pub use program::*;
+pub use binary_op::*;
 pub use function::*;
 pub use instruction::*;
-pub use unary_op::*;
-pub use binary_op::*;
-pub use value::*;
+pub use program::*;
 pub use tacky::*;
+pub use unary_op::*;
+pub use value::*;

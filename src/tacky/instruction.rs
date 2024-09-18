@@ -1,4 +1,4 @@
-use super::{Value, UnaryOp, BinaryOp};
+use super::{BinaryOp, UnaryOp, Value};
 
 #[derive(Clone, Debug)]
 pub enum Instruction {

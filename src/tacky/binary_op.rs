@@ -1,5 +1,5 @@
+use crate::error::{CodeGenError, CompilerError};
 use crate::parse;
-use crate::error::{CompilerError, CodeGenError};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum BinaryOp {

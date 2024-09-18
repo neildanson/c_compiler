@@ -26,10 +26,10 @@ impl Display for SemanticAnalysisError {
         match self {
             SemanticAnalysisError::VariableAlreadyDeclared(s) => {
                 write!(f, "Variable {} already declared", s)
-            },
+            }
             SemanticAnalysisError::VariableNotDeclared(s) => {
                 write!(f, "Variable {} not declared", s)
-            },
+            }
         }
     }
 }
