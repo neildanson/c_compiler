@@ -1,5 +1,5 @@
 int main(void) {
-    int a;
-    a = 0 || 5;
-    return a;
+    int a = 1;
+    int b = 2;
+    a = 3 * b = a;
 }

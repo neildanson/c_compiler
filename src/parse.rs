@@ -247,7 +247,6 @@ fn parse_declaration(tokens: &[Token]) -> Result<(Declaration, &[Token])> {
             rest,
         ),
         [Token::Int, Token::Identifier(name), Token::Assignment, rest @ ..] => {
-            println!("Declaration: {:?}", rest);
             let (expression, rest) = parse_expression(rest, 0)?;
             let rest = swallow_semicolon(rest)?;
             (
@@ -383,7 +382,7 @@ fn resolve_declatation(
             crate::error::SemanticAnalysisError::VariableAlreadyDeclared(decl.name),
         ));
     }
-    let unique_name = format!("__{}", variable_map.len());
+    let unique_name = format!("{}__{}", decl.name, variable_map.len());
     variable_map.insert(decl.name, unique_name.clone());
     let init = match decl.value {
         Some(expr) => {
