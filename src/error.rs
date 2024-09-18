@@ -16,10 +16,30 @@ impl Display for CodeGenError {
 }
 
 #[derive(Debug)]
+pub enum SemanticAnalysisError {
+    VariableAlreadyDeclared(String),
+    VariableNotDeclared(String),
+}
+
+impl Display for SemanticAnalysisError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            SemanticAnalysisError::VariableAlreadyDeclared(s) => {
+                write!(f, "Variable {} already declared", s)
+            },
+            SemanticAnalysisError::VariableNotDeclared(s) => {
+                write!(f, "Variable {} not declared", s)
+            },
+        }
+    }
+}
+
+#[derive(Debug)]
 pub enum CompilerError {
     IO(std::io::Error),
     Lex,
     Parse(String),
+    SemanticAnalysis(SemanticAnalysisError),
     CodeGen(CodeGenError),
 }
 
@@ -29,6 +49,7 @@ impl Display for CompilerError {
             CompilerError::IO(err) => write!(f, "{}", err),
             CompilerError::Lex => write!(f, "Lexing Error"),
             CompilerError::Parse(s) => write!(f, "Parsing Error : {}", s),
+            CompilerError::SemanticAnalysis(s) => write!(f, "Semantic Analysis Error : {}", s),
             CompilerError::CodeGen(c) => write!(f, "Code Generation Error : {}", c),
         }
     }

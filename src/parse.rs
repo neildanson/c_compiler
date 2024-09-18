@@ -1,4 +1,6 @@
-use crate::{error::CompilerError, lex::Token};
+use std::collections::HashMap;
+
+use crate::{error::{CompilerError, SemanticAnalysisError}, lex::Token};
 use anyhow::Result;
 
 #[derive(Debug, PartialEq)]
@@ -31,7 +33,7 @@ pub enum Statement {
     Null,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Expression {
     Constant(i32),
     Var(String),
@@ -40,14 +42,14 @@ pub enum Expression {
     Assignment(Box<Expression>, Box<Expression>),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum UnaryOperator {
     Negation,
     Tilde,
     Not,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum BinaryOperator {
     Add,
     Sub,
@@ -323,6 +325,49 @@ pub fn parse_program(tokens: &[Token]) -> Result<Program> {
         return Err(CompilerError::Parse("Garbage found after function".to_string()).into());
     }
     Ok(Program { function })
+}
+
+
+fn resolve_expression(expr : &Expression, variable_map: &mut HashMap<String, String>) -> Result<Expression, CompilerError> {
+    match expr {
+        Expression::Var(name) => {
+            let unique_name = variable_map.get(name).ok_or(CompilerError::SemanticAnalysis(SemanticAnalysisError::VariableNotDeclared(name.clone())))?;
+            Ok(Expression::Var(unique_name.clone()))
+        },
+        Expression::Unary(op, expr) => {
+            let expr = resolve_expression(expr, variable_map)?;
+            Ok(Expression::Unary(op.clone(), Box::new(expr)))
+        },
+        Expression::BinOp(op, expr1, expr2) => {
+            let expr1 = resolve_expression(expr1, variable_map)?;
+            let expr2 = resolve_expression(expr2, variable_map)?;
+            Ok(Expression::BinOp(op.clone(), Box::new(expr1), Box::new(expr2)))
+        },
+        Expression::Assignment(expr1, expr2) => {
+            let expr1 = resolve_expression(expr1, variable_map)?;
+            let expr2 = resolve_expression(expr2, variable_map)?;
+            Ok(Expression::Assignment(Box::new(expr1), Box::new(expr2)))
+        }
+        expr => Ok(expr.clone())
+    }
+}
+
+fn resolve_declatation(decl : Declaration, variable_map: &mut HashMap<String, String>) -> Result<Declaration, CompilerError> {
+    if variable_map.contains_key(&decl.name) {
+        return Err(CompilerError::SemanticAnalysis(crate::error::SemanticAnalysisError::VariableAlreadyDeclared(decl.name)));
+    }
+    let unique_name = format!("__{}", variable_map.len());
+    variable_map.insert(decl.name, unique_name.clone());
+    let init = match decl.value {
+        Some(expr) => {
+            let expression = resolve_expression(&expr, variable_map)?;
+            Some(expression)
+        },
+        None => {
+            None
+        }
+    };
+    Ok(Declaration { name: unique_name, value: init })
 }
 
 #[cfg(test)]
