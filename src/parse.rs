@@ -352,6 +352,11 @@ fn resolve_expression(
         }
         Expression::BinOp(op, expr1, expr2) => {
             let expr1 = resolve_expression(expr1, variable_map)?;
+            if let Expression::Assignment(_, _) = expr2.as_ref() {
+                return Err(CompilerError::SemanticAnalysis(
+                    SemanticAnalysisError::InvalidLValue,
+                ));
+            }
             let expr2 = resolve_expression(expr2, variable_map)?;
             Ok(Expression::BinOp(
                 op.clone(),
@@ -369,7 +374,7 @@ fn resolve_expression(
                 SemanticAnalysisError::InvalidLValue,
             )),
         },
-        expr => Ok(expr.clone()),
+        Expression::Constant(_) => Ok(expr.clone()),
     }
 }
 
