@@ -209,7 +209,7 @@ impl Tacky {
                     });
                 }
                 parse::BlockItem::Statement(parse::Statement::Null) => (),
-                //s => unimplemented!("Unimplemented Tacky statement {:?}", s),
+                s => unimplemented!("Unimplemented Tacky statement {:?}", s),
             }
         }
         Ok(Function { name: f.name, body })

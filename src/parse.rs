@@ -33,6 +33,7 @@ pub struct Declaration {
 pub enum Statement {
     Return(Expression),
     Expression(Expression),
+    If(Expression, Box<Statement>, Option<Box<Statement>>),
     Null,
 }
 
@@ -404,6 +405,29 @@ fn resolve_declatation(
     })
 }
 
+fn semantic_validation_statement(stmt : &Statement, variable_map: &mut HashMap<String, String>) -> Result<Statement, CompilerError> {
+    match stmt {
+        Statement::Return(expr) => {
+            let expr = resolve_expression(&expr, variable_map)?;
+            Ok(Statement::Return(expr))
+        }
+        Statement::Expression(expr) => {
+            let expr = resolve_expression(&expr, variable_map)?;
+            Ok(Statement::Expression(expr))
+        }
+        Statement::If(expr, then, els) => {
+            let expr = resolve_expression(&expr, variable_map)?;
+            let then = semantic_validation_statement(then.as_ref(), variable_map)?;
+            let els = match els {
+                Some(els) => Some(Box::new(semantic_validation_statement(els, variable_map)?)),
+                None => None,
+            };
+            Ok(Statement::If(expr, Box::new(then), els))
+        }
+        Statement::Null => Ok(Statement::Null),
+    }
+}
+
 pub fn semantic_validation(program: Program) -> Result<Program, CompilerError> {
     let mut variable_map = HashMap::new();
     let mut new_body = Vec::new();
@@ -414,17 +438,7 @@ pub fn semantic_validation(program: Program) -> Result<Program, CompilerError> {
                 new_body.push(BlockItem::Declaration(decl));
             }
             BlockItem::Statement(stmt) => {
-                let stmt = match stmt {
-                    Statement::Return(expr) => {
-                        let expr = resolve_expression(&expr, &mut variable_map)?;
-                        Statement::Return(expr)
-                    }
-                    Statement::Expression(expr) => {
-                        let expr = resolve_expression(&expr, &mut variable_map)?;
-                        Statement::Expression(expr)
-                    }
-                    Statement::Null => Statement::Null,
-                };
+                let stmt = semantic_validation_statement(&stmt, &mut variable_map)?;
                 new_body.push(BlockItem::Statement(stmt));
             }
         }
