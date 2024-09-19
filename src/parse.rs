@@ -229,7 +229,18 @@ fn parse_statement(tokens: &[Token]) -> Result<(Statement, &[Token])> {
             (Statement::Return(expression), rest)
         }
         [Token::SemiColon, rest @ ..] => (Statement::Null, rest),
-
+        [Token::If, rest @ ..] => { //TODO handle brackets (required)
+            let (expression, rest) = parse_expression(rest, 0)?;
+            let (then, rest) = parse_statement(rest)?;
+            let (els, rest) = match rest {
+                [Token::Else, rest @ ..] => {
+                    let (els, rest) = parse_statement(rest)?;
+                    (Some(Box::new(els)), rest)
+                }
+                rest => (None, rest),
+            };
+            (Statement::If(expression, Box::new(then), els), rest)
+        }
         tok => {
             let statement = parse_expression(tok, 0)?;
             let (expression, rest) = statement;
