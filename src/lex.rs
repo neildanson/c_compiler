@@ -12,6 +12,8 @@ pub enum Token {
     Int,                           //int\b
     Void,                          //void\b
     Return,                        //return\b
+    If,                            //if\b
+    Else,                          //else\b
     LParen,                        //\(
     RParen,                        //\)
     LBrace,                        //{
@@ -39,6 +41,8 @@ pub enum Token {
     LessThanOrEqual,               //<=
     GreaterThanOrEqual,            //>=
     Assignment,                    //=
+    QuestionMark,                  //?
+    Colon,                         //:
 }
 
 pub struct Tokenizer {
@@ -83,6 +87,8 @@ impl Tokenizer {
             TokenMapper::new(r"^void\b", Box::new(|_| Token::Void)),
             TokenMapper::new(r"^return\b", Box::new(|_| Token::Return)),
             TokenMapper::new(r"^int\b", Box::new(|_| Token::Int)),
+            TokenMapper::new(r"^if\b", Box::new(|_| Token::If)),
+            TokenMapper::new(r"^else\b", Box::new(|_| Token::Else)),
             TokenMapper::new(r"^\(", Box::new(|_| Token::LParen)),
             TokenMapper::new(r"^\)", Box::new(|_| Token::RParen)),
             TokenMapper::new(r"^\{", Box::new(|_| Token::LBrace)),
@@ -112,6 +118,8 @@ impl Tokenizer {
             TokenMapper::new(r"^<", Box::new(|_| Token::LessThan)),
             TokenMapper::new(r"^>", Box::new(|_| Token::GreaterThan)),
             TokenMapper::new(r"^=", Box::new(|_| Token::Assignment)),
+            TokenMapper::new(r"^\?", Box::new(|_| Token::QuestionMark)),
+            TokenMapper::new(r"^:", Box::new(|_| Token::Colon)),
         ];
 
         Tokenizer { token_mappers }
