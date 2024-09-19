@@ -118,11 +118,15 @@ fn is_binop(tok: &Token) -> bool {
     )
 }
 
-fn swallow_semicolon(tokens: &[Token]) -> Result<&[Token]> {
+fn swallow_one(exp: Token, tokens: &[Token]) -> Result<&[Token]> {
     match tokens {
-        [Token::SemiColon, rest @ ..] => Ok(rest),
-        _ => Err(CompilerError::Parse("Expected SemiColon".to_string()).into()),
+        [tok, rest @ ..] if *tok == exp => Ok(rest),
+        _ => Err(CompilerError::Parse(format!("Expected {:?}", exp)).into()),
     }
+}
+
+fn swallow_semicolon(tokens: &[Token]) -> Result<&[Token]> {
+    swallow_one(Token::SemiColon, tokens)
 }
 
 fn parse_factor(tokens: &[Token]) -> Result<(Expression, &[Token])> {
@@ -229,8 +233,9 @@ fn parse_statement(tokens: &[Token]) -> Result<(Statement, &[Token])> {
             (Statement::Return(expression), rest)
         }
         [Token::SemiColon, rest @ ..] => (Statement::Null, rest),
-        [Token::If, rest @ ..] => { //TODO handle brackets (required)
+        [Token::If, Token::LParen, rest @ ..] => { 
             let (expression, rest) = parse_expression(rest, 0)?;
+            let rest = swallow_one(Token::RParen, rest)?;
             let (then, rest) = parse_statement(rest)?;
             let (els, rest) = match rest {
                 [Token::Else, rest @ ..] => {
