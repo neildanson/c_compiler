@@ -64,6 +64,28 @@ impl Tacky {
         }
     }
 
+    fn emit_tacky_conditional(&mut self, cond : &parse::Expression, then : &parse::Expression, els : &Box<parse::Expression>, instructions: &mut Vec<Instruction>) -> Result<Value, CompilerError> {
+        let cond = self.emit_tacky_expr(cond, instructions)?;
+        let cond = self.emit_temp(cond, instructions);
+        let else_label = self.make_label("else".to_string());
+        let end_label = self.make_label("end".to_string());
+        instructions.push(Instruction::JumpIfZero {
+            condition: cond,
+            target: else_label.clone(),
+        });
+        self.emit_tacky_expr(then, instructions)?;
+        
+        instructions.push(Instruction::Jump {
+            target: end_label.clone(),
+        });
+        instructions.push(Instruction::Label { name: else_label });
+        
+        self.emit_tacky_expr(els, instructions)?;
+        
+        instructions.push(Instruction::Label { name: end_label });
+        Ok(Value::Constant(0)) //Unused
+    }
+
     fn emit_tacky_factor(
         &mut self,
         f: &parse::Expression,
@@ -73,6 +95,7 @@ impl Tacky {
             parse::Expression::Constant(i) => Ok(Value::Constant(*i)),
             parse::Expression::Unary(op, inner) => self.emit_tacky_unaryop(op, inner, instructions),
             parse::Expression::Var(v) => Ok(Value::Var(v.clone())),
+            parse::Expression::Conditional(cond, then, els) => self.emit_tacky_conditional(cond.as_ref(), then.as_ref(), els, instructions),
             e => self.emit_tacky_expr(e, instructions),
         }
     }
