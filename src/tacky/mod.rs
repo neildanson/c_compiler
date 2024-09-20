@@ -198,18 +198,55 @@ impl Tacky {
         }
     }
 
+    fn emit_tacky_statement(
+        &mut self,
+        s: &parse::Statement,
+        instructions: &mut Vec<Instruction>,
+    ) -> Result<(), CompilerError> {
+        match s {
+            parse::Statement::If(cond, then , _els) => {
+                let cond = self.emit_tacky_expr(&cond, instructions)?;
+                let cond = self.emit_temp(cond, instructions);
+                let else_label = self.make_label("else".to_string());
+                let end_label = self.make_label("end".to_string());
+                instructions.push(Instruction::JumpIfZero {
+                    condition: cond,
+                    target: else_label.clone(),
+                });
+                self.emit_tacky_statement(&then, instructions)?;
+                
+                instructions.push(Instruction::Jump {
+                    target: end_label.clone(),
+                });
+                instructions.push(Instruction::Label { name: else_label });
+                
+                if let Some(els) = _els {
+                    self.emit_tacky_statement(&els, instructions)?;
+                }
+                
+                instructions.push(Instruction::Label { name: end_label });
+                Ok(())
+            }
+            parse::Statement::Return(e) => {
+                let value = self.emit_tacky_expr(e, instructions)?;
+                instructions.push(Instruction::Return(value));
+                Ok(())
+            }
+            parse::Statement::Expression(e) => {
+                let _value = self.emit_tacky_expr(e, instructions)?;
+                Ok(())
+            }
+            parse::Statement::Null => Ok(()),
+            s => unimplemented!("Unimplemented Tacky statement {:?}", s),
+        }
+    }
+
+
     fn emit_tacky_function(&mut self, f: parse::Function) -> Result<Function, CompilerError> {
         let mut body = Vec::new();
         for statement in f.body {
             match statement {
-                parse::BlockItem::Statement(parse::Statement::Return(expression)) => {
-                    let value = self.emit_tacky_expr(&expression, &mut body)?;
-                    body.push(Instruction::Return(value));
-                }
-                parse::BlockItem::Statement(parse::Statement::Expression(expression)) => {
-                    println!("Expr {:?}", expression);
-                    let _value = self.emit_tacky_expr(&expression, &mut body)?; //Do I need return value?
-                }
+                parse::BlockItem::Statement(s) => self.emit_tacky_statement(&s, &mut body)?,
                 parse::BlockItem::Declaration(decl) => {
                     let name = decl.name;
                     let value = decl
@@ -222,8 +259,7 @@ impl Tacky {
                         dst: Value::Var(name),
                     });
                 }
-                parse::BlockItem::Statement(parse::Statement::Null) => (),
-                s => unimplemented!("Unimplemented Tacky statement {:?}", s),
+                //s => unimplemented!("Unimplemented Tacky statement {:?}", s),
             }
         }
         Ok(Function { name: f.name, body })
