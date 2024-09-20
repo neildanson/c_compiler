@@ -397,11 +397,6 @@ fn resolve_expression(
         }
         Expression::BinOp(op, expr1, expr2) => {
             let expr1 = resolve_expression(expr1, variable_map)?;
-            //if let Expression::Assignment(_, _) = expr2.as_ref() {
-            //    return Err(CompilerError::SemanticAnalysis(
-            //        SemanticAnalysisError::InvalidLValue,
-            //    ));
-            //}
             let expr2 = resolve_expression(expr2, variable_map)?;
             Ok(Expression::BinOp(
                 op.clone(),
@@ -460,15 +455,15 @@ fn resolve_declatation(
 fn semantic_validation_statement(stmt : &Statement, variable_map: &mut HashMap<String, String>) -> Result<Statement, CompilerError> {
     match stmt {
         Statement::Return(expr) => {
-            let expr = resolve_expression(&expr, variable_map)?;
+            let expr = resolve_expression(expr, variable_map)?;
             Ok(Statement::Return(expr))
         }
         Statement::Expression(expr) => {
-            let expr = resolve_expression(&expr, variable_map)?;
+            let expr = resolve_expression(expr, variable_map)?;
             Ok(Statement::Expression(expr))
         }
         Statement::If(expr, then, els) => {
-            let expr = resolve_expression(&expr, variable_map)?;
+            let expr = resolve_expression(expr, variable_map)?;
             let then = semantic_validation_statement(then.as_ref(), variable_map)?;
             let els = match els {
                 Some(els) => Some(Box::new(semantic_validation_statement(els, variable_map)?)),
