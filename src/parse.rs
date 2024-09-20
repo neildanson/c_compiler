@@ -44,6 +44,7 @@ pub enum Expression {
     Unary(UnaryOperator, Box<Expression>),
     BinOp(BinaryOperator, Box<Expression>, Box<Expression>),
     Assignment(Box<Expression>, Box<Expression>),
+    Conditional(Box<Expression>, Box<Expression>, Box<Expression>),
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -80,6 +81,7 @@ fn precedence(tok: &Token) -> u16 {
         Token::ShiftLeft | Token::ShiftRight => 1,
         Token::BitwiseAnd | Token::BitwiseOr | Token::BitwiseXor => 1,
         Token::Assignment => 1,
+        Token::QuestionMark => 3,
         Token::Or => 5,
         Token::And => 10,
         Token::Equal | Token::NotEqual => 30,
@@ -115,6 +117,7 @@ fn is_binop(tok: &Token) -> bool {
             | Token::LessThanOrEqual
             | Token::GreaterThanOrEqual
             | Token::Assignment
+            | Token::QuestionMark
     )
 }
 
@@ -127,6 +130,14 @@ fn swallow_one(exp: Token, tokens: &[Token]) -> Result<&[Token]> {
 
 fn swallow_semicolon(tokens: &[Token]) -> Result<&[Token]> {
     swallow_one(Token::SemiColon, tokens)
+}
+
+fn expect(exp: Token, tok: &[Token]) -> Result<()> {
+    if Some(&exp) == tok.first() {
+        Ok(())
+    } else {
+        Err(CompilerError::Parse(format!("Expected {:?}, got {:?}", exp, tok)).into())
+    }
 }
 
 fn parse_factor(tokens: &[Token]) -> Result<(Expression, &[Token])> {
@@ -162,6 +173,7 @@ fn parse_factor(tokens: &[Token]) -> Result<(Expression, &[Token])> {
             (expression, rest)
         }
         [Token::Identifier(name), rest @ ..] => (Expression::Var(name.clone()), rest),
+        
         toks => {
             return Err(CompilerError::Parse(format!("Factor Unexpected Tokens {:?}", toks)).into())
         }
@@ -215,6 +227,19 @@ fn parse_expression(tokens: &[Token], min_precedence: u16) -> Result<(Expression
             continue;
         }
 
+        if next_token == &Token::QuestionMark {
+            let (then_expr, rest) = parse_expression(&tokens[1..], 0)?;
+            let rest = swallow_one(Token::Colon, rest)?;
+            let (else_expr, new_tokens) = parse_expression(rest, 0)?;
+            tokens = new_tokens;
+            left_expr = Expression::Conditional(
+                Box::new(left_expr),
+                Box::new(then_expr),
+                Box::new(else_expr),
+            );
+            continue;
+        }
+
         let (binop, rest) = parse_binop(tokens)?;
 
         let (right_expr, new_tokens) = parse_expression(rest, precedence(next_token) + 1)?;
@@ -257,6 +282,7 @@ fn parse_statement(tokens: &[Token]) -> Result<(Statement, &[Token])> {
 }
 
 fn parse_declaration(tokens: &[Token]) -> Result<(Declaration, &[Token])> {
+    //println!("{:?}", tokens);
     let (declaration, tokens) = match tokens {
         [Token::Int, Token::Identifier(name), Token::SemiColon, rest @ ..] => (
             Declaration {
@@ -394,6 +420,16 @@ fn resolve_expression(
             )),
         },
         Expression::Constant(_) => Ok(expr.clone()),
+        Expression::Conditional(cond, then, els) => {
+            let cond = resolve_expression(cond, variable_map)?;
+            let then = resolve_expression(then, variable_map)?;
+            let els = resolve_expression(els, variable_map)?;
+            Ok(Expression::Conditional(
+                Box::new(cond),
+                Box::new(then),
+                Box::new(els),
+            ))
+        }
     }
 }
 
