@@ -205,7 +205,7 @@ impl Tacky {
     ) -> Result<(), CompilerError> {
         match s {
             parse::Statement::If(cond, then , _els) => {
-                let cond = self.emit_tacky_expr(&cond, instructions)?;
+                let cond = self.emit_tacky_expr(cond, instructions)?;
                 let cond = self.emit_temp(cond, instructions);
                 let else_label = self.make_label("else".to_string());
                 let end_label = self.make_label("end".to_string());
@@ -213,7 +213,7 @@ impl Tacky {
                     condition: cond,
                     target: else_label.clone(),
                 });
-                self.emit_tacky_statement(&then, instructions)?;
+                self.emit_tacky_statement(then, instructions)?;
                 
                 instructions.push(Instruction::Jump {
                     target: end_label.clone(),
@@ -221,7 +221,7 @@ impl Tacky {
                 instructions.push(Instruction::Label { name: else_label });
                 
                 if let Some(els) = _els {
-                    self.emit_tacky_statement(&els, instructions)?;
+                    self.emit_tacky_statement(els, instructions)?;
                 }
                 
                 instructions.push(Instruction::Label { name: end_label });
@@ -237,7 +237,7 @@ impl Tacky {
                 Ok(())
             }
             parse::Statement::Null => Ok(()),
-            s => unimplemented!("Unimplemented Tacky statement {:?}", s),
+            //s => unimplemented!("Unimplemented Tacky statement {:?}", s),
         }
     }
 
