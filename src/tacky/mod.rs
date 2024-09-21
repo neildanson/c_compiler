@@ -56,6 +56,7 @@ impl Tacky {
                         src,
                         dst: Value::Var(v.clone()),
                     });
+                    println!("Assignment to {}", v);
                     Ok(Value::Var(v.clone()))
                 }
                 e => self.emit_tacky_expr(e, instructions),
@@ -227,27 +228,36 @@ impl Tacky {
         instructions: &mut Vec<Instruction>,
     ) -> Result<(), CompilerError> {
         match s {
-            parse::Statement::If(cond, then , _els) => {
+            parse::Statement::If(cond, then , els) => {
                 let cond = self.emit_tacky_expr(cond, instructions)?;
                 let cond = self.emit_temp(cond, instructions);
                 let else_label = self.make_label("else".to_string());
                 let end_label = self.make_label("end".to_string());
-                instructions.push(Instruction::JumpIfZero {
-                    condition: cond,
-                    target: else_label.clone(),
-                });
-                self.emit_tacky_statement(then, instructions)?;
-                
-                instructions.push(Instruction::Jump {
-                    target: end_label.clone(),
-                });
-                instructions.push(Instruction::Label { name: else_label });
-                
-                if let Some(els) = _els {
-                    self.emit_tacky_statement(els, instructions)?;
+
+                match els {
+                    None => {
+                        instructions.push(Instruction::JumpIfZero {
+                            condition: cond,
+                            target: end_label.clone(),
+                        });
+                        self.emit_tacky_statement(then, instructions)?;
+                        instructions.push(Instruction::Label { name: end_label });
+                    }
+                    Some (els) => {
+                        instructions.push(Instruction::JumpIfZero {
+                            condition: cond,
+                            target: else_label.clone(),
+                        });
+                        self.emit_tacky_statement(then, instructions)?;
+                        instructions.push(Instruction::Jump {
+                            target: end_label.clone(),
+                        });
+                        instructions.push(Instruction::Label { name: else_label });
+                        self.emit_tacky_statement(els, instructions)?;
+                        instructions.push(Instruction::Label { name: end_label });
+                    }
                 }
-                
-                instructions.push(Instruction::Label { name: end_label });
+
                 Ok(())
             }
             parse::Statement::Return(e) => {

@@ -7,7 +7,7 @@ cargo build
  
 
 gcc -E -P main.c -o a.c
-cargo run -- --parse a.c
+cargo run -- --codegen a.c --S
 
 gcc a.s
 time ./a.out
