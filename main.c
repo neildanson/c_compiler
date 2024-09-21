@@ -1,9 +1,4 @@
 int main(void) {
-    int x = 0;
-    if (x) 
-        x = 1;
-    else 
-        x = 2;
-
+    int x = 1 ? 2 : 3;
     return x;
 }
