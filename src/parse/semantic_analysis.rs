@@ -98,6 +98,7 @@ fn semantic_validation_statement(
             };
             Ok(Statement::If(expr, Box::new(then), els))
         }
+        Statement::Compound(bi) => Ok(Statement::Compound(bi.to_vec())),
         Statement::Null => Ok(Statement::Null),
     }
 }

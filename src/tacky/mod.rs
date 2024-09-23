@@ -288,7 +288,7 @@ impl Tacky {
                 Ok(())
             }
             parse::Statement::Null => Ok(()),
-            //s => unimplemented!("Unimplemented Tacky statement {:?}", s),
+            s => unimplemented!("Unimplemented Tacky statement {:?}", s),
         }
     }
 

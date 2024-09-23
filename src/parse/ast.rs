@@ -10,23 +10,24 @@ pub struct Function {
     pub body: Vec<BlockItem>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum BlockItem {
     Declaration(Declaration),
     Statement(Statement),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Declaration {
     pub name: String,
     pub value: Option<Expression>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Statement {
     Return(Expression),
     Expression(Expression),
     If(Expression, Box<Statement>, Option<Box<Statement>>),
+    Compound(Vec<BlockItem>),
     Null,
 }
 
