@@ -173,7 +173,7 @@ fn parse_factor(tokens: &[Token]) -> Result<(Expression, &[Token])> {
             (expression, rest)
         }
         [Token::Identifier(name), rest @ ..] => (Expression::Var(name.clone()), rest),
-        
+
         toks => {
             return Err(CompilerError::Parse(format!("Factor Unexpected Tokens {:?}", toks)).into())
         }
@@ -211,6 +211,12 @@ fn parse_binop(tokens: &[Token]) -> Result<(BinaryOperator, &[Token])> {
     Ok((binop, tokens))
 }
 
+fn parse_conditional_middle(tokens: &[Token]) -> Result<(Expression, &[Token])> {
+    let (expression, tokens) = parse_expression(tokens, 0)?;
+    let rest = swallow_one(Token::Colon, tokens)?;
+    Ok((expression, rest))
+}
+
 fn parse_expression(tokens: &[Token], min_precedence: u16) -> Result<(Expression, &[Token])> {
     let left = parse_factor(tokens)?;
     let (mut left_expr, mut tokens) = left;
@@ -228,9 +234,8 @@ fn parse_expression(tokens: &[Token], min_precedence: u16) -> Result<(Expression
         }
 
         if next_token == &Token::QuestionMark {
-            let (then_expr, rest) = parse_expression(&tokens[1..], 0)?;
-            let rest = swallow_one(Token::Colon, rest)?;
-            let (else_expr, new_tokens) = parse_expression(rest, 0)?;
+            let (then_expr, rest) = parse_conditional_middle(&tokens[1..])?;
+            let (else_expr, new_tokens) = parse_expression(rest, precedence(next_token))?;
             tokens = new_tokens;
             left_expr = Expression::Conditional(
                 Box::new(left_expr),
@@ -258,7 +263,7 @@ fn parse_statement(tokens: &[Token]) -> Result<(Statement, &[Token])> {
             (Statement::Return(expression), rest)
         }
         [Token::SemiColon, rest @ ..] => (Statement::Null, rest),
-        [Token::If, Token::LParen, rest @ ..] => { 
+        [Token::If, Token::LParen, rest @ ..] => {
             let (expression, rest) = parse_expression(rest, 0)?;
             let rest = swallow_one(Token::RParen, rest)?;
             let (then, rest) = parse_statement(rest)?;
@@ -452,7 +457,10 @@ fn resolve_declatation(
     })
 }
 
-fn semantic_validation_statement(stmt : &Statement, variable_map: &mut HashMap<String, String>) -> Result<Statement, CompilerError> {
+fn semantic_validation_statement(
+    stmt: &Statement,
+    variable_map: &mut HashMap<String, String>,
+) -> Result<Statement, CompilerError> {
     match stmt {
         Statement::Return(expr) => {
             let expr = resolve_expression(expr, variable_map)?;

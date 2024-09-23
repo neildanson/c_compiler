@@ -12,7 +12,6 @@ pub use program::*;
 pub use unary_op::*;
 pub use value::*;
 
-
 use crate::{
     error::CompilerError,
     parse::{self},
@@ -65,7 +64,13 @@ impl Tacky {
         }
     }
 
-    fn emit_tacky_conditional(&mut self, cond : &parse::Expression, then : &parse::Expression, els : &Box<parse::Expression>, instructions: &mut Vec<Instruction>) -> Result<Value, CompilerError> {
+    fn emit_tacky_conditional(
+        &mut self,
+        cond: &parse::Expression,
+        then: &parse::Expression,
+        els: &Box<parse::Expression>,
+        instructions: &mut Vec<Instruction>,
+    ) -> Result<Value, CompilerError> {
         let cond = self.emit_tacky_expr(cond, instructions)?;
         let cond = self.emit_temp(cond, instructions);
         let result = Value::Var(self.make_name());
@@ -82,21 +87,20 @@ impl Tacky {
             src: v1,
             dst: result.clone(),
         });
-        
 
         instructions.push(Instruction::Jump {
             target: end_label.clone(),
         });
         instructions.push(Instruction::Label { name: else_label });
-        
+
         let v2 = self.emit_tacky_expr(els, instructions)?;
         instructions.push(Instruction::Copy {
             src: v2,
             dst: result.clone(),
         });
-        
+
         instructions.push(Instruction::Label { name: end_label });
-        Ok(result) 
+        Ok(result)
     }
 
     fn emit_tacky_factor(
@@ -108,7 +112,9 @@ impl Tacky {
             parse::Expression::Constant(i) => Ok(Value::Constant(*i)),
             parse::Expression::Unary(op, inner) => self.emit_tacky_unaryop(op, inner, instructions),
             parse::Expression::Var(v) => Ok(Value::Var(v.clone())),
-            parse::Expression::Conditional(cond, then, els) => self.emit_tacky_conditional(cond.as_ref(), then.as_ref(), els, instructions),
+            parse::Expression::Conditional(cond, then, els) => {
+                self.emit_tacky_conditional(cond.as_ref(), then.as_ref(), els, instructions)
+            }
             e => self.emit_tacky_expr(e, instructions),
         }
     }
@@ -240,7 +246,7 @@ impl Tacky {
         instructions: &mut Vec<Instruction>,
     ) -> Result<(), CompilerError> {
         match s {
-            parse::Statement::If(cond, then , els) => {
+            parse::Statement::If(cond, then, els) => {
                 let cond = self.emit_tacky_expr(cond, instructions)?;
                 let cond = self.emit_temp(cond, instructions);
                 let else_label = self.make_label("else".to_string());
@@ -255,7 +261,7 @@ impl Tacky {
                         self.emit_tacky_statement(then, instructions)?;
                         instructions.push(Instruction::Label { name: end_label });
                     }
-                    Some (els) => {
+                    Some(els) => {
                         instructions.push(Instruction::JumpIfZero {
                             condition: cond,
                             target: else_label.clone(),
@@ -286,7 +292,6 @@ impl Tacky {
         }
     }
 
-
     fn emit_tacky_function(&mut self, f: parse::Function) -> Result<Function, CompilerError> {
         let mut body = Vec::new();
         for statement in f.body {
@@ -303,8 +308,7 @@ impl Tacky {
                         src: value,
                         dst: Value::Var(name),
                     });
-                }
-                //s => unimplemented!("Unimplemented Tacky statement {:?}", s),
+                } //s => unimplemented!("Unimplemented Tacky statement {:?}", s),
             }
         }
         Ok(Function { name: f.name, body })
