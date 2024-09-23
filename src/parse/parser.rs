@@ -207,6 +207,32 @@ fn parse_statement(tokens: &[Token]) -> Result<(Statement, &[Token])> {
             };
             (Statement::If(expression, Box::new(then), els), rest)
         }
+        [Token::LBrace, rest @ ..] => {
+            let mut statements = Vec::new();
+            let mut rest = rest;
+            let mut is_ok = true;
+            while is_ok {
+                let result = parse_block_item(rest);
+                match result {
+                    Ok((block_item, new_rest)) => {
+                        statements.push(block_item);
+                        rest = new_rest;
+                    }
+                    Err(_) => {
+                        is_ok = false;
+                    }
+                }
+            }
+            let rest = match rest {
+                [Token::RBrace, rest @ ..] => rest,
+                rest => {
+                    return Err(
+                        CompilerError::Parse(format!("Expected RBrace, got {:?}", rest)).into(),
+                    )
+                }
+            };
+            (Statement::Compound(statements), rest)
+        }
         tok => {
             let statement = parse_expression(tok, 0)?;
             let (expression, rest) = statement;
