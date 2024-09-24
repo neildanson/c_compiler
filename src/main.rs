@@ -1,65 +1,8 @@
-use std::io::{Read, Write};
 
-use anyhow::Result;
 use clap::{arg, Command};
 
-use c_compiler::lex::*;
-use c_compiler::parse::{parse_program, semantic_validation};
-use c_compiler::tacky::Tacky;
 use c_compiler::*;
-
-fn read_file(filename: &str) -> Result<String> {
-    let file = std::fs::File::open(filename)?;
-    let mut buff = std::io::BufReader::new(file);
-    let mut contents = String::new();
-    buff.read_to_string(&mut contents)?;
-    Ok(contents)
-}
-
-fn write_file(filename: &str, contents: &str) -> Result<()> {
-    let file = std::fs::File::create(filename)?;
-    let mut buff = std::io::BufWriter::new(file);
-    buff.write_all(contents.as_bytes())?;
-    Ok(())
-}
-
-fn lex(filename: &str) -> Result<Vec<Token>> {
-    let tokenizer = Tokenizer::new();
-    let input = read_file(filename)?;
-    let tokens = tokenizer.tokenize(&input)?;
-    Ok(tokens)
-}
-
-fn parse(filename: &str) -> Result<parse::Program> {
-    let tokens = lex(filename)?;
-    let ast = parse_program(&tokens)?;
-    Ok(ast)
-}
-
-fn validate(filename: &str) -> Result<parse::Program> {
-    let program = parse(filename)?;
-    let program = semantic_validation(program)?;
-    Ok(program)
-}
-
-fn tacky(filename: &str) -> Result<tacky::Program> {
-    let ast = validate(filename)?;
-    let mut tacky = Tacky::default();
-    let tacky = tacky.emit_tacky(ast)?;
-    Ok(tacky)
-}
-
-fn codegen(filename: &str) -> Result<codegen::Program> {
-    let ast = tacky(filename)?;
-    let asm = ast.try_into()?;
-    Ok(asm)
-}
-
-fn write_asm(filename: &str, asm: &codegen::Program) -> Result<()> {
-    let asm = asm.to_string();
-    write_file(filename, &asm)?;
-    Ok(())
-}
+use anyhow::Result;
 
 //gcc asm.s
 //./a.out
