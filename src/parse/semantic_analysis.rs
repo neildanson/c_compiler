@@ -2,18 +2,50 @@ use crate::error::*;
 use super::ast::*;   
 use std::collections::HashMap;
 
+#[derive(Debug)]
+struct MapEntry {
+    unique_name: String,
+    from_current_scope: bool,   
+}
+
+impl Clone for MapEntry {
+    fn clone(&self) -> Self {
+        MapEntry {
+            unique_name: self.unique_name.clone(),
+            from_current_scope: false, //Is this a bit naughty changing on clone?
+        }
+    }
+}
+
+impl From<String> for MapEntry {
+    fn from(name: String) -> Self {
+        MapEntry {
+            unique_name: name,
+            from_current_scope: true,
+        }
+    }
+}
+
+fn copy_variable_map(variable_map: &HashMap<String, MapEntry>) -> HashMap<String, MapEntry> {
+    let mut new_map = HashMap::new();
+    for (key, value) in variable_map.iter() {
+        new_map.insert(key.clone(), value.clone());
+    }
+    new_map
+}
+
 fn resolve_expression(
     expr: &Expression,
-    variable_map: &mut HashMap<String, String>,
+    variable_map: &mut HashMap<String, MapEntry>,
 ) -> Result<Expression, CompilerError> {
     match expr {
         Expression::Var(name) => {
-            let unique_name = variable_map
+            let map_entry = variable_map
                 .get(name)
                 .ok_or(CompilerError::SemanticAnalysis(
                     SemanticAnalysisError::VariableNotDeclared(name.clone()),
                 ))?;
-            Ok(Expression::Var(unique_name.clone()))
+            Ok(Expression::Var(map_entry.unique_name.clone()))
         }
         Expression::Unary(op, expr) => {
             let expr = resolve_expression(expr, variable_map)?;
@@ -52,17 +84,17 @@ fn resolve_expression(
     }
 }
 
-fn resolve_declatation(
+fn resolve_declaration(
     decl: Declaration,
-    variable_map: &mut HashMap<String, String>,
+    variable_map: &mut HashMap<String, MapEntry>,
 ) -> Result<Declaration, CompilerError> {
-    if variable_map.contains_key(&decl.name) {
+    if variable_map.contains_key(&decl.name) && variable_map[&decl.name].from_current_scope {
         return Err(CompilerError::SemanticAnalysis(
             crate::error::SemanticAnalysisError::VariableAlreadyDeclared(decl.name),
         ));
     }
     let unique_name = format!("{}__{}", decl.name, variable_map.len());
-    variable_map.insert(decl.name, unique_name.clone());
+    variable_map.insert(decl.name, unique_name.clone().into());
     let init = match decl.value {
         Some(expr) => {
             let expression = resolve_expression(&expr, variable_map)?;
@@ -76,9 +108,29 @@ fn resolve_declatation(
     })
 }
 
-fn semantic_validation_statement(
+fn resolve_block(
+    blocks: &[BlockItem],
+    variable_map: &mut HashMap<String, MapEntry>,
+) -> Result<Vec<BlockItem>, CompilerError> {
+    let mut new_block = Vec::new();
+    for item in blocks {
+        match item {
+            BlockItem::Declaration(decl) => {
+                let decl = resolve_declaration(decl.clone(),variable_map)?;
+                new_block.push(BlockItem::Declaration(decl));
+            }
+            BlockItem::Statement(stmt) => {
+                let stmt = resolve_statement(stmt, variable_map)?;
+                new_block.push(BlockItem::Statement(stmt));
+            }
+        }
+    }
+    Ok(new_block)
+}
+
+fn resolve_statement(
     stmt: &Statement,
-    variable_map: &mut HashMap<String, String>,
+    variable_map: &mut HashMap<String, MapEntry>,
 ) -> Result<Statement, CompilerError> {
     match stmt {
         Statement::Return(expr) => {
@@ -91,14 +143,18 @@ fn semantic_validation_statement(
         }
         Statement::If(expr, then, els) => {
             let expr = resolve_expression(expr, variable_map)?;
-            let then = semantic_validation_statement(then.as_ref(), variable_map)?;
+            let then = resolve_statement(then.as_ref(), variable_map)?;
             let els = match els {
-                Some(els) => Some(Box::new(semantic_validation_statement(els, variable_map)?)),
+                Some(els) => Some(Box::new(resolve_statement(els, variable_map)?)),
                 None => None,
             };
             Ok(Statement::If(expr, Box::new(then), els))
         }
-        Statement::Compound(bi) => Ok(Statement::Compound(bi.to_vec())),
+        Statement::Compound(blocks) => {
+            let mut new_variable_map = copy_variable_map(variable_map);
+            let blocks = resolve_block(blocks, &mut new_variable_map)?;
+            Ok(Statement::Compound(blocks))
+        },
         Statement::Null => Ok(Statement::Null),
     }
 }
@@ -109,11 +165,11 @@ pub fn semantic_validation(program: Program) -> Result<Program, CompilerError> {
     for item in program.function.body {
         match item {
             BlockItem::Declaration(decl) => {
-                let decl = resolve_declatation(decl, &mut variable_map)?;
+                let decl = resolve_declaration(decl, &mut variable_map)?;
                 new_body.push(BlockItem::Declaration(decl));
             }
             BlockItem::Statement(stmt) => {
-                let stmt = semantic_validation_statement(&stmt, &mut variable_map)?;
+                let stmt = resolve_statement(&stmt, &mut variable_map)?;
                 new_body.push(BlockItem::Statement(stmt));
             }
         }
