@@ -240,6 +240,25 @@ impl Tacky {
         }
     }
 
+    fn emit_tacky_decl(
+        &mut self,
+        d: &parse::Declaration,
+        instructions: &mut Vec<Instruction>,
+    ) -> Result<(), CompilerError> {
+        let name = d.name.clone();
+        let value = d
+            .value
+            .as_ref()
+            .map(|e| self.emit_tacky_expr(e, instructions))
+            .transpose()?;
+        let value = value.unwrap_or(Value::Constant(0));
+        instructions.push(Instruction::Copy {
+            src: value,
+            dst: Value::Var(name),
+        });
+        Ok(())
+    }
+
     fn emit_tacky_statement(
         &mut self,
         s: &parse::Statement,
@@ -288,7 +307,19 @@ impl Tacky {
                 Ok(())
             }
             parse::Statement::Null => Ok(()),
-            s => unimplemented!("Unimplemented Tacky statement {:?}", s),
+            parse::Statement::Compound(block) => {
+                for item in block {
+                    match item {
+                        parse::BlockItem::Declaration(decl) => {
+                            self.emit_tacky_decl(decl, instructions)?;
+                        }
+                        parse::BlockItem::Statement(s) => {
+                            self.emit_tacky_statement(s, instructions)?;
+                        }                    
+                    }
+                }
+                Ok(())
+            }
         }
     }
 
@@ -298,16 +329,7 @@ impl Tacky {
             match statement {
                 parse::BlockItem::Statement(s) => self.emit_tacky_statement(&s, &mut body)?,
                 parse::BlockItem::Declaration(decl) => {
-                    let name = decl.name;
-                    let value = decl
-                        .value
-                        .map(|e| self.emit_tacky_expr(&e, &mut body))
-                        .transpose()?;
-                    let value = value.unwrap_or(Value::Constant(0));
-                    body.push(Instruction::Copy {
-                        src: value,
-                        dst: Value::Var(name),
-                    });
+                    self.emit_tacky_decl(&decl, &mut body)?;
                 } //s => unimplemented!("Unimplemented Tacky statement {:?}", s),
             }
         }

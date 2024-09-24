@@ -2,8 +2,7 @@
 cargo test --release
 cargo build --release
 
-../writing-a-c-compiler-tests/test_compiler ./target/release/c_compiler --chapter 6 --stage codegen
-../writing-a-c-compiler-tests/test_compiler ./target/release/c_compiler --chapter 7 --stage validate
+../writing-a-c-compiler-tests/test_compiler ./target/release/c_compiler --chapter 7 --stage codegen
  
 
 gcc -E -P main.c -o a.c
