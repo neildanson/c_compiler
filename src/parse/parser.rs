@@ -63,14 +63,6 @@ fn swallow_semicolon(tokens: &[Token]) -> Result<&[Token]> {
     swallow_one(Token::SemiColon, tokens)
 }
 
-fn expect(exp: Token, tok: &[Token]) -> Result<()> {
-    if Some(&exp) == tok.first() {
-        Ok(())
-    } else {
-        Err(CompilerError::Parse(format!("Expected {:?}, got {:?}", exp, tok)).into())
-    }
-}
-
 fn parse_factor(tokens: &[Token]) -> Result<(Expression, &[Token])> {
     let (factor, tokens) = match tokens {
         [Token::Constant(c), rest @ ..] => (Expression::Constant(c.parse().unwrap()), rest),
