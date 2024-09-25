@@ -1,8 +1,10 @@
 int main(void) {
-    int a = 2;
-    
-    do {
+    int a = 0;
+    for (; ; ) {
         a = a + 1;
-    } while (a < 5);
+        if (a > 3)
+            break;
+    }
+
     return a;
 }

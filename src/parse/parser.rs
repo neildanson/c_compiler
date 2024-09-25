@@ -52,6 +52,13 @@ fn is_binop(tok: &Token) -> bool {
     )
 }
 
+fn expect(exp:Token, tokens: &[Token]) -> Result<&[Token]> {
+    match tokens {
+        [tok, rest @ ..] if *tok == exp => Ok(rest),
+        _ => Err(CompilerError::Parse(format!("Expected {:?}", exp)).into()),
+    }
+}
+
 fn swallow_one(exp: Token, tokens: &[Token]) -> Result<&[Token]> {
     match tokens {
         [tok, rest @ ..] if *tok == exp => Ok(rest),
@@ -178,6 +185,30 @@ fn parse_expression(tokens: &[Token], min_precedence: u16) -> Result<(Expression
     Ok(result)
 }
 
+fn parse_optional_expression(tokens: &[Token]) -> Result<(Option<Expression>, &[Token])> {
+    let expression = parse_expression(tokens, 0);
+    match expression {
+        Ok((expression, rest)) => Ok((Some(expression), rest)),
+        _ => {
+            expect(Token::SemiColon, tokens)?;
+            Ok((None, tokens))
+        }
+    }
+}
+
+fn parse_for_init(tokens: &[Token]) -> Result<(ForInit, &[Token])> {
+    let decl = parse_declaration(tokens);
+    match decl {
+        Ok((decl, rest)) => {
+            return Ok((ForInit::InitDeclaration(decl), rest));
+        }
+        _ => {
+            let (expression, rest) = parse_optional_expression(tokens)?;
+            return Ok((ForInit::InitExpression(expression), rest));
+        }
+    }
+}
+
 fn parse_statement(tokens: &[Token]) -> Result<(Statement, &[Token])> {
     let (statement, tokens) = match tokens {
         [Token::Return, rest @ ..] => {
@@ -245,6 +276,15 @@ fn parse_statement(tokens: &[Token]) -> Result<(Statement, &[Token])> {
         [Token::Continue, rest @ ..] => {
             let rest = swallow_semicolon(rest)?;
             (Statement::Continue, rest)
+        }
+        [Token::For, Token::LParen, rest @ ..] => {
+            let (init, rest) = parse_for_init(rest)?;
+            let (condition, rest) = parse_optional_expression(rest)?;
+            let rest = swallow_semicolon(rest)?;
+            let (post, rest) = parse_optional_expression(rest)?;
+            let rest = swallow_one(Token::RParen, rest)?;
+            let (statement, rest) = parse_statement(rest)?;
+            (Statement::For(init, condition, post, Box::new(statement)), rest)
         }
         tok => {
             let statement = parse_expression(tok, 0)?;

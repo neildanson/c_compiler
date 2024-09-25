@@ -25,7 +25,7 @@ pub struct Declaration {
 #[derive(Clone, Debug, PartialEq)]
 pub enum ForInit {
     InitDeclaration(Declaration),
-    InitExpression(Expression),
+    InitExpression(Option<Expression>),
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -39,7 +39,7 @@ pub enum Statement {
     Continue,
     While(Expression, Box<Statement>),
     DoWhile(Box<Statement>, Expression),
-    For(Option<ForInit>, Option<Expression>, Option<Expression>, Box<Statement>),
+    For(ForInit, Option<Expression>, Option<Expression>, Box<Statement>),
 }
 
 #[derive(Clone, Debug, PartialEq)]
