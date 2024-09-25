@@ -1,7 +1,9 @@
 int main(void) {
-    int a = 2;
-    for (int i = 0; i < 10; i= i + 1) {
-        a = a + i;
+    int a = 0;
+    for (; ; ) {
+        a = a + 1;
+        if (a > 3)
+            break;
     }
     return a;
 }

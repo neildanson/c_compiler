@@ -188,9 +188,10 @@ fn parse_expression(tokens: &[Token], min_precedence: u16) -> Result<(Expression
 fn parse_optional_expression(tokens: &[Token]) -> Result<(Option<Expression>, &[Token])> {
     let expression = parse_expression(tokens, 0);
     match expression {
-        Ok((expression, rest)) => Ok((Some(expression), rest)),
+        Ok((expression, rest)) => {
+            Ok((Some(expression), rest))
+        },
         _ => {
-            expect(Token::SemiColon, tokens)?;
             Ok((None, tokens))
         }
     }
@@ -279,10 +280,13 @@ fn parse_statement(tokens: &[Token]) -> Result<(Statement, &[Token])> {
         }
         [Token::For, Token::LParen, rest @ ..] => {
             let (init, rest) = parse_for_init(rest)?;
+            let rest = swallow_one(Token::SemiColon, rest)?;
+            println!("{:?}, {:?}", init, rest);
             let (condition, rest) = parse_optional_expression(rest)?;
-            let rest = swallow_semicolon(rest)?;
+            let rest = swallow_one(Token::SemiColon, rest)?;
             let (post, rest) = parse_optional_expression(rest)?;
             let rest = swallow_one(Token::RParen, rest)?;
+            println!("here4");
             let (statement, rest) = parse_statement(rest)?;
             (Statement::For(init, condition, post, Box::new(statement)), rest)
         }
