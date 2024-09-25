@@ -1,9 +1,8 @@
 int main(void) {
-    int a = 1;
-    int c;
-    if (a == 1) {
-        int b = 2;
-        c = a + b;
+    int a = 2;
+    {
+        int b = 47;
+        a = b;
     }
-    return c;
+    return a;
 }

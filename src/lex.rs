@@ -43,6 +43,11 @@ pub enum Token {
     Assignment,                    //=
     QuestionMark,                  //?
     Colon,                         //:
+    Do,                            //do\b
+    While,                         //while\b
+    For,                           //for\b
+    Break,                         //break\b
+    Continue,                      //continue\b
 }
 
 pub struct Tokenizer {
@@ -89,6 +94,11 @@ impl Tokenizer {
             TokenMapper::new(r"^int\b", Box::new(|_| Token::Int)),
             TokenMapper::new(r"^if\b", Box::new(|_| Token::If)),
             TokenMapper::new(r"^else\b", Box::new(|_| Token::Else)),
+            TokenMapper::new(r"^do\b", Box::new(|_| Token::Do)),
+            TokenMapper::new(r"^while\b", Box::new(|_| Token::While)),
+            TokenMapper::new(r"^for\b", Box::new(|_| Token::For)),
+            TokenMapper::new(r"^break\b", Box::new(|_| Token::Break)),
+            TokenMapper::new(r"^continue\b", Box::new(|_| Token::Continue)),
             TokenMapper::new(r"^\(", Box::new(|_| Token::LParen)),
             TokenMapper::new(r"^\)", Box::new(|_| Token::RParen)),
             TokenMapper::new(r"^\{", Box::new(|_| Token::LBrace)),
