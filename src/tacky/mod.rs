@@ -55,7 +55,6 @@ impl Tacky {
                         src,
                         dst: Value::Var(v.clone()),
                     });
-                    println!("Assignment to {}", v);
                     Ok(Value::Var(v.clone()))
                 }
                 e => self.emit_tacky_expr(e, instructions),
@@ -320,6 +319,7 @@ impl Tacky {
                 }
                 Ok(())
             }
+            s => unimplemented!("Unimplemented Tacky statement {:?}", s),
         }
     }
 

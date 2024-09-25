@@ -225,6 +225,27 @@ fn parse_statement(tokens: &[Token]) -> Result<(Statement, &[Token])> {
             };
             (Statement::Compound(statements), rest)
         }
+        [Token::Do, rest @ ..] => {
+            let (statement, rest) = parse_statement(rest)?;
+            let rest = swallow_one(Token::While, rest)?;
+            let (expression, rest) = parse_expression(rest, 0)?;
+            let rest = swallow_semicolon(rest)?;
+            (Statement::DoWhile(Box::new(statement), expression), rest)
+        }
+        [Token::While, Token::LParen, rest @ ..] => {
+            let (expression, rest) = parse_expression(rest, 0)?;
+            let rest = swallow_one(Token::RParen, rest)?;
+            let (statement, rest) = parse_statement(rest)?;
+            (Statement::While(expression, Box::new(statement)), rest)
+        }
+        [Token::Break, rest @ ..] => {
+            let rest = swallow_semicolon(rest)?;
+            (Statement::Break, rest)
+        }
+        [Token::Continue, rest @ ..] => {
+            let rest = swallow_semicolon(rest)?;
+            (Statement::Continue, rest)
+        }
         tok => {
             let statement = parse_expression(tok, 0)?;
             let (expression, rest) = statement;

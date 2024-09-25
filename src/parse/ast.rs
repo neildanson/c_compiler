@@ -23,12 +23,23 @@ pub struct Declaration {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+pub enum ForInit {
+    InitDeclaration(Declaration),
+    InitExpression(Expression),
+}
+
+#[derive(Clone, Debug, PartialEq)]
 pub enum Statement {
     Return(Expression),
     Expression(Expression),
     If(Expression, Box<Statement>, Option<Box<Statement>>),
     Compound(Vec<BlockItem>),
     Null,
+    Break,
+    Continue,
+    While(Expression, Box<Statement>),
+    DoWhile(Box<Statement>, Expression),
+    For(Option<ForInit>, Option<Expression>, Option<Expression>, Box<Statement>),
 }
 
 #[derive(Clone, Debug, PartialEq)]

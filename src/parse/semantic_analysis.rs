@@ -156,6 +156,7 @@ fn resolve_statement(
             Ok(Statement::Compound(blocks))
         },
         Statement::Null => Ok(Statement::Null),
+        d => Ok(d.clone()), //TODO: Implement the rest of the statements
     }
 }
 
