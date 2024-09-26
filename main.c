@@ -1,5 +1,9 @@
 int main(void) {
-    int a = 2
-    a = a + 4;
+    int a = 12345;
+    int i;
+
+    for (i = 5; i >= 0; i = i - 1)
+        a = a / 3;
+
     return a;
 }

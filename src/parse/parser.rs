@@ -188,12 +188,14 @@ fn parse_optional_expression(tokens: &[Token]) -> Result<(Option<Expression>, &[
 
 fn parse_for_init(tokens: &[Token]) -> Result<(ForInit, &[Token])> {
     let decl = parse_declaration(tokens);
+    
     match decl {
         Ok((decl, rest)) => {
             return Ok((ForInit::InitDeclaration(decl), rest));
         }
         _ => {
             let (expression, rest) = parse_optional_expression(tokens)?;
+            let rest = swallow_semicolon(rest)?;
             return Ok((ForInit::InitExpression(expression), rest));
         }
     }
@@ -269,7 +271,6 @@ fn parse_statement(tokens: &[Token]) -> Result<(Statement, &[Token])> {
         }
         [Token::For, Token::LParen, rest @ ..] => {
             let (init, rest) = parse_for_init(rest)?;
-            let rest = swallow_semicolon(rest)?;
             let (condition, rest) = parse_optional_expression(rest)?;
             let rest = swallow_semicolon(rest)?;
             let (post, rest) = parse_optional_expression(rest)?;
@@ -288,14 +289,7 @@ fn parse_statement(tokens: &[Token]) -> Result<(Statement, &[Token])> {
 }
 
 fn parse_declaration(tokens: &[Token]) -> Result<(Declaration, &[Token])> {
-    let (declaration, tokens) = match tokens {
-        [Token::Int, Token::Identifier(name), Token::SemiColon, rest @ ..] => (
-            Declaration {
-                name: name.clone(),
-                value: None,
-            },
-            rest,
-        ),
+    let (declaration, rest) = match tokens {
         [Token::Int, Token::Identifier(name), Token::Assignment, rest @ ..] => {
             let (expression, rest) = parse_expression(rest, 0)?;
             (
@@ -306,13 +300,22 @@ fn parse_declaration(tokens: &[Token]) -> Result<(Declaration, &[Token])> {
                 rest,
             )
         }
+        [Token::Int, Token::Identifier(name), rest @ ..] => (
+            Declaration {
+                name: name.clone(),
+                value: None,
+            },
+            rest,
+        ),
+        
         toks => {
             return Err(
                 CompilerError::Parse(format!("Declaration Unexpected Tokens {:?}", toks)).into(),
             )
         }
     };
-    Ok((declaration, tokens))
+    let rest = swallow_semicolon(rest)?;
+    Ok((declaration, rest))
 }
 
 fn parse_block_item(tokens: &[Token]) -> Result<(BlockItem, &[Token])> {
