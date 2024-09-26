@@ -201,10 +201,10 @@ fn resolve_statement(
     }
 }
 
-pub fn semantic_validation(program: Program) -> Result<Program, CompilerError> {
+fn resolve_function(function: Function,) -> Result<Function, CompilerError> {
     let mut variable_map = HashMap::new();
     let mut new_body = Vec::new();
-    for item in program.function.body {
+    for item in function.body {
         match item {
             BlockItem::Declaration(decl) => {
                 let decl = resolve_declaration(decl, &mut variable_map)?;
@@ -216,10 +216,15 @@ pub fn semantic_validation(program: Program) -> Result<Program, CompilerError> {
             }
         }
     }
+    Ok(Function {
+        name: function.name,
+        body: new_body,
+    })
+}
+
+pub fn semantic_validation(program: Program) -> Result<Program, CompilerError> {
+    let function = resolve_function(program.function)?;
     Ok(Program {
-        function: Function {
-            name: program.function.name,
-            body: new_body,
-        },
+        function,
     })
 }
