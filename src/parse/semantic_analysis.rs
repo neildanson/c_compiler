@@ -128,6 +128,25 @@ fn resolve_block(
     Ok(new_block)
 }
 
+fn resolve_for_init(
+    init: &ForInit,
+    variable_map: &mut HashMap<String, MapEntry>,
+) -> Result<ForInit, CompilerError> {
+    match init {
+        ForInit::InitDeclaration(decl) => {
+            let decl = resolve_declaration(decl.clone(), variable_map)?;
+            Ok(ForInit::InitDeclaration(decl))
+        }
+        ForInit::InitExpression(Some(expr)) => {
+            let expr = resolve_expression(expr, variable_map)?;
+            Ok(ForInit::InitExpression(Some(expr)))
+        }
+        ForInit::InitExpression(None) => {
+            Ok(ForInit::InitExpression(None))
+        }
+    }
+}
+
 fn resolve_statement(
     stmt: &Statement,
     variable_map: &mut HashMap<String, MapEntry>,
@@ -157,10 +176,28 @@ fn resolve_statement(
         },
         Statement::Null => Ok(Statement::Null),
         Statement::For(init, cond , post , body) => {
-            
-            Err(CompilerError::SemanticAnalysis(SemanticAnalysisError::NotImplemented))
+            let for_init = resolve_for_init(init, variable_map)?;
+            let cond = cond.clone().map(|expr| resolve_expression(&expr, variable_map)).transpose()?;
+            let post = post.clone().map(|expr| resolve_expression(&expr, variable_map)).transpose()?;
+            let mut new_variable_map = copy_variable_map(variable_map);
+            let body = resolve_statement(body, &mut new_variable_map)?;
+            Ok(Statement::For(for_init, cond, post, Box::new(body)))
         }
-        d => Ok(d.clone()), //TODO: Implement the rest of the statements
+        Statement::DoWhile(body, cond ) => {
+            let mut new_variable_map = copy_variable_map(variable_map);
+            let body = resolve_statement(body, &mut new_variable_map)?;
+            let cond = resolve_expression(cond, variable_map)?;
+            Ok(Statement::DoWhile(Box::new(body), cond))
+        }
+        Statement::While(cond, body) => {
+            let cond = resolve_expression(cond, variable_map)?;
+            let mut new_variable_map = copy_variable_map(variable_map);
+            let body = resolve_statement(body, &mut new_variable_map)?;
+            Ok(Statement::While(cond, Box::new(body)))
+        }
+        Statement::Break => Ok(Statement::Break),
+        Statement::Continue => Ok(Statement::Continue),
+        //d => Ok(d.clone()), //TODO: Implement the rest of the statements
     }
 }
 

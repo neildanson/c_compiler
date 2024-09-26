@@ -1,7 +1,8 @@
 int main(void) {
-    int a = 12345;
-    int i;
-    for (i = 5; i >= 0; i = i - 1)
-        a = a / 3;
-    return a;
+    int shadow = 1;
+    int acc = 0;
+    for (int shadow = 0; shadow < 10; shadow = shadow + 1) {
+        acc = acc + shadow;
+    }
+    return acc == 45 && shadow == 1;
 }
