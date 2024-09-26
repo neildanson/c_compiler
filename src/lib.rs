@@ -6,9 +6,10 @@ pub mod parse;
 pub mod tacky;
 
 use crate::lex::*;
-use crate::parse::{parse_program, semantic_validation};
+use crate::parse::parse_program;
 use crate::tacky::Tacky;
 use anyhow::Result;
+use parse::Analysis;
 use std::io::{Read, Write};
 
 pub fn read_file(filename: &str) -> Result<String> {
@@ -42,7 +43,8 @@ pub fn parse(filename: &str) -> Result<parse::Program> {
 
 pub fn validate(filename: &str) -> Result<parse::Program> {
     let program = parse(filename)?;
-    let program = semantic_validation(program)?;
+    let mut analysis = Analysis::default();
+    let program = analysis.semantic_validation(program)?;
     Ok(program)
 }
 

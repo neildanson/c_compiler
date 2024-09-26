@@ -181,9 +181,7 @@ fn parse_for_init(tokens: &[Token]) -> Result<(ForInit, &[Token])> {
     let decl = parse_declaration(tokens);
 
     match decl {
-        Ok((decl, rest)) => {
-            Ok((ForInit::InitDeclaration(decl), rest))
-        }
+        Ok((decl, rest)) => Ok((ForInit::InitDeclaration(decl), rest)),
         _ => {
             let (expression, rest) = parse_optional_expression(tokens)?;
             let rest = swallow_semicolon(rest)?;
