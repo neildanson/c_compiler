@@ -5,12 +5,11 @@ pub mod lex;
 pub mod parse;
 pub mod tacky;
 
-use std::io::{Read, Write};
-use anyhow::Result;
 use crate::lex::*;
 use crate::parse::{parse_program, semantic_validation};
 use crate::tacky::Tacky;
-
+use anyhow::Result;
+use std::io::{Read, Write};
 
 pub fn read_file(filename: &str) -> Result<String> {
     let file = std::fs::File::open(filename)?;

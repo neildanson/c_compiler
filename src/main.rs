@@ -1,8 +1,7 @@
-
 use clap::{arg, Command};
 
-use c_compiler::*;
 use anyhow::Result;
+use c_compiler::*;
 
 //gcc asm.s
 //./a.out

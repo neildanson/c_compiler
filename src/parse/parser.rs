@@ -1,11 +1,6 @@
-
-use super::ast::*;   
-use crate::{
-    error::CompilerError,
-    lex::Token,
-};
+use super::ast::*;
+use crate::{error::CompilerError, lex::Token};
 use anyhow::Result;
-
 
 fn precedence(tok: &Token) -> u16 {
     match tok {
@@ -177,18 +172,14 @@ fn parse_expression(tokens: &[Token], min_precedence: u16) -> Result<(Expression
 fn parse_optional_expression(tokens: &[Token]) -> Result<(Option<Expression>, &[Token])> {
     let expression = parse_expression(tokens, 0);
     match expression {
-        Ok((expression, rest)) => {
-            Ok((Some(expression), rest))
-        },
-        _ => {
-            Ok((None, tokens))
-        }
+        Ok((expression, rest)) => Ok((Some(expression), rest)),
+        _ => Ok((None, tokens)),
     }
 }
 
 fn parse_for_init(tokens: &[Token]) -> Result<(ForInit, &[Token])> {
     let decl = parse_declaration(tokens);
-    
+
     match decl {
         Ok((decl, rest)) => {
             return Ok((ForInit::InitDeclaration(decl), rest));
@@ -253,13 +244,19 @@ fn parse_statement(tokens: &[Token]) -> Result<(Statement, &[Token])> {
             let rest = swallow_one(Token::While, rest)?;
             let (expression, rest) = parse_expression(rest, 0)?;
             let rest = swallow_semicolon(rest)?;
-            (Statement::DoWhile(Box::new(statement), expression, None), rest)
+            (
+                Statement::DoWhile(Box::new(statement), expression, None),
+                rest,
+            )
         }
         [Token::While, Token::LParen, rest @ ..] => {
             let (expression, rest) = parse_expression(rest, 0)?;
             let rest = swallow_one(Token::RParen, rest)?;
             let (statement, rest) = parse_statement(rest)?;
-            (Statement::While(expression, Box::new(statement), None), rest)
+            (
+                Statement::While(expression, Box::new(statement), None),
+                rest,
+            )
         }
         [Token::Break, rest @ ..] => {
             let rest = swallow_semicolon(rest)?;
@@ -276,7 +273,10 @@ fn parse_statement(tokens: &[Token]) -> Result<(Statement, &[Token])> {
             let (post, rest) = parse_optional_expression(rest)?;
             let rest = swallow_one(Token::RParen, rest)?;
             let (statement, rest) = parse_statement(rest)?;
-            (Statement::For(init, condition, post, Box::new(statement), None), rest)
+            (
+                Statement::For(init, condition, post, Box::new(statement), None),
+                rest,
+            )
         }
         tok => {
             let statement = parse_expression(tok, 0)?;
@@ -307,7 +307,7 @@ fn parse_declaration(tokens: &[Token]) -> Result<(Declaration, &[Token])> {
             },
             rest,
         ),
-        
+
         toks => {
             return Err(
                 CompilerError::Parse(format!("Declaration Unexpected Tokens {:?}", toks)).into(),
@@ -342,7 +342,6 @@ fn parse_function(tokens: &[Token]) -> Result<(Function, &[Token])> {
                 let result = parse_block_item(rest);
                 match result {
                     Ok((block_item, new_rest)) => {
-
                         statements.push(block_item);
                         rest = new_rest;
                     }
@@ -351,7 +350,7 @@ fn parse_function(tokens: &[Token]) -> Result<(Function, &[Token])> {
                     }
                 }
             }
-            
+
             let rest = swallow_one(Token::RBrace, rest)?;
             (
                 Function {
@@ -377,7 +376,6 @@ pub fn parse_program(tokens: &[Token]) -> Result<Program> {
     }
     Ok(Program { function })
 }
-
 
 #[cfg(test)]
 mod tests {

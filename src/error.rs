@@ -20,7 +20,7 @@ pub enum SemanticAnalysisError {
     VariableAlreadyDeclared(String),
     VariableNotDeclared(String),
     InvalidLValue,
-    NotImplemented
+    NotImplemented,
 }
 
 impl Display for SemanticAnalysisError {

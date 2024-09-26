@@ -314,7 +314,7 @@ impl Tacky {
                         }
                         parse::BlockItem::Statement(s) => {
                             self.emit_tacky_statement(s, instructions)?;
-                        }                    
+                        }
                     }
                 }
                 Ok(())

@@ -2,7 +2,7 @@ use std::process::{Command, ExitStatus};
 
 use c_compiler::*;
 
-fn run_gcc(input: &str, output : &str) -> bool {
+fn run_gcc(input: &str, output: &str) -> bool {
     let output = Command::new("gcc")
         .args([input, "-o", &output])
         .output()
@@ -28,7 +28,7 @@ fn run_test(input: &str) {
     let s_file = format!("{}/temp/{}.s", path, input);
     let my_out_file = format!("{}/temp/my_{}.out", path, input);
     let gcc_out_file = format!("{}/temp/gcc_{}.out", path, input);
-    
+
     let generate_assembly = codegen(&c_file).unwrap();
     write_asm(&s_file, &generate_assembly).unwrap();
     let my_status = run_gcc(&s_file, &my_out_file);
@@ -41,7 +41,6 @@ fn run_test(input: &str) {
 
     assert_eq!(my_result, gcc_result, "App difference");
 }
-
 
 #[test]
 fn add() {

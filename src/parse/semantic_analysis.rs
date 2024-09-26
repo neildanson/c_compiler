@@ -1,11 +1,11 @@
+use super::ast::*;
 use crate::error::*;
-use super::ast::*;   
 use std::collections::HashMap;
 
 #[derive(Debug)]
 struct MapEntry {
     unique_name: String,
-    from_current_scope: bool,   
+    from_current_scope: bool,
 }
 
 impl Clone for MapEntry {
@@ -116,7 +116,7 @@ fn resolve_block(
     for item in blocks {
         match item {
             BlockItem::Declaration(decl) => {
-                let decl = resolve_declaration(decl.clone(),variable_map)?;
+                let decl = resolve_declaration(decl.clone(), variable_map)?;
                 new_block.push(BlockItem::Declaration(decl));
             }
             BlockItem::Statement(stmt) => {
@@ -141,9 +141,7 @@ fn resolve_for_init(
             let expr = resolve_expression(expr, variable_map)?;
             Ok(ForInit::InitExpression(Some(expr)))
         }
-        ForInit::InitExpression(None) => {
-            Ok(ForInit::InitExpression(None))
-        }
+        ForInit::InitExpression(None) => Ok(ForInit::InitExpression(None)),
     }
 }
 
@@ -173,17 +171,29 @@ fn resolve_statement(
             let mut new_variable_map = copy_variable_map(variable_map);
             let blocks = resolve_block(blocks, &mut new_variable_map)?;
             Ok(Statement::Compound(blocks))
-        },
+        }
         Statement::Null => Ok(Statement::Null),
-        Statement::For(init, cond , post , body, loop_id) => {
+        Statement::For(init, cond, post, body, loop_id) => {
             let mut new_variable_map = copy_variable_map(variable_map);
             let for_init = resolve_for_init(init, &mut new_variable_map)?;
-            let cond = cond.clone().map(|expr| resolve_expression(&expr, &mut new_variable_map)).transpose()?;
-            let post = post.clone().map(|expr| resolve_expression(&expr, &mut new_variable_map)).transpose()?;
+            let cond = cond
+                .clone()
+                .map(|expr| resolve_expression(&expr, &mut new_variable_map))
+                .transpose()?;
+            let post = post
+                .clone()
+                .map(|expr| resolve_expression(&expr, &mut new_variable_map))
+                .transpose()?;
             let body = resolve_statement(body, &mut new_variable_map)?;
-            Ok(Statement::For(for_init, cond, post, Box::new(body), loop_id.clone()))
+            Ok(Statement::For(
+                for_init,
+                cond,
+                post,
+                Box::new(body),
+                loop_id.clone(),
+            ))
         }
-        Statement::DoWhile(body, cond , loop_id) => {
+        Statement::DoWhile(body, cond, loop_id) => {
             let mut new_variable_map = copy_variable_map(variable_map);
             let body = resolve_statement(body, &mut new_variable_map)?;
             let cond = resolve_expression(cond, variable_map)?;
@@ -201,7 +211,7 @@ fn resolve_statement(
     }
 }
 
-fn resolve_function(function: Function,) -> Result<Function, CompilerError> {
+fn resolve_function(function: Function) -> Result<Function, CompilerError> {
     let mut variable_map = HashMap::new();
     let mut new_body = Vec::new();
     for item in function.body {
@@ -224,7 +234,5 @@ fn resolve_function(function: Function,) -> Result<Function, CompilerError> {
 
 pub fn semantic_validation(program: Program) -> Result<Program, CompilerError> {
     let function = resolve_function(program.function)?;
-    Ok(Program {
-        function,
-    })
+    Ok(Program { function })
 }

@@ -1,4 +1,3 @@
-
 #[derive(Debug, PartialEq)]
 pub struct Program {
     pub function: Function,
@@ -41,7 +40,13 @@ pub enum Statement {
     Continue(LoopIdentifier),
     While(Expression, Box<Statement>, LoopIdentifier),
     DoWhile(Box<Statement>, Expression, LoopIdentifier),
-    For(ForInit, Option<Expression>, Option<Expression>, Box<Statement>, LoopIdentifier),
+    For(
+        ForInit,
+        Option<Expression>,
+        Option<Expression>,
+        Box<Statement>,
+        LoopIdentifier,
+    ),
 }
 
 #[derive(Clone, Debug, PartialEq)]
