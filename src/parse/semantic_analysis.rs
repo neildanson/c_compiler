@@ -175,28 +175,28 @@ fn resolve_statement(
             Ok(Statement::Compound(blocks))
         },
         Statement::Null => Ok(Statement::Null),
-        Statement::For(init, cond , post , body) => {
+        Statement::For(init, cond , post , body, loop_id) => {
             let mut new_variable_map = copy_variable_map(variable_map);
             let for_init = resolve_for_init(init, &mut new_variable_map)?;
             let cond = cond.clone().map(|expr| resolve_expression(&expr, &mut new_variable_map)).transpose()?;
             let post = post.clone().map(|expr| resolve_expression(&expr, &mut new_variable_map)).transpose()?;
             let body = resolve_statement(body, &mut new_variable_map)?;
-            Ok(Statement::For(for_init, cond, post, Box::new(body)))
+            Ok(Statement::For(for_init, cond, post, Box::new(body), loop_id.clone()))
         }
-        Statement::DoWhile(body, cond ) => {
+        Statement::DoWhile(body, cond , loop_id) => {
             let mut new_variable_map = copy_variable_map(variable_map);
             let body = resolve_statement(body, &mut new_variable_map)?;
             let cond = resolve_expression(cond, variable_map)?;
-            Ok(Statement::DoWhile(Box::new(body), cond))
+            Ok(Statement::DoWhile(Box::new(body), cond, loop_id.clone()))
         }
-        Statement::While(cond, body) => {
+        Statement::While(cond, body, loop_id) => {
             let cond = resolve_expression(cond, variable_map)?;
             let mut new_variable_map = copy_variable_map(variable_map);
             let body = resolve_statement(body, &mut new_variable_map)?;
-            Ok(Statement::While(cond, Box::new(body)))
+            Ok(Statement::While(cond, Box::new(body), loop_id.clone()))
         }
-        Statement::Break => Ok(Statement::Break),
-        Statement::Continue => Ok(Statement::Continue),
+        Statement::Break(loop_id) => Ok(Statement::Break(loop_id.clone())),
+        Statement::Continue(loop_id) => Ok(Statement::Continue(loop_id.clone())),
         //d => Ok(d.clone()), //TODO: Implement the rest of the statements
     }
 }

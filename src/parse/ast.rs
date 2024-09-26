@@ -28,6 +28,8 @@ pub enum ForInit {
     InitExpression(Option<Expression>),
 }
 
+type LoopIdentifier = Option<String>;
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum Statement {
     Return(Expression),
@@ -35,11 +37,11 @@ pub enum Statement {
     If(Expression, Box<Statement>, Option<Box<Statement>>),
     Compound(Vec<BlockItem>),
     Null,
-    Break,
-    Continue,
-    While(Expression, Box<Statement>),
-    DoWhile(Box<Statement>, Expression),
-    For(ForInit, Option<Expression>, Option<Expression>, Box<Statement>),
+    Break(LoopIdentifier),
+    Continue(LoopIdentifier),
+    While(Expression, Box<Statement>, LoopIdentifier),
+    DoWhile(Box<Statement>, Expression, LoopIdentifier),
+    For(ForInit, Option<Expression>, Option<Expression>, Box<Statement>, LoopIdentifier),
 }
 
 #[derive(Clone, Debug, PartialEq)]
