@@ -21,6 +21,8 @@ pub enum SemanticAnalysisError {
     VariableNotDeclared(String),
     InvalidLValue,
     NotImplemented,
+    InvalidBreak,
+    InvalidContinue,
 }
 
 impl Display for SemanticAnalysisError {
@@ -34,6 +36,8 @@ impl Display for SemanticAnalysisError {
             }
             SemanticAnalysisError::InvalidLValue => write!(f, "Invalid LValue"),
             SemanticAnalysisError::NotImplemented => write!(f, "Not Implemented"),
+            SemanticAnalysisError::InvalidBreak => write!(f, "Invalid Break"),
+            SemanticAnalysisError::InvalidContinue => write!(f, "Invalid Continue"),
         }
     }
 }

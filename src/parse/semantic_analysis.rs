@@ -1,5 +1,5 @@
 use super::ast::*;
-use crate::error::*;
+use crate::{codegen::function, error::*};
 use std::collections::HashMap;
 
 #[derive(Debug)]
@@ -232,7 +232,103 @@ fn resolve_function(function: Function) -> Result<Function, CompilerError> {
     })
 }
 
+fn label_statement(stmt: Statement, current_label : Option<String>) -> Result<Statement, CompilerError> {
+    match stmt {
+        Statement::Break(_) => {
+            if current_label.is_none() {
+                return Err(CompilerError::SemanticAnalysis(SemanticAnalysisError::InvalidBreak));
+            }
+            Ok(stmt.clone())
+        }
+        Statement::Continue(_) => {
+            if current_label.is_none() {
+                return Err(CompilerError::SemanticAnalysis(SemanticAnalysisError::InvalidContinue));
+            }
+            Ok(stmt.clone())
+        }
+        Statement::While(condition, body, _ ) => {
+            let label = format!("while_{}", 1); //make label
+            let body = label_statement(*body, Some(label.clone()))?;
+            let new_stmt = Statement::While(condition, Box::new(body), Some(label));
+            Ok(new_stmt)
+        }
+        _ => Ok(stmt.clone())
+    }
+}
+
+fn label_function(function: Function) -> Result<Function, CompilerError> {
+    let mut new_body = Vec::new();
+    for item in function.body {
+        match item {
+            BlockItem::Declaration(decl) => {
+                new_body.push(BlockItem::Declaration(decl));
+            }
+            BlockItem::Statement(stmt) => {
+                let stmt = label_statement(stmt, None)?;
+                new_body.push(BlockItem::Statement(stmt));
+            }
+        }
+    }
+    Ok(Function {
+        name: function.name,
+        body: new_body,
+    })
+}
+
+fn verify_statement_labels(stmt: Statement) -> Result<Statement, CompilerError> {
+    match stmt {
+        Statement::Break(None) => Err(CompilerError::SemanticAnalysis(SemanticAnalysisError::InvalidBreak)),
+        Statement::Continue(None) => Err(CompilerError::SemanticAnalysis(SemanticAnalysisError::InvalidContinue)),
+        Statement::Compound(block) => {
+            let mut new_block = Vec::new();
+            for item in block {
+                match item {
+                    BlockItem::Declaration(decl) => {
+                        new_block.push(BlockItem::Declaration(decl));
+                    }
+                    BlockItem::Statement(stmt) => {
+                        let stmt = verify_statement_labels(stmt)?;
+                        new_block.push(BlockItem::Statement(stmt));
+                    }
+                }
+            }
+            Ok(Statement::Compound(new_block))
+        },
+        Statement::If(cond, then, els) => {
+            let then = verify_statement_labels(*then)?;
+            let els = match els {
+                Some(els) => Some(Box::new(verify_statement_labels(*els)?)),
+                None => None,
+            };
+            Ok(Statement::If(cond, Box::new(then), els))
+        },
+        _ => Ok(stmt.clone())
+    }
+}
+
+fn verify_function_labels(function: Function) -> Result<Function, CompilerError> {
+    let mut new_body = Vec::new();
+    for item in function.body {
+        match item {
+            BlockItem::Declaration(decl) => {
+                new_body.push(BlockItem::Declaration(decl));
+            }
+            BlockItem::Statement(stmt) => {
+                let stmt = verify_statement_labels(stmt)?;
+                new_body.push(BlockItem::Statement(stmt));
+            }
+        }
+    }
+    Ok(Function {
+        name: function.name,
+        body: new_body,
+    })
+}
+
 pub fn semantic_validation(program: Program) -> Result<Program, CompilerError> {
     let function = resolve_function(program.function)?;
+    let function = label_function(function)?;
+    let function = verify_function_labels(function)?;
+
     Ok(Program { function })
 }
