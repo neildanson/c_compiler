@@ -176,10 +176,10 @@ fn resolve_statement(
         },
         Statement::Null => Ok(Statement::Null),
         Statement::For(init, cond , post , body) => {
-            let for_init = resolve_for_init(init, variable_map)?;
-            let cond = cond.clone().map(|expr| resolve_expression(&expr, variable_map)).transpose()?;
-            let post = post.clone().map(|expr| resolve_expression(&expr, variable_map)).transpose()?;
             let mut new_variable_map = copy_variable_map(variable_map);
+            let for_init = resolve_for_init(init, &mut new_variable_map)?;
+            let cond = cond.clone().map(|expr| resolve_expression(&expr, &mut new_variable_map)).transpose()?;
+            let post = post.clone().map(|expr| resolve_expression(&expr, &mut new_variable_map)).transpose()?;
             let body = resolve_statement(body, &mut new_variable_map)?;
             Ok(Statement::For(for_init, cond, post, Box::new(body)))
         }
