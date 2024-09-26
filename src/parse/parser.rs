@@ -332,15 +332,13 @@ fn parse_declaration(tokens: &[Token]) -> Result<(Declaration, &[Token])> {
 
 fn parse_block_item(tokens: &[Token]) -> Result<(BlockItem, &[Token])> {
     let declaration = parse_declaration(tokens);
-    if declaration.is_ok() {
-        let (declaration, tokens) = declaration.unwrap();
-        return Ok((BlockItem::Declaration(declaration), tokens));
+    if let Ok((declaration, rest)) = declaration {
+        return Ok((BlockItem::Declaration(declaration), rest));
     }
 
     let statement = parse_statement(tokens);
-    if statement.is_ok() {
-        let (statement, tokens) = statement.unwrap();
-        return Ok((BlockItem::Statement(statement), tokens));
+    if let Ok((statement, rest)) = statement {
+        return Ok((BlockItem::Statement(statement), rest));
     }
     Err(CompilerError::Parse("Unexpected tokens".to_string()).into())
 }
