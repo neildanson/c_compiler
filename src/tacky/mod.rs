@@ -67,7 +67,7 @@ impl Tacky {
         &mut self,
         cond: &parse::Expression,
         then: &parse::Expression,
-        els: &Box<parse::Expression>,
+        els: &parse::Expression,
         instructions: &mut Vec<Instruction>,
     ) -> Result<Value, CompilerError> {
         let cond = self.emit_tacky_expr(cond, instructions)?;
