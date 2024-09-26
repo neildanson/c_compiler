@@ -52,13 +52,6 @@ fn is_binop(tok: &Token) -> bool {
     )
 }
 
-fn expect(exp:Token, tokens: &[Token]) -> Result<&[Token]> {
-    match tokens {
-        [tok, rest @ ..] if *tok == exp => Ok(rest),
-        _ => Err(CompilerError::Parse(format!("Expected {:?}", exp)).into()),
-    }
-}
-
 fn swallow_one(exp: Token, tokens: &[Token]) -> Result<&[Token]> {
     match tokens {
         [tok, rest @ ..] if *tok == exp => Ok(rest),
@@ -96,10 +89,7 @@ fn parse_factor(tokens: &[Token]) -> Result<(Expression, &[Token])> {
         }
         [Token::LParen, rest @ ..] => {
             let (expression, rest) = parse_expression(rest, 0)?;
-            let rest = match rest {
-                [Token::RParen, rest @ ..] => rest,
-                _ => return Err(CompilerError::Parse("LParen".to_string()).into()),
-            };
+            let rest = swallow_one(Token::RParen, rest)?;
             (expression, rest)
         }
         [Token::Identifier(name), rest @ ..] => (Expression::Var(name.clone()), rest),
@@ -150,7 +140,6 @@ fn parse_conditional_middle(tokens: &[Token]) -> Result<(Expression, &[Token])> 
 fn parse_expression(tokens: &[Token], min_precedence: u16) -> Result<(Expression, &[Token])> {
     let left = parse_factor(tokens)?;
     let (mut left_expr, mut tokens) = left;
-    //Perhaps just use shunting algorithm here?
     while let Some(next_token) = tokens.iter().next() {
         if !is_binop(next_token) || precedence(next_token) < min_precedence {
             break;
@@ -280,13 +269,11 @@ fn parse_statement(tokens: &[Token]) -> Result<(Statement, &[Token])> {
         }
         [Token::For, Token::LParen, rest @ ..] => {
             let (init, rest) = parse_for_init(rest)?;
-            let rest = swallow_one(Token::SemiColon, rest)?;
-            println!("{:?}, {:?}", init, rest);
+            let rest = swallow_semicolon(rest)?;
             let (condition, rest) = parse_optional_expression(rest)?;
-            let rest = swallow_one(Token::SemiColon, rest)?;
+            let rest = swallow_semicolon(rest)?;
             let (post, rest) = parse_optional_expression(rest)?;
             let rest = swallow_one(Token::RParen, rest)?;
-            println!("here4");
             let (statement, rest) = parse_statement(rest)?;
             (Statement::For(init, condition, post, Box::new(statement)), rest)
         }
@@ -301,7 +288,6 @@ fn parse_statement(tokens: &[Token]) -> Result<(Statement, &[Token])> {
 }
 
 fn parse_declaration(tokens: &[Token]) -> Result<(Declaration, &[Token])> {
-    //println!("{:?}", tokens);
     let (declaration, tokens) = match tokens {
         [Token::Int, Token::Identifier(name), Token::SemiColon, rest @ ..] => (
             Declaration {
@@ -312,7 +298,6 @@ fn parse_declaration(tokens: &[Token]) -> Result<(Declaration, &[Token])> {
         ),
         [Token::Int, Token::Identifier(name), Token::Assignment, rest @ ..] => {
             let (expression, rest) = parse_expression(rest, 0)?;
-            let rest = swallow_semicolon(rest)?;
             (
                 Declaration {
                     name: name.clone(),
@@ -354,6 +339,7 @@ fn parse_function(tokens: &[Token]) -> Result<(Function, &[Token])> {
                 let result = parse_block_item(rest);
                 match result {
                     Ok((block_item, new_rest)) => {
+
                         statements.push(block_item);
                         rest = new_rest;
                     }
@@ -362,14 +348,8 @@ fn parse_function(tokens: &[Token]) -> Result<(Function, &[Token])> {
                     }
                 }
             }
-            let rest = match rest {
-                [Token::RBrace, rest @ ..] => rest,
-                rest => {
-                    return Err(
-                        CompilerError::Parse(format!("Expected RBrace, got {:?}", rest)).into(),
-                    )
-                }
-            };
+            
+            let rest = swallow_one(Token::RBrace, rest)?;
             (
                 Function {
                     name: name.clone(),
