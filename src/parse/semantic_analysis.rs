@@ -156,6 +156,10 @@ fn resolve_statement(
             Ok(Statement::Compound(blocks))
         },
         Statement::Null => Ok(Statement::Null),
+        Statement::For(init, cond , post , body) => {
+            
+            Err(CompilerError::SemanticAnalysis(SemanticAnalysisError::NotImplemented))
+        }
         d => Ok(d.clone()), //TODO: Implement the rest of the statements
     }
 }
