@@ -1,16 +1,13 @@
 int main(void) {
     int k = 1;
-    do {
-        int i = 1;
-        while (i < 100) {
-            i = i + 1;
-            if (i == 50) {
-                break;
-            } else {
+    for (int i = 0; i < 10; i = i + 1) {
+        if (k > 5) {
+            k = k + 3;
+            if (k % 2 == 0) {
                 continue;
             }
         }
-        k = k + 1;
-    } while (k < 50000);
+        k = k + 2;
+    }
     return k;
 }
