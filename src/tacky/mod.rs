@@ -315,6 +315,55 @@ impl Tacky {
     }
 
     fn emit_tacky_for_loop(&mut self, for_init : &parse::ForInit, cond: &Option<Expression>, post:&Option<Expression>, body : &parse::Statement, loop_label: &Option<String>, instructions: &mut Vec<Instruction>,) -> Result<(), CompilerError> {
+        let loop_label = loop_label.clone().unwrap();
+        let start_label = self.make_label("start".to_string());
+        let break_label = format!("break_{loop_label}");
+        let continue_label = format!("continue_{loop_label}");
+        
+        match for_init {
+            parse::ForInit::InitDeclaration(decl) => {
+                self.emit_tacky_decl(decl, instructions)?;
+            }
+            parse::ForInit::InitExpression(Some(e)) => {
+                self.emit_tacky_expr(e, instructions)?; //Value?
+            }
+            parse::ForInit::InitExpression(None) => {}
+        }
+
+        instructions.push(Instruction::Label {
+            name: start_label.clone(),
+        });
+
+        match cond {
+            Some(cond) => {
+                let cond = self.emit_tacky_expr(cond, instructions)?;
+                instructions.push(Instruction::JumpIfZero {
+                    condition: cond,
+                    target: break_label.clone(),
+                });
+            }
+            None => {}
+        }
+
+        self.emit_tacky_statement(body, instructions)?;
+        instructions.push(Instruction::Label {
+            name: continue_label.clone(),
+        });
+
+        match post {
+            Some(post) => {
+                self.emit_tacky_expr(post, instructions)?;
+            }
+            None => {}
+        }
+        instructions.push(Instruction::Jump {
+            target: start_label.clone(),
+        });
+
+        instructions.push(Instruction::Label {
+            name: break_label.clone(),
+        });
+        
         Ok(())
     }
 
