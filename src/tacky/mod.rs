@@ -258,8 +258,6 @@ impl Tacky {
         Ok(())
     }
 
-    
-
     fn emit_tacky_statement(
         &mut self,
         s: &parse::Statement,
@@ -321,18 +319,24 @@ impl Tacky {
                 }
                 Ok(())
             }
-            parse::Statement::DoWhile(body, cond , label) => {
+            parse::Statement::DoWhile(body, cond, label) => {
                 let start_label = self.make_label("start".to_string());
                 let end_label = self.make_label("end".to_string());
-                instructions.push(Instruction::Label { name: start_label.clone() });
+                instructions.push(Instruction::Label {
+                    name: start_label.clone(),
+                });
                 self.emit_tacky_statement(body, instructions)?;
-                instructions.push(Instruction::Label { name: label.clone().unwrap() });
+                instructions.push(Instruction::Label {
+                    name: label.clone().unwrap(),
+                });
                 let cond = self.emit_tacky_expr(cond, instructions)?;
                 instructions.push(Instruction::JumpIfNotZero {
                     condition: cond,
                     target: start_label.clone(),
                 });
-                instructions.push(Instruction::Label { name: end_label.clone() });
+                instructions.push(Instruction::Label {
+                    name: end_label.clone(),
+                });
                 Ok(())
             }
             s => unimplemented!("Unimplemented Tacky statement {:?}", s),

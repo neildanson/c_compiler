@@ -32,7 +32,6 @@ pub struct Analysis {
 }
 
 impl Analysis {
-    
     pub fn make_label(&mut self) -> String {
         let name = format!("__{}", self.counter);
         self.counter += 1;
@@ -275,10 +274,16 @@ impl Analysis {
                 let new_stmt = Statement::While(condition, Box::new(body), Some(label));
                 Ok(new_stmt)
             }
-            Statement::DoWhile(body, condition , _) => {
+            Statement::DoWhile(body, condition, _) => {
                 let label = self.make_label();
                 let body = self.label_statement(*body, Some(label.clone()))?;
                 let new_stmt = Statement::DoWhile(Box::new(body), condition, Some(label));
+                Ok(new_stmt)
+            }
+            Statement::For(init, condition, post, body, _) => {
+                let label = self.make_label();
+                let body = self.label_statement(*body, Some(label.clone()))?;
+                let new_stmt = Statement::For(init, condition, post, Box::new(body), Some(label));
                 Ok(new_stmt)
             }
             _ => Ok(stmt.clone()),
