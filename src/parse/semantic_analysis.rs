@@ -246,6 +246,23 @@ impl Analysis {
         })
     }
 
+    fn label_block(&mut self, 
+    blocks: &[BlockItem]) -> Result<Vec<BlockItem>, CompilerError> {
+        let mut new_block = Vec::new();
+        for item in blocks {
+            match item {
+                BlockItem::Declaration(decl) => {
+                    new_block.push(BlockItem::Declaration(decl.clone()));
+                }
+                BlockItem::Statement(stmt) => {
+                    let stmt = self.label_statement(stmt.clone(), None)?;
+                    new_block.push(BlockItem::Statement(stmt));
+                }
+            }
+        }
+        Ok(new_block)
+    }
+
     fn label_statement(
         &mut self,
         stmt: Statement,
@@ -286,23 +303,24 @@ impl Analysis {
                 let new_stmt = Statement::For(init, condition, post, Box::new(body), Some(label));
                 Ok(new_stmt)
             }
+            Statement::If(cond, then , els ) => {
+                let then = self.label_statement(*then, current_label.clone())?;
+                let els = match els {
+                    Some(els) => Some(Box::new(self.label_statement(*els, current_label.clone())?)),
+                    None => None,
+                };
+                Ok(Statement::If(cond, Box::new(then), els))
+            }
+            Statement::Compound(block) => {
+                let new_block = self.label_block(&block)?;
+                Ok(Statement::Compound(new_block))
+            }
             _ => Ok(stmt.clone()),
         }
     }
 
     fn label_function(&mut self, function: Function) -> Result<Function, CompilerError> {
-        let mut new_body = Vec::new();
-        for item in function.body {
-            match item {
-                BlockItem::Declaration(decl) => {
-                    new_body.push(BlockItem::Declaration(decl));
-                }
-                BlockItem::Statement(stmt) => {
-                    let stmt = self.label_statement(stmt, None)?;
-                    new_body.push(BlockItem::Statement(stmt));
-                }
-            }
-        }
+        let new_body = self.label_block(&function.body)?;
         Ok(Function {
             name: function.name,
             body: new_body,
