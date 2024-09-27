@@ -247,7 +247,9 @@ impl Analysis {
     }
 
     fn label_block(&mut self, 
-    blocks: &[BlockItem]) -> Result<Vec<BlockItem>, CompilerError> {
+    blocks: &[BlockItem], 
+    current_label: Option<String>
+    ) -> Result<Vec<BlockItem>, CompilerError> {
         let mut new_block = Vec::new();
         for item in blocks {
             match item {
@@ -255,7 +257,7 @@ impl Analysis {
                     new_block.push(BlockItem::Declaration(decl.clone()));
                 }
                 BlockItem::Statement(stmt) => {
-                    let stmt = self.label_statement(stmt.clone(), None)?;
+                    let stmt = self.label_statement(stmt.clone(), current_label.clone())?;
                     new_block.push(BlockItem::Statement(stmt));
                 }
             }
@@ -269,13 +271,14 @@ impl Analysis {
         current_label: Option<String>,
     ) -> Result<Statement, CompilerError> {
         match stmt {
-            Statement::Break(_) => {
+            Statement::Break(label) => {
                 if current_label.is_none() {
                     return Err(CompilerError::SemanticAnalysis(
                         SemanticAnalysisError::InvalidBreak,
                     ));
                 }
-                Ok(stmt.clone())
+                println!("Break statement found {:?} {:?}", label, current_label);
+                Ok(Statement::Break(current_label))
             }
             Statement::Continue(_) => {
                 if current_label.is_none() {
@@ -283,7 +286,7 @@ impl Analysis {
                         SemanticAnalysisError::InvalidContinue,
                     ));
                 }
-                Ok(stmt.clone())
+                Ok(Statement::Continue(current_label))
             }
             Statement::While(condition, body, _) => {
                 let label = self.make_label();
@@ -312,7 +315,7 @@ impl Analysis {
                 Ok(Statement::If(cond, Box::new(then), els))
             }
             Statement::Compound(block) => {
-                let new_block = self.label_block(&block)?;
+                let new_block = self.label_block(&block, current_label)?;
                 Ok(Statement::Compound(new_block))
             }
             _ => Ok(stmt.clone()),
@@ -320,7 +323,7 @@ impl Analysis {
     }
 
     fn label_function(&mut self, function: Function) -> Result<Function, CompilerError> {
-        let new_body = self.label_block(&function.body)?;
+        let new_body = self.label_block(&function.body, None)?;
         Ok(Function {
             name: function.name,
             body: new_body,

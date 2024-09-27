@@ -1,7 +1,7 @@
 int main(void) {
     int k = 1;
     do {
-        if (k % 10 == 0) {
+        if (k == 10) {
             break;
         }
         k = k + 1;

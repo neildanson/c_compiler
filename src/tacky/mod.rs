@@ -319,23 +319,28 @@ impl Tacky {
                 }
                 Ok(())
             }
-            parse::Statement::DoWhile(body, cond, label) => {
+            parse::Statement::DoWhile(body, cond, loop_label) => {
+                let loop_label = loop_label.clone().unwrap();
                 let start_label = self.make_label("start".to_string());
-                let end_label = self.make_label("end".to_string());
+                let break_label = format!("break_{loop_label}");
+                let continue_label = format!("continue_{loop_label}");
+
                 instructions.push(Instruction::Label {
                     name: start_label.clone(),
                 });
                 self.emit_tacky_statement(body, instructions)?;
                 instructions.push(Instruction::Label {
-                    name: label.clone().unwrap(),
+                    name: continue_label.clone(),
                 });
+
                 let cond = self.emit_tacky_expr(cond, instructions)?;
+
                 instructions.push(Instruction::JumpIfNotZero {
                     condition: cond,
                     target: start_label.clone(),
                 });
                 instructions.push(Instruction::Label {
-                    name: end_label.clone(),
+                    name: break_label.clone(),
                 });
                 Ok(())
             }
@@ -360,14 +365,16 @@ impl Tacky {
                 Ok(())
             }
             parse::Statement::Break(label) => {
+                let break_label = format!("break_{}", label.clone().unwrap());
                 instructions.push(Instruction::Jump {
-                    target: label.clone().unwrap(),
+                    target: break_label,
                 });
                 Ok(())
             }
             parse::Statement::Continue(label) => {
+                let continue_label = format!("continue_{}", label.clone().unwrap());
                 instructions.push(Instruction::Jump {
-                    target: label.clone().unwrap(),
+                    target: continue_label,
                 });
                 Ok(())
             }

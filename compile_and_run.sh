@@ -9,10 +9,14 @@ cargo build --release
 gcc -E -P main.c -o a.c
 cargo run --release -- --codegen a.c --S
 
-gcc a.s
-time ./a.out
-echo "My Code : $?"
+echo "Running the code"
+
 
 gcc -o b.out main.c
 time ./b.out
 echo "GCC Code : $?"
+
+gcc a.s
+time ./a.out
+echo "My Code : $?"
+
