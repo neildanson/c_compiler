@@ -339,6 +339,26 @@ impl Tacky {
                 });
                 Ok(())
             }
+            parse::Statement::While(cond, body, label) => {
+                let start_label = self.make_label("start".to_string());
+                let end_label = self.make_label("end".to_string());
+                instructions.push(Instruction::Label {
+                    name: start_label.clone(),
+                });
+                let cond = self.emit_tacky_expr(cond, instructions)?;
+                instructions.push(Instruction::JumpIfZero {
+                    condition: cond,
+                    target: end_label.clone(),
+                });
+                self.emit_tacky_statement(body, instructions)?;
+                instructions.push(Instruction::Jump {
+                    target: start_label.clone(),
+                });
+                instructions.push(Instruction::Label {
+                    name: end_label.clone(),
+                });
+                Ok(())
+            }
             s => unimplemented!("Unimplemented Tacky statement {:?}", s),
         }
     }
