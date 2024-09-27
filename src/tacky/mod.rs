@@ -15,7 +15,7 @@ pub use value::*;
 
 use crate::{
     error::CompilerError,
-    parse::{self},
+    parse::{self, Expression},
 };
 use std::collections::HashMap;
 
@@ -314,6 +314,10 @@ impl Tacky {
         Ok(())
     }
 
+    fn emit_tacky_for_loop(&mut self, for_init : &parse::ForInit, cond: &Option<Expression>, post:&Option<Expression>, body : &parse::Statement, loop_label: &Option<String>, instructions: &mut Vec<Instruction>,) -> Result<(), CompilerError> {
+        Ok(())
+    }
+
     fn emit_tacky_statement(
         &mut self,
         s: &parse::Statement,
@@ -381,6 +385,9 @@ impl Tacky {
             parse::Statement::While(cond, body, label) => {
                 self.emit_tacky_while(cond, body, label, instructions)
             }
+            parse::Statement::For(for_init, cond, post, body , loop_label) => {
+                self.emit_tacky_for_loop(for_init, cond, post, body, loop_label, instructions)
+            }
             parse::Statement::Break(label) => {
                 let break_label = format!("break_{}", label.clone().unwrap());
                 instructions.push(Instruction::Jump {
@@ -395,7 +402,7 @@ impl Tacky {
                 });
                 Ok(())
             }
-            s => unimplemented!("Unimplemented Tacky statement {:?}", s),
+            //s => unimplemented!("Unimplemented Tacky statement {:?}", s),
         }
     }
 
