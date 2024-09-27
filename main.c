@@ -1,6 +1,9 @@
 int main(void) {
-    int k = 0;
-    while (k < 50000) {
+    int k = 1;
+    while (k < 50) {
+        if (k % 10 == 0) {
+            break;
+        }
         k = k + 1;
     }
     return k;
