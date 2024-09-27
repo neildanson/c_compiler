@@ -5,6 +5,7 @@ pub mod program;
 pub mod unary_op;
 pub mod value;
 
+use anyhow::Result;
 pub use binary_op::*;
 pub use function::*;
 pub use instruction::*;
@@ -258,6 +259,61 @@ impl Tacky {
         Ok(())
     }
 
+    fn emit_tacky_do_while(
+        &mut self,
+        body: &parse::Statement,
+        cond: &parse::Expression,
+        loop_label: &Option<String>,
+        instructions: &mut Vec<Instruction>,
+    ) -> Result<(), CompilerError> {
+        let loop_label = loop_label.clone().unwrap();
+        let start_label = self.make_label("start".to_string());
+        let break_label = format!("break_{loop_label}");
+        let continue_label = format!("continue_{loop_label}");
+
+        instructions.push(Instruction::Label {
+            name: start_label.clone(),
+        });
+        self.emit_tacky_statement(body, instructions)?;
+        instructions.push(Instruction::Label {
+            name: continue_label.clone(),
+        });
+
+        let cond = self.emit_tacky_expr(cond, instructions)?;
+
+        instructions.push(Instruction::JumpIfNotZero {
+            condition: cond,
+            target: start_label.clone(),
+        });
+        instructions.push(Instruction::Label {
+            name: break_label.clone(),
+        });
+        Ok(())
+    }
+
+    fn emit_tacky_while(&mut self, cond: &parse::Expression, body: &parse::Statement, loop_label: &Option<String>, instructions: &mut Vec<Instruction>,) -> Result<(), CompilerError>{
+        let loop_label = loop_label.clone().unwrap();
+        let break_label = format!("break_{loop_label}");
+        let continue_label = format!("continue_{loop_label}");
+        instructions.push(Instruction::Label {
+            name: continue_label.clone(),
+        });
+
+        let cond = self.emit_tacky_expr(cond, instructions)?;
+        instructions.push(Instruction::JumpIfZero {
+            condition: cond,
+            target: break_label.clone(),
+        });
+        self.emit_tacky_statement(body, instructions)?;
+        instructions.push(Instruction::Jump {
+            target: continue_label.clone(),
+        });
+        instructions.push(Instruction::Label {
+            name: break_label.clone(),
+        });
+        Ok(())
+    }
+
     fn emit_tacky_statement(
         &mut self,
         s: &parse::Statement,
@@ -320,49 +376,10 @@ impl Tacky {
                 Ok(())
             }
             parse::Statement::DoWhile(body, cond, loop_label) => {
-                let loop_label = loop_label.clone().unwrap();
-                let start_label = self.make_label("start".to_string());
-                let break_label = format!("break_{loop_label}");
-                let continue_label = format!("continue_{loop_label}");
-
-                instructions.push(Instruction::Label {
-                    name: start_label.clone(),
-                });
-                self.emit_tacky_statement(body, instructions)?;
-                instructions.push(Instruction::Label {
-                    name: continue_label.clone(),
-                });
-
-                let cond = self.emit_tacky_expr(cond, instructions)?;
-
-                instructions.push(Instruction::JumpIfNotZero {
-                    condition: cond,
-                    target: start_label.clone(),
-                });
-                instructions.push(Instruction::Label {
-                    name: break_label.clone(),
-                });
-                Ok(())
+                self.emit_tacky_do_while(body, cond, loop_label, instructions)
             }
             parse::Statement::While(cond, body, label) => {
-                let start_label = self.make_label("start".to_string());
-                let end_label = self.make_label("end".to_string());
-                instructions.push(Instruction::Label {
-                    name: start_label.clone(),
-                });
-                let cond = self.emit_tacky_expr(cond, instructions)?;
-                instructions.push(Instruction::JumpIfZero {
-                    condition: cond,
-                    target: end_label.clone(),
-                });
-                self.emit_tacky_statement(body, instructions)?;
-                instructions.push(Instruction::Jump {
-                    target: start_label.clone(),
-                });
-                instructions.push(Instruction::Label {
-                    name: end_label.clone(),
-                });
-                Ok(())
+                self.emit_tacky_while(cond, body, label, instructions)
             }
             parse::Statement::Break(label) => {
                 let break_label = format!("break_{}", label.clone().unwrap());

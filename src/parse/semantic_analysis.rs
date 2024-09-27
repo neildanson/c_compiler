@@ -246,9 +246,10 @@ impl Analysis {
         })
     }
 
-    fn label_block(&mut self, 
-    blocks: &[BlockItem], 
-    current_label: Option<String>
+    fn label_block(
+        &mut self,
+        blocks: &[BlockItem],
+        current_label: Option<String>,
     ) -> Result<Vec<BlockItem>, CompilerError> {
         let mut new_block = Vec::new();
         for item in blocks {
@@ -271,13 +272,12 @@ impl Analysis {
         current_label: Option<String>,
     ) -> Result<Statement, CompilerError> {
         match stmt {
-            Statement::Break(label) => {
+            Statement::Break(_) => {
                 if current_label.is_none() {
                     return Err(CompilerError::SemanticAnalysis(
                         SemanticAnalysisError::InvalidBreak,
                     ));
                 }
-                println!("Break statement found {:?} {:?}", label, current_label);
                 Ok(Statement::Break(current_label))
             }
             Statement::Continue(_) => {
@@ -306,7 +306,7 @@ impl Analysis {
                 let new_stmt = Statement::For(init, condition, post, Box::new(body), Some(label));
                 Ok(new_stmt)
             }
-            Statement::If(cond, then , els ) => {
+            Statement::If(cond, then, els) => {
                 let then = self.label_statement(*then, current_label.clone())?;
                 let els = match els {
                     Some(els) => Some(Box::new(self.label_statement(*els, current_label.clone())?)),
