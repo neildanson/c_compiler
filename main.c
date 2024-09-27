@@ -1,8 +1,7 @@
 int main(void) {
     int k = 0;
-    for (int i = -100; i <= 0; i = i + 1) {
+    do 
         k = k + 1;
-        break;
-    }
+    while (k < 10);
     return k;
 }
