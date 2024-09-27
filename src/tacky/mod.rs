@@ -359,6 +359,18 @@ impl Tacky {
                 });
                 Ok(())
             }
+            parse::Statement::Break(label) => {
+                instructions.push(Instruction::Jump {
+                    target: label.clone().unwrap(),
+                });
+                Ok(())
+            }
+            parse::Statement::Continue(label) => {
+                instructions.push(Instruction::Jump {
+                    target: label.clone().unwrap(),
+                });
+                Ok(())
+            }
             s => unimplemented!("Unimplemented Tacky statement {:?}", s),
         }
     }
