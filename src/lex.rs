@@ -49,6 +49,7 @@ pub enum Token {
     For,                           //for\b
     Break,                         //break\b
     Continue,                      //continue\b
+    Comma,                         //,
 }
 
 pub struct Tokenizer {
@@ -132,6 +133,7 @@ impl Tokenizer {
             TokenMapper::new(r"^=", Box::new(|_| Token::Assignment)),
             TokenMapper::new(r"^\?", Box::new(|_| Token::QuestionMark)),
             TokenMapper::new(r"^:", Box::new(|_| Token::Colon)),
+            TokenMapper::new(r"^,", Box::new(|_| Token::Comma)),
         ];
 
         Tokenizer { token_mappers }
