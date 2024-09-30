@@ -1,5 +1,7 @@
 int main(void) {
-    int k = 10;
-
-    return ++k;
+    int k = 0;
+    for (int i = 0; i < 10; i = i + 1) {
+        k = k + i;
+    }
+    return k;
 }
