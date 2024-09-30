@@ -51,3 +51,18 @@ fn add() {
 fn subtraction() {
     run_test("subtraction");
 }
+
+#[test]
+fn for_loops() {
+    run_test("for");
+}
+
+#[test]
+fn pre_increment() {
+    run_test("pre_increment");
+}
+
+#[test]
+fn post_increment() {
+    run_test("post_increment");
+}
