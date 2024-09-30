@@ -64,6 +64,10 @@ pub enum UnaryOperator {
     Negation,
     Tilde,
     Not,
+    PreIncrement,
+    PostIncrement,
+    PreDecrement,
+    PostDecrement,
 }
 
 #[derive(Clone, Debug, PartialEq)]

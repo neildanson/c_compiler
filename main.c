@@ -1,9 +1,5 @@
 int main(void) {
-    int k = 1;
+    int k = 10;
 
-    for (int i = 0; i < 100000000; i = i + 1) {
-        k = k + 1;
-    }
-    
-    return k;
+    return ++k;
 }

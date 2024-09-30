@@ -125,16 +125,60 @@ impl Tacky {
         inner: &parse::Expression,
         instructions: &mut Vec<Instruction>,
     ) -> Result<Value, CompilerError> {
-        let src = self.emit_tacky_factor(inner, instructions)?;
         let dst_name = self.make_name();
         let dst = Value::Var(dst_name);
-        let tacky_op = op.into();
-        instructions.push(Instruction::Unary {
-            op: tacky_op,
-            src,
-            dst: dst.clone(),
-        });
-        Ok(dst)
+        match op {
+            parse::UnaryOperator::PreIncrement => {
+                let src = self.emit_tacky_expr(inner, instructions)?;
+                instructions.push(Instruction::Binary {
+                    op: BinaryOp::Add,
+                    src1: src.clone(),
+                    src2: Value::Constant(1),
+                    dst: dst.clone(),
+                });
+                Ok(dst)
+            }
+            parse::UnaryOperator::PreDecrement => {
+                let src = self.emit_tacky_expr(inner, instructions)?;
+                instructions.push(Instruction::Binary {
+                    op: BinaryOp::Subtract,
+                    src1: src.clone(),
+                    src2: Value::Constant(1),
+                    dst: dst.clone(),
+                });
+                Ok(dst)
+            }
+            parse::UnaryOperator::PostDecrement => {
+                let src = self.emit_tacky_expr(inner, instructions)?;
+                instructions.push(Instruction::Binary {
+                    op: BinaryOp::Subtract,
+                    src1: src.clone(),
+                    src2: Value::Constant(1),
+                    dst: dst.clone(),
+                });
+                Ok(src)
+            }
+            parse::UnaryOperator::PostIncrement => {
+                let src = self.emit_tacky_expr(inner, instructions)?;
+                instructions.push(Instruction::Binary {
+                    op: BinaryOp::Add,
+                    src1: src.clone(),
+                    src2: Value::Constant(1),
+                    dst: dst.clone(),
+                });
+                Ok(src)
+            }
+            _ => {
+                let src = self.emit_tacky_factor(inner, instructions)?;
+                let tacky_op = op.into();
+                instructions.push(Instruction::Unary {
+                    op: tacky_op,
+                    src,
+                    dst: dst.clone(),
+                });
+                Ok(dst)
+            }
+        }
     }
 
     fn emit_temp(&mut self, src: Value, instructions: &mut Vec<Instruction>) -> Value {
@@ -291,7 +335,13 @@ impl Tacky {
         Ok(())
     }
 
-    fn emit_tacky_while(&mut self, cond: &parse::Expression, body: &parse::Statement, loop_label: &Option<String>, instructions: &mut Vec<Instruction>,) -> Result<(), CompilerError>{
+    fn emit_tacky_while(
+        &mut self,
+        cond: &parse::Expression,
+        body: &parse::Statement,
+        loop_label: &Option<String>,
+        instructions: &mut Vec<Instruction>,
+    ) -> Result<(), CompilerError> {
         let loop_label = loop_label.clone().unwrap();
         let break_label = format!("break_{loop_label}");
         let continue_label = format!("continue_{loop_label}");
@@ -314,12 +364,20 @@ impl Tacky {
         Ok(())
     }
 
-    fn emit_tacky_for_loop(&mut self, for_init : &parse::ForInit, cond: &Option<Expression>, post:&Option<Expression>, body : &parse::Statement, loop_label: &Option<String>, instructions: &mut Vec<Instruction>,) -> Result<(), CompilerError> {
+    fn emit_tacky_for_loop(
+        &mut self,
+        for_init: &parse::ForInit,
+        cond: &Option<Expression>,
+        post: &Option<Expression>,
+        body: &parse::Statement,
+        loop_label: &Option<String>,
+        instructions: &mut Vec<Instruction>,
+    ) -> Result<(), CompilerError> {
         let loop_label = loop_label.clone().unwrap();
         let start_label = self.make_label("start".to_string());
         let break_label = format!("break_{loop_label}");
         let continue_label = format!("continue_{loop_label}");
-        
+
         match for_init {
             parse::ForInit::InitDeclaration(decl) => {
                 self.emit_tacky_decl(decl, instructions)?;
@@ -363,7 +421,7 @@ impl Tacky {
         instructions.push(Instruction::Label {
             name: break_label.clone(),
         });
-        
+
         Ok(())
     }
 
@@ -434,7 +492,7 @@ impl Tacky {
             parse::Statement::While(cond, body, label) => {
                 self.emit_tacky_while(cond, body, label, instructions)
             }
-            parse::Statement::For(for_init, cond, post, body , loop_label) => {
+            parse::Statement::For(for_init, cond, post, body, loop_label) => {
                 self.emit_tacky_for_loop(for_init, cond, post, body, loop_label, instructions)
             }
             parse::Statement::Break(label) => {
@@ -450,8 +508,7 @@ impl Tacky {
                     target: continue_label,
                 });
                 Ok(())
-            }
-            //s => unimplemented!("Unimplemented Tacky statement {:?}", s),
+            } //s => unimplemented!("Unimplemented Tacky statement {:?}", s),
         }
     }
 

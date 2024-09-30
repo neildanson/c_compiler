@@ -82,6 +82,34 @@ fn parse_factor(tokens: &[Token]) -> Result<(Expression, &[Token])> {
                 rest,
             )
         }
+        [Token::DoublePlus, rest @ ..] => {
+            let (factor, rest) = parse_factor(rest)?;
+            (
+                Expression::Unary(UnaryOperator::PreIncrement, Box::new(factor)),
+                rest,
+            )
+        }
+        [Token::DoubleMinus, rest @ ..] => {
+            let (factor, rest) = parse_factor(rest)?;
+            (
+                Expression::Unary(UnaryOperator::PreDecrement, Box::new(factor)),
+                rest,
+            )
+        }
+        [Token::Identifier(name), Token::DoublePlus, rest @ ..] => (
+            Expression::Unary(
+                UnaryOperator::PostIncrement,
+                Box::new(Expression::Var(name.clone())),
+            ),
+            rest,
+        ),
+        [Token::Identifier(name), Token::DoubleMinus, rest @ ..] => (
+            Expression::Unary(
+                UnaryOperator::PostDecrement,
+                Box::new(Expression::Var(name.clone())),
+            ),
+            rest,
+        ),
         [Token::LParen, rest @ ..] => {
             let (expression, rest) = parse_expression(rest, 0)?;
             let rest = swallow_one(Token::RParen, rest)?;

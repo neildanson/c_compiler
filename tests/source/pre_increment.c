@@ -1,4 +1,4 @@
 int main(void) {
-    int = 10;
+    int i = 10;
     return ++i;
 }
