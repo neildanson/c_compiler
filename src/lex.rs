@@ -20,7 +20,8 @@ pub enum Token {
     RBrace,                        //}
     SemiColon,                     //;
     Tilde,                         //~
-    DoubleNegation,                //--
+    DoubleMinus,                   //--
+    DoublePlus,                    //++
     Plus,                          //+
     Minus,                         //-
     Asterisk,                      //*
@@ -107,7 +108,8 @@ impl Tokenizer {
             TokenMapper::new(r"^[a-zA-Z_]\w*\b", Box::new(Token::Identifier)),
             TokenMapper::new(r"^[0-9]+\b", Box::new(Token::Constant)),
             TokenMapper::new(r"^~", Box::new(|_| Token::Tilde)),
-            TokenMapper::new(r"^--", Box::new(|_| Token::DoubleNegation)),
+            TokenMapper::new(r"^--", Box::new(|_| Token::DoubleMinus)),
+            TokenMapper::new(r"^\+\+", Box::new(|_| Token::DoublePlus)),
             TokenMapper::new(r"^<=", Box::new(|_| Token::LessThanOrEqual)),
             TokenMapper::new(r"^>=", Box::new(|_| Token::GreaterThanOrEqual)),
             TokenMapper::new(r"^<<", Box::new(|_| Token::ShiftLeft)),
@@ -199,7 +201,7 @@ mod tests {
         let tokens = tokenizer.tokenize("--42").unwrap();
         assert_eq!(
             tokens,
-            vec![Token::DoubleNegation, Token::Constant("42".to_string())]
+            vec![Token::DoubleMinus, Token::Constant("42".to_string())]
         );
     }
 
