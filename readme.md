@@ -57,13 +57,35 @@ Limits
 Cannot move from rbp (local variable) to rbp must move 1 rbp to register 1st. In our case we use `scratch` register r10.
 
 
-# add, sub
+# add, sub, imul
 
-`add value, dst`
+`add src, dst`
 
 eg 
 
 `add 2, %eax`
 
 will add 2 to eax and store in place. 
+
+src can be a an immediate value, register or memory address. 
+dst can be a register or memory address. 
+src & dst cannot _both_ be memory addresses. 
+
+# idiv & cdq
+
+idiv computes both (integer) division and remainder
+
+9/2 & 9%2 both emit same assembler, but read result from different place
+
+eg
+
+```
+movl $2, -4(%rdp)   # move 2 into local
+movl $9, %eax       # mov 9 into eax
+cdq                 # sign extend eax into edx
+idiv -4(%rdp)       # eax div by local. result in 
+                    # divide result in eax
+                    # mod result in edx
+```
+
 
