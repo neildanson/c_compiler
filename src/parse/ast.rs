@@ -16,14 +16,27 @@ pub enum BlockItem {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct Declaration {
+pub struct FunctionDefinition {
+    pub name: String,
+    pub parameters: Vec<String>,
+    pub body: Vec<BlockItem>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum Declaration {
+    Variable(VariableDeclaration),
+    Function(FunctionDefinition),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct VariableDeclaration {
     pub name: String,
     pub value: Option<Expression>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum ForInit {
-    InitDeclaration(Declaration),
+    InitDeclaration(VariableDeclaration),
     InitExpression(Option<Expression>),
 }
 
@@ -57,6 +70,7 @@ pub enum Expression {
     BinOp(BinaryOperator, Box<Expression>, Box<Expression>),
     Assignment(Box<Expression>, Box<Expression>),
     Conditional(Box<Expression>, Box<Expression>, Box<Expression>),
+    FunctionCall(String, Vec<Expression>),
 }
 
 #[derive(Clone, Debug, PartialEq)]

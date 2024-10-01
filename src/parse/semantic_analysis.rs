@@ -95,13 +95,20 @@ impl Analysis {
                     Box::new(els),
                 ))
             }
+            Expression::FunctionCall(name, args) => {
+                let args = args
+                    .iter()
+                    .map(|arg| Self::resolve_expression(arg, variable_map))
+                    .collect::<Result<Vec<Expression>, CompilerError>>()?;
+                Ok(Expression::FunctionCall(name.clone(), args))
+            }
         }
     }
 
-    fn resolve_declaration(
-        decl: Declaration,
+    fn resolve_variable_declaration(
+        decl: VariableDeclaration,
         variable_map: &mut HashMap<String, MapEntry>,
-    ) -> Result<Declaration, CompilerError> {
+    ) -> Result<VariableDeclaration, CompilerError> {
         if variable_map.contains_key(&decl.name) && variable_map[&decl.name].from_current_scope {
             return Err(CompilerError::SemanticAnalysis(
                 crate::error::SemanticAnalysisError::VariableAlreadyDeclared(decl.name),
@@ -116,7 +123,7 @@ impl Analysis {
             }
             None => None,
         };
-        Ok(Declaration {
+        Ok(VariableDeclaration {
             name: unique_name,
             value: init,
         })
@@ -129,13 +136,19 @@ impl Analysis {
         let mut new_block = Vec::new();
         for item in blocks {
             match item {
-                BlockItem::Declaration(decl) => {
-                    let decl = Self::resolve_declaration(decl.clone(), variable_map)?;
-                    new_block.push(BlockItem::Declaration(decl));
+                BlockItem::Declaration(Declaration::Variable(decl)) => {
+                    //Dont nest
+                    let decl = Self::resolve_variable_declaration(decl.clone(), variable_map)?;
+                    new_block.push(BlockItem::Declaration(Declaration::Variable(decl)));
                 }
                 BlockItem::Statement(stmt) => {
                     let stmt = Self::resolve_statement(stmt, variable_map)?;
                     new_block.push(BlockItem::Statement(stmt));
+                }
+                _ => {
+                    return Err(CompilerError::SemanticAnalysis(
+                        SemanticAnalysisError::InvalidBlockItem,
+                    ))
                 }
             }
         }
@@ -148,7 +161,7 @@ impl Analysis {
     ) -> Result<ForInit, CompilerError> {
         match init {
             ForInit::InitDeclaration(decl) => {
-                let decl = Self::resolve_declaration(decl.clone(), variable_map)?;
+                let decl = Self::resolve_variable_declaration(decl.clone(), variable_map)?;
                 Ok(ForInit::InitDeclaration(decl))
             }
             ForInit::InitExpression(Some(expr)) => {
@@ -230,13 +243,18 @@ impl Analysis {
         let mut new_body = Vec::new();
         for item in function.body {
             match item {
-                BlockItem::Declaration(decl) => {
-                    let decl = Self::resolve_declaration(decl, &mut variable_map)?;
-                    new_body.push(BlockItem::Declaration(decl));
+                BlockItem::Declaration(Declaration::Variable(decl)) => {
+                    let decl = Self::resolve_variable_declaration(decl, &mut variable_map)?;
+                    new_body.push(BlockItem::Declaration(Declaration::Variable(decl)));
                 }
                 BlockItem::Statement(stmt) => {
                     let stmt = Self::resolve_statement(&stmt, &mut variable_map)?;
                     new_body.push(BlockItem::Statement(stmt));
+                }
+                _ => {
+                    return Err(CompilerError::SemanticAnalysis(
+                        SemanticAnalysisError::InvalidBlockItem,
+                    ))
                 }
             }
         }

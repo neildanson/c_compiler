@@ -286,7 +286,7 @@ impl Tacky {
 
     fn emit_tacky_decl(
         &mut self,
-        d: &parse::Declaration,
+        d: &parse::VariableDeclaration,
         instructions: &mut Vec<Instruction>,
     ) -> Result<(), CompilerError> {
         let name = d.name.clone();
@@ -476,12 +476,14 @@ impl Tacky {
             parse::Statement::Compound(block) => {
                 for item in block {
                     match item {
-                        parse::BlockItem::Declaration(decl) => {
+                        parse::BlockItem::Declaration(parse::Declaration::Variable(decl)) => {
+                            //Dont nest?
                             self.emit_tacky_decl(decl, instructions)?;
                         }
                         parse::BlockItem::Statement(s) => {
                             self.emit_tacky_statement(s, instructions)?;
                         }
+                        _ => unimplemented!("Unimplemented Tacky block item {:?}", item),
                     }
                 }
                 Ok(())
@@ -517,9 +519,11 @@ impl Tacky {
         for statement in f.body {
             match statement {
                 parse::BlockItem::Statement(s) => self.emit_tacky_statement(&s, &mut body)?,
-                parse::BlockItem::Declaration(decl) => {
+                parse::BlockItem::Declaration(parse::Declaration::Variable(decl)) => {
+                    //Dont nest?
                     self.emit_tacky_decl(&decl, &mut body)?;
-                } //s => unimplemented!("Unimplemented Tacky statement {:?}", s),
+                }
+                s => unimplemented!("Unimplemented Tacky statement {:?}", s),
             }
         }
         Ok(Function { name: f.name, body })

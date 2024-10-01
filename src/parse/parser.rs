@@ -206,7 +206,7 @@ fn parse_optional_expression(tokens: &[Token]) -> Result<(Option<Expression>, &[
 }
 
 fn parse_for_init(tokens: &[Token]) -> Result<(ForInit, &[Token])> {
-    let decl = parse_declaration(tokens);
+    let decl = parse_variable_declaration(tokens);
 
     match decl {
         Ok((decl, rest)) => Ok((ForInit::InitDeclaration(decl), rest)),
@@ -314,12 +314,12 @@ fn parse_statement(tokens: &[Token]) -> Result<(Statement, &[Token])> {
     Ok((statement, tokens))
 }
 
-fn parse_declaration(tokens: &[Token]) -> Result<(Declaration, &[Token])> {
+fn parse_variable_declaration(tokens: &[Token]) -> Result<(VariableDeclaration, &[Token])> {
     let (declaration, rest) = match tokens {
         [Token::Int, Token::Identifier(name), Token::Assignment, rest @ ..] => {
             let (expression, rest) = parse_expression(rest, 0)?;
             (
-                Declaration {
+                VariableDeclaration {
                     name: name.clone(),
                     value: Some(expression),
                 },
@@ -327,7 +327,7 @@ fn parse_declaration(tokens: &[Token]) -> Result<(Declaration, &[Token])> {
             )
         }
         [Token::Int, Token::Identifier(name), rest @ ..] => (
-            Declaration {
+            VariableDeclaration {
                 name: name.clone(),
                 value: None,
             },
@@ -345,9 +345,12 @@ fn parse_declaration(tokens: &[Token]) -> Result<(Declaration, &[Token])> {
 }
 
 fn parse_block_item(tokens: &[Token]) -> Result<(BlockItem, &[Token])> {
-    let declaration = parse_declaration(tokens);
+    let declaration = parse_variable_declaration(tokens);
     if let Ok((declaration, rest)) = declaration {
-        return Ok((BlockItem::Declaration(declaration), rest));
+        return Ok((
+            BlockItem::Declaration(Declaration::Variable(declaration)),
+            rest,
+        ));
     }
 
     let statement = parse_statement(tokens);

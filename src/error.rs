@@ -23,6 +23,7 @@ pub enum SemanticAnalysisError {
     NotImplemented,
     InvalidBreak,
     InvalidContinue,
+    InvalidBlockItem,
 }
 
 impl Display for SemanticAnalysisError {
@@ -38,6 +39,7 @@ impl Display for SemanticAnalysisError {
             SemanticAnalysisError::NotImplemented => write!(f, "Not Implemented"),
             SemanticAnalysisError::InvalidBreak => write!(f, "Invalid Break"),
             SemanticAnalysisError::InvalidContinue => write!(f, "Invalid Continue"),
+            SemanticAnalysisError::InvalidBlockItem => write!(f, "Invalid Block Item"),
         }
     }
 }
