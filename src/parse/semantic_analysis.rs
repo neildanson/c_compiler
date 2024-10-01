@@ -238,7 +238,7 @@ impl Analysis {
         }
     }
 
-    fn resolve_function(function: Function) -> Result<Function, CompilerError> {
+    fn resolve_function(function: FunctionDefinition) -> Result<FunctionDefinition, CompilerError> {
         let mut variable_map = HashMap::new();
         let mut new_body = Vec::new();
         for item in function.body {
@@ -258,8 +258,9 @@ impl Analysis {
                 }
             }
         }
-        Ok(Function {
+        Ok(FunctionDefinition {
             name: function.name,
+            parameters: function.parameters,
             body: new_body,
         })
     }
@@ -340,10 +341,14 @@ impl Analysis {
         }
     }
 
-    fn label_function(&mut self, function: Function) -> Result<Function, CompilerError> {
+    fn label_function(
+        &mut self,
+        function: FunctionDefinition,
+    ) -> Result<FunctionDefinition, CompilerError> {
         let new_body = self.label_block(&function.body, None)?;
-        Ok(Function {
+        Ok(FunctionDefinition {
             name: function.name,
+            parameters: function.parameters,
             body: new_body,
         })
     }
@@ -383,7 +388,9 @@ impl Analysis {
         }
     }
 
-    fn verify_function_labels(function: Function) -> Result<Function, CompilerError> {
+    fn verify_function_labels(
+        function: FunctionDefinition,
+    ) -> Result<FunctionDefinition, CompilerError> {
         let mut new_body = Vec::new();
         for item in function.body {
             match item {
@@ -396,8 +403,9 @@ impl Analysis {
                 }
             }
         }
-        Ok(Function {
+        Ok(FunctionDefinition {
             name: function.name,
+            parameters: function.parameters,
             body: new_body,
         })
     }

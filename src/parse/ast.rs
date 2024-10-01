@@ -1,12 +1,6 @@
 #[derive(Debug, PartialEq)]
 pub struct Program {
-    pub function: Function,
-}
-
-#[derive(Debug, PartialEq)]
-pub struct Function {
-    pub name: String,
-    pub body: Vec<BlockItem>,
+    pub function: FunctionDefinition,
 }
 
 #[derive(Clone, Debug, PartialEq)]

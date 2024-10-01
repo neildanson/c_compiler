@@ -360,7 +360,7 @@ fn parse_block_item(tokens: &[Token]) -> Result<(BlockItem, &[Token])> {
     Err(CompilerError::Parse("Unexpected tokens".to_string()).into())
 }
 
-fn parse_function(tokens: &[Token]) -> Result<(Function, &[Token])> {
+fn parse_function(tokens: &[Token]) -> Result<(FunctionDefinition, &[Token])> {
     let (function, tokens) = match tokens {
         [Token::Int, Token::Identifier(name), Token::LParen, Token::Void, Token::RParen, Token::LBrace, rest @ ..] =>
         {
@@ -382,8 +382,9 @@ fn parse_function(tokens: &[Token]) -> Result<(Function, &[Token])> {
 
             let rest = swallow_one(Token::RBrace, rest)?;
             (
-                Function {
+                FunctionDefinition {
                     name: name.clone(),
+                    parameters: Vec::new(), //TODO
                     body: statements,
                 },
                 rest,
@@ -448,8 +449,9 @@ mod tests {
         let (function, rest) = parse_function(&tokens).unwrap();
         assert_eq!(
             function,
-            Function {
+            FunctionDefinition {
                 name: "main".to_string(),
+                parameters: vec![],
                 body: vec![BlockItem::Statement(Statement::Return(
                     Expression::Constant(42)
                 ))]
@@ -473,8 +475,9 @@ int main(void) {
         let (function, rest) = parse_function(&tokens).unwrap();
         assert_eq!(
             function,
-            Function {
+            FunctionDefinition {
                 name: "main".to_string(),
+                parameters: vec![],
                 body: vec![BlockItem::Statement(Statement::Return(
                     Expression::Constant(100)
                 ))]
@@ -492,8 +495,9 @@ int main(void) {
         let (function, rest) = parse_function(&tokens).unwrap();
         assert_eq!(
             function,
-            Function {
+            FunctionDefinition {
                 name: "main".to_string(),
+                parameters: vec![],
                 body: vec![BlockItem::Statement(Statement::Return(Expression::BinOp(
                     BinaryOperator::Add,
                     Box::new(Expression::Constant(42)),

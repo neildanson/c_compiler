@@ -514,7 +514,10 @@ impl Tacky {
         }
     }
 
-    fn emit_tacky_function(&mut self, f: parse::Function) -> Result<Function, CompilerError> {
+    fn emit_tacky_function(
+        &mut self,
+        f: parse::FunctionDefinition,
+    ) -> Result<Function, CompilerError> {
         let mut body = Vec::new();
         for statement in f.body {
             match statement {
