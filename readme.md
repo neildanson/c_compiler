@@ -45,3 +45,25 @@ echo $?
 A Convenience script called `compile_and_run.sh` will compile `a.s` into `a.out` and run and echo the result. 
 
 `chmod u+x compile_and_run.sh`
+
+Assembly reference
+
+### mov
+
+`mov src, dst`
+
+Limits
+
+Cannot move from rbp (local variable) to rbp must move 1 rbp to register 1st. In our case we use `scratch` register r10.
+
+
+# add, sub
+
+`add value, dst`
+
+eg 
+
+`add 2, %eax`
+
+will add 2 to eax and store in place. 
+
