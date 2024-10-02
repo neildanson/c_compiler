@@ -60,7 +60,7 @@ fn swallow_semicolon(tokens: &[Token]) -> Result<&[Token]> {
 
 fn parse_parameter_list(tokens: &[Token]) -> Result<(Vec<String>, &[Token])> {
     let (parameters, rest) = match tokens {
-        [Token::Void, Token::RParen, rest @ ..] => (Vec::new(), rest),
+        [Token::Void, rest @ ..] => (Vec::new(), rest),
         [Token::Int, Token::Identifier(name), rest @ ..] => {
             let mut parameters = vec![name.clone()];
             let mut rest = rest;

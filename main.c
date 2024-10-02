@@ -4,6 +4,6 @@ int add_fortytwo(int a) {
 
 
 int main(void) {
-    int k = add_fortytwo(27);
+    int k = 27;
     return k;
 }
