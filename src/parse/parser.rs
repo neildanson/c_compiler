@@ -75,7 +75,7 @@ fn parse_parameter_list(tokens: &[Token]) -> Result<(Vec<String>, &[Token])> {
         [Token::Int, Token::Identifier(name), rest @ ..] => {
             let mut parameters = vec![name.clone()];
             let mut rest = rest;
-            while let [Token::Comma, Token::Identifier(name), new_rest @ ..] = rest {
+            while let [Token::Comma, Token::Int, Token::Identifier(name), new_rest @ ..] = rest {
                 parameters.push(name.clone());
                 rest = new_rest;
             }
@@ -476,7 +476,7 @@ pub fn parse_program(tokens: &[Token]) -> Result<Program> {
     }
 
     if !tokens.is_empty() {
-        return Err(CompilerError::Parse("Garbage found after function".to_string()).into());
+        return Err(CompilerError::Parse(format!("Garbage found after function {:?}", tokens)).into());
     }
     Ok(Program { functions })
 }

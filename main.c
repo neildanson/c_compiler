@@ -1,16 +1,11 @@
-int foo(void);
-
-int foo(void) {
-    return 8;
+int lotsofargs(int l, int o) {
+    return l + 1;
 }
 
 int main(void) {
-    int foo = 3;
-    int bar = 4;
-    if (foo + bar > 0) {
-        bar = foo(1); //incorrect number of arguments
+    int ret = 0;
+    for (int i = 0; i < 10000000; i = i + 1) {
+        ret = lotsofargs(1);
     }
-    /* Variable foo becomes visible again */
-    return foo + bar;
+    return ret == 150000000;
 }
-
