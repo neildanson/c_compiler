@@ -60,7 +60,10 @@ fn swallow_semicolon(tokens: &[Token]) -> Result<&[Token]> {
     swallow_one(Token::SemiColon, tokens)
 }
 
-fn optional<'a, T>(parser : &dyn Fn(&[Token]) -> Result<(T, &[Token])>, tokens: &'a [Token]) -> Result<(Option<T>, &'a [Token])> {
+fn optional<'a, T>(
+    parser: &dyn Fn(&[Token]) -> Result<(T, &[Token])>,
+    tokens: &'a [Token],
+) -> Result<(Option<T>, &'a [Token])> {
     let result = parser(tokens);
     match result {
         Ok((value, rest)) => Ok((Some(value), rest)),
@@ -93,9 +96,7 @@ fn parse_parameter_list(tokens: &[Token]) -> Result<(Vec<String>, &[Token])> {
 
 fn parse_argument_list(tokens: &[Token]) -> Result<(Vec<Expression>, &[Token])> {
     match tokens {
-        [Token::RParen, rest @ ..] => {
-            Ok((Vec::new(), rest))
-        },
+        [Token::RParen, rest @ ..] => Ok((Vec::new(), rest)),
         _ => {
             let (expression, rest) = parse_expression(tokens, 0)?;
             let mut arguments = vec![expression];
@@ -254,10 +255,8 @@ fn parse_expression(tokens: &[Token], min_precedence: u16) -> Result<(Expression
     Ok(result)
 }
 
-
-
 fn parse_optional_expression(tokens: &[Token]) -> Result<(Option<Expression>, &[Token])> {
-    optional(&|tokens| parse_expression(tokens, 0), tokens) 
+    optional(&|tokens| parse_expression(tokens, 0), tokens)
 }
 
 fn parse_for_init(tokens: &[Token]) -> Result<(ForInit, &[Token])> {
@@ -415,10 +414,7 @@ fn parse_declaration(tokens: &[Token]) -> Result<(Declaration, &[Token])> {
 fn parse_block_item(tokens: &[Token]) -> Result<(BlockItem, &[Token])> {
     let declaration = parse_declaration(tokens);
     if let Ok((declaration, rest)) = declaration {
-        return Ok((
-            BlockItem::Declaration(declaration),
-            rest,
-        ));
+        return Ok((BlockItem::Declaration(declaration), rest));
     }
 
     let statement = parse_statement(tokens);
@@ -454,13 +450,12 @@ fn parse_function_definition(tokens: &[Token]) -> Result<(FunctionDefinition, &[
         [Token::Int, Token::Identifier(name), Token::LParen, rest @ ..] => {
             let (params, rest) = parse_parameter_list(rest)?;
             let rest = swallow_one(Token::RParen, rest)?;
-            
+
             let (statements, rest) = optional(&|tokens| parse_function_body(tokens), rest)?;
-            let rest = 
-                match statements {
-                    Some(_) => rest,
-                    None => swallow_semicolon(rest)?,
-                };
+            let rest = match statements {
+                Some(_) => rest,
+                None => swallow_semicolon(rest)?,
+            };
 
             (
                 FunctionDefinition {
@@ -489,7 +484,11 @@ pub fn parse_program(tokens: &[Token]) -> Result<Program> {
     }
 
     if !tokens.is_empty() {
-        return Err(CompilerError::Parse(format!("Garbage found after function {:?}, parsed \n\n{:?}", tokens, functions)).into());
+        return Err(CompilerError::Parse(format!(
+            "Garbage found after function {:?}, parsed \n\n{:?}",
+            tokens, functions
+        ))
+        .into());
     }
     Ok(Program { functions })
 }
@@ -585,11 +584,13 @@ int main(void) {
             FunctionDefinition {
                 name: "main".to_string(),
                 parameters: vec![],
-                body: Some(vec![BlockItem::Statement(Statement::Return(Expression::BinOp(
-                    BinaryOperator::Add,
-                    Box::new(Expression::Constant(42)),
-                    Box::new(Expression::Constant(12))
-                )))])
+                body: Some(vec![BlockItem::Statement(Statement::Return(
+                    Expression::BinOp(
+                        BinaryOperator::Add,
+                        Box::new(Expression::Constant(42)),
+                        Box::new(Expression::Constant(12))
+                    )
+                ))])
             }
         );
         assert!(rest.is_empty());

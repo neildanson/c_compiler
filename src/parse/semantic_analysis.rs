@@ -392,8 +392,9 @@ impl Analysis {
         function: FunctionDefinition,
     ) -> Result<FunctionDefinition, CompilerError> {
         let mut new_body = Vec::new();
-        
-        for item in function.body.unwrap() { //TODO: Fix this unwrap
+
+        for item in function.body.unwrap() {
+            //TODO: Fix this unwrap
             match item {
                 BlockItem::Declaration(decl) => {
                     new_body.push(BlockItem::Declaration(decl));
