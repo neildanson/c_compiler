@@ -58,6 +58,28 @@ fn swallow_semicolon(tokens: &[Token]) -> Result<&[Token]> {
     swallow_one(Token::SemiColon, tokens)
 }
 
+fn parse_parameter_list(tokens: &[Token]) -> Result<(Vec<String>, &[Token])> {
+    let (parameters, rest) = match tokens {
+        [Token::Void, Token::RParen, rest @ ..] => (Vec::new(), rest),
+        [Token::Int, Token::Identifier(name), rest @ ..] => {
+            let mut parameters = vec![name.clone()];
+            let mut rest = rest;
+            while let [Token::Comma, Token::Identifier(name), new_rest @ ..] = rest {
+                parameters.push(name.clone());
+                rest = new_rest;
+            }
+            (parameters, rest)
+        }
+        toks => {
+            return Err(
+                CompilerError::Parse(format!("Parameter List Unexpected Tokens {:?}", toks)).into(),
+            )
+        }
+    };
+    Ok((parameters, rest))
+}
+
+
 fn parse_factor(tokens: &[Token]) -> Result<(Expression, &[Token])> {
     let (factor, tokens) = match tokens {
         [Token::Constant(c), rest @ ..] => (Expression::Constant(c.parse().unwrap()), rest),
@@ -362,8 +384,12 @@ fn parse_block_item(tokens: &[Token]) -> Result<(BlockItem, &[Token])> {
 
 fn parse_function(tokens: &[Token]) -> Result<(FunctionDefinition, &[Token])> {
     let (function, tokens) = match tokens {
-        [Token::Int, Token::Identifier(name), Token::LParen, Token::Void, Token::RParen, Token::LBrace, rest @ ..] =>
+        [Token::Int, Token::Identifier(name), Token::LParen, rest @ ..] =>
         {
+            let (params, rest) = parse_parameter_list(rest)?;
+            let rest = swallow_one(Token::RParen, rest)?;
+            let rest = swallow_one(Token::LBrace, rest)?;
+
             let mut statements = Vec::new();
             let mut rest = rest;
             let mut is_ok = true;
@@ -384,7 +410,7 @@ fn parse_function(tokens: &[Token]) -> Result<(FunctionDefinition, &[Token])> {
             (
                 FunctionDefinition {
                     name: name.clone(),
-                    parameters: Vec::new(), //TODO
+                    parameters: params,
                     body: statements,
                 },
                 rest,
@@ -400,11 +426,13 @@ fn parse_function(tokens: &[Token]) -> Result<(FunctionDefinition, &[Token])> {
 }
 
 pub fn parse_program(tokens: &[Token]) -> Result<Program> {
-    let (function, rest) = parse_function(tokens)?;
+    let (function1, rest) = parse_function(tokens)?;
+    let (function2, rest) = parse_function(rest)?;
+    let functions = vec![function1, function2];
     if !rest.is_empty() {
         return Err(CompilerError::Parse("Garbage found after function".to_string()).into());
     }
-    Ok(Program { function })
+    Ok(Program { functions })
 }
 
 #[cfg(test)]

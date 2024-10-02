@@ -75,7 +75,7 @@ src & dst cannot _both_ be memory addresses.
 
 idiv computes both (integer) division and remainder
 
-9/2 & 9%2 both emit same assembler, but read result from different place
+`9 / 2` & `9 % 2` both emit same assembler, but read result from different place
 
 eg
 

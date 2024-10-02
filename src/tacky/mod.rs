@@ -533,7 +533,11 @@ impl Tacky {
     }
 
     pub fn emit_tacky(&mut self, p: parse::Program) -> Result<Program, CompilerError> {
-        let function = self.emit_tacky_function(p.function)?;
-        Ok(Program { function })
+        let mut functions = Vec::new();
+        for f in p.functions {
+            functions.push(self.emit_tacky_function(f)?);
+        }
+
+        Ok(Program { function : functions[0].clone() })
     }
 }

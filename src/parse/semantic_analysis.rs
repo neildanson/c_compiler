@@ -410,11 +410,21 @@ impl Analysis {
         })
     }
 
-    pub fn semantic_validation(&mut self, program: Program) -> Result<Program, CompilerError> {
-        let function = Self::resolve_function(program.function)?;
+    fn semantic_validation_function(&mut self, function : FunctionDefinition) -> Result<FunctionDefinition, CompilerError> {
+        let function = Self::resolve_function(function)?;
         let function = self.label_function(function)?;
         let function = Self::verify_function_labels(function)?;
 
-        Ok(Program { function })
+        Ok(function)
+    }
+
+    pub fn semantic_validation(&mut self, program: Program) -> Result<Program, CompilerError> {
+        let mut functions = Vec::new();
+        for function in program.functions {
+            let function = self.semantic_validation_function(function)?;
+            functions.push(function);
+        }
+
+        Ok(Program { functions })
     }
 }

@@ -1,7 +1,7 @@
+int add_fortytwo(int a) {
+    return 42 + a;
+}
 int main(void) {
-    int k = 0;
-    for (int i = 0; i < 1000000; i = i + 1) {
-        k = k + i;
-    }
+    int k = add_fortytwo(27);
     return k;
 }

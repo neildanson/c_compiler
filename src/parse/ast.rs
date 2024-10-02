@@ -1,6 +1,6 @@
 #[derive(Debug, PartialEq)]
 pub struct Program {
-    pub function: FunctionDefinition,
+    pub functions: Vec<FunctionDefinition>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
