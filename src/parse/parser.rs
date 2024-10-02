@@ -93,8 +93,10 @@ fn parse_parameter_list(tokens: &[Token]) -> Result<(Vec<String>, &[Token])> {
 }
 
 fn parse_argument_list(tokens: &[Token]) -> Result<(Vec<Expression>, &[Token])> {
-    let (arguments, rest) = match tokens {
-        [Token::RParen, rest @ ..] => (Vec::new(), rest),
+    match tokens {
+        [Token::RParen, rest @ ..] => {
+            Ok((Vec::new(), rest))
+        },
         _ => {
             let (expression, rest) = parse_expression(tokens, 0)?;
             let mut arguments = vec![expression];
@@ -104,10 +106,10 @@ fn parse_argument_list(tokens: &[Token]) -> Result<(Vec<Expression>, &[Token])> 
                 arguments.push(expression);
                 rest = new_rest;
             }
-            (arguments, rest)
+            let rest = swallow_one(Token::RParen, rest)?;
+            Ok((arguments, rest))
         }
-    };
-    Ok((arguments, rest))
+    }
 }
 
 fn parse_factor(tokens: &[Token]) -> Result<(Expression, &[Token])> {
@@ -169,7 +171,6 @@ fn parse_factor(tokens: &[Token]) -> Result<(Expression, &[Token])> {
         }
         [Token::Identifier(name), Token::LParen, rest @ ..] => {
             let (arguments, rest) = parse_argument_list(rest)?;
-            let rest = swallow_one(Token::RParen, rest)?;
             (Expression::FunctionCall(name.clone(), arguments), rest)
         }
         [Token::Identifier(name), rest @ ..] => (Expression::Var(name.clone()), rest),
@@ -476,7 +477,7 @@ pub fn parse_program(tokens: &[Token]) -> Result<Program> {
     }
 
     if !tokens.is_empty() {
-        return Err(CompilerError::Parse(format!("Garbage found after function {:?}", tokens)).into());
+        return Err(CompilerError::Parse(format!("Garbage found after function {:?}, parsed \n\n{:?}", tokens, functions)).into());
     }
     Ok(Program { functions })
 }
