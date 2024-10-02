@@ -50,7 +50,9 @@ fn is_binop(tok: &Token) -> bool {
 fn swallow_one(exp: Token, tokens: &[Token]) -> Result<&[Token]> {
     match tokens {
         [tok, rest @ ..] if *tok == exp => Ok(rest),
-        [rest @.. ] => Err(CompilerError::Parse(format!("Expected {:?}, got {:?}", exp, rest)).into()),
+        [rest @ ..] => {
+            Err(CompilerError::Parse(format!("Expected {:?}, got {:?}", exp, rest)).into())
+        }
         //[] => Err(CompilerError::Parse(format!("Expected {:?}", exp)).into()),
     }
 }
@@ -163,7 +165,9 @@ fn parse_factor(tokens: &[Token]) -> Result<(Expression, &[Token])> {
             (Expression::FunctionCall(name.clone(), arguments), rest)
         }
         [Token::Identifier(name), rest @ ..] => (Expression::Var(name.clone()), rest),
-        toks => return Err(CompilerError::Parse(format!("Factor Unexpected Tokens {:?}", toks)).into())
+        toks => {
+            return Err(CompilerError::Parse(format!("Factor Unexpected Tokens {:?}", toks)).into())
+        }
     };
     Ok((factor, tokens))
 }
@@ -230,7 +234,7 @@ fn parse_expression(tokens: &[Token], min_precedence: u16) -> Result<(Expression
             );
             continue;
         }
-        
+
         let (binop, rest) = parse_binop(tokens)?;
 
         let (right_expr, new_tokens) = parse_expression(rest, precedence(next_token) + 1)?;
@@ -448,10 +452,14 @@ fn parse_function_definition(tokens: &[Token]) -> Result<(FunctionDefinition, &[
 }
 
 pub fn parse_program(tokens: &[Token]) -> Result<Program> {
-    let (function1, rest) = parse_function_definition(tokens)?;
-    let (function2, rest) = parse_function_definition(rest)?;
-    let functions = vec![function1, function2];
-    if !rest.is_empty() {
+    let mut tokens = tokens;
+    let mut functions = Vec::new();
+    while let Ok((function, rest)) = parse_function_definition(tokens) {
+        tokens = rest;
+        functions.push(function);
+    }
+
+    if !tokens.is_empty() {
         return Err(CompilerError::Parse("Garbage found after function".to_string()).into());
     }
     Ok(Program { functions })
