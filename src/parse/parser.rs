@@ -53,7 +53,6 @@ fn swallow_one(exp: Token, tokens: &[Token]) -> Result<&[Token]> {
         [rest @ ..] => {
             Err(CompilerError::Parse(format!("Expected {:?}, got {:?}", exp, rest)).into())
         }
-        //[] => Err(CompilerError::Parse(format!("Expected {:?}", exp)).into()),
     }
 }
 
@@ -400,11 +399,24 @@ fn parse_variable_declaration(tokens: &[Token]) -> Result<(VariableDeclaration, 
     Ok((declaration, rest))
 }
 
-fn parse_block_item(tokens: &[Token]) -> Result<(BlockItem, &[Token])> {
+fn parse_declaration(tokens: &[Token]) -> Result<(Declaration, &[Token])> {
     let declaration = parse_variable_declaration(tokens);
     if let Ok((declaration, rest)) = declaration {
+        return Ok((Declaration::Variable(declaration), rest));
+    }
+
+    let function = parse_function_definition(tokens);
+    if let Ok((function, rest)) = function {
+        return Ok((Declaration::Function(function), rest));
+    }
+    Err(CompilerError::Parse("Unexpected tokens".to_string()).into())
+}
+
+fn parse_block_item(tokens: &[Token]) -> Result<(BlockItem, &[Token])> {
+    let declaration = parse_declaration(tokens);
+    if let Ok((declaration, rest)) = declaration {
         return Ok((
-            BlockItem::Declaration(Declaration::Variable(declaration)),
+            BlockItem::Declaration(declaration),
             rest,
         ));
     }
