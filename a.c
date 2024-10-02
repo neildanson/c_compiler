@@ -1,7 +1,12 @@
-int add_fortytwo(int a) {
-    return 42 + a;
+int foo(void)
+int foo(void) {
+    return 8;
 }
 int main(void) {
-    int k = add_fortytwo(27);
-    return k;
+    int foo = 3;
+    int bar = 4;
+    if (foo + bar > 0) {
+        bar = foo(1);
+    }
+    return foo + bar;
 }

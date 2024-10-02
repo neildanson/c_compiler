@@ -61,6 +61,14 @@ fn swallow_semicolon(tokens: &[Token]) -> Result<&[Token]> {
     swallow_one(Token::SemiColon, tokens)
 }
 
+fn optional<'a, T>(parser : &dyn Fn(&[Token]) -> Result<(T, &[Token])>, tokens: &'a [Token]) -> Result<(Option<T>, &'a [Token])> {
+    let result = parser(tokens);
+    match result {
+        Ok((value, rest)) => Ok((Some(value), rest)),
+        _ => Ok((None, tokens)),
+    }
+}
+
 fn parse_parameter_list(tokens: &[Token]) -> Result<(Vec<String>, &[Token])> {
     let (parameters, rest) = match tokens {
         [Token::Void, rest @ ..] => (Vec::new(), rest),
@@ -246,12 +254,10 @@ fn parse_expression(tokens: &[Token], min_precedence: u16) -> Result<(Expression
     Ok(result)
 }
 
+
+
 fn parse_optional_expression(tokens: &[Token]) -> Result<(Option<Expression>, &[Token])> {
-    let expression = parse_expression(tokens, 0);
-    match expression {
-        Ok((expression, rest)) => Ok((Some(expression), rest)),
-        _ => Ok((None, tokens)),
-    }
+    optional(&|tokens| parse_expression(tokens, 0), tokens) 
 }
 
 fn parse_for_init(tokens: &[Token]) -> Result<(ForInit, &[Token])> {
@@ -414,11 +420,13 @@ fn parse_function_definition(tokens: &[Token]) -> Result<(FunctionDefinition, &[
         [Token::Int, Token::Identifier(name), Token::LParen, rest @ ..] => {
             let (params, rest) = parse_parameter_list(rest)?;
             let rest = swallow_one(Token::RParen, rest)?;
+            
             let rest = swallow_one(Token::LBrace, rest)?;
 
             let mut statements = Vec::new();
             let mut rest = rest;
             let mut is_ok = true;
+            println!("Parsing function {}", name);
             while is_ok {
                 let result = parse_block_item(rest);
                 match result {
@@ -432,7 +440,7 @@ fn parse_function_definition(tokens: &[Token]) -> Result<(FunctionDefinition, &[
                 }
             }
 
-            let rest = swallow_one(Token::RBrace, rest)?;
+            let rest =swallow_one(Token::RBrace, rest)?;
             (
                 FunctionDefinition {
                     name: name.clone(),
