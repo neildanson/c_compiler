@@ -392,15 +392,12 @@ impl Tacky {
             name: start_label.clone(),
         });
 
-        match cond {
-            Some(cond) => {
-                let cond = self.emit_tacky_expr(cond, instructions)?;
-                instructions.push(Instruction::JumpIfZero {
-                    condition: cond,
-                    target: break_label.clone(),
-                });
-            }
-            None => {}
+        if let Some(cond) = cond {
+            let cond = self.emit_tacky_expr(cond, instructions)?;
+            instructions.push(Instruction::JumpIfZero {
+                condition: cond,
+                target: break_label.clone(),
+            });
         }
 
         self.emit_tacky_statement(body, instructions)?;
@@ -408,11 +405,8 @@ impl Tacky {
             name: continue_label.clone(),
         });
 
-        match post {
-            Some(post) => {
-                self.emit_tacky_expr(post, instructions)?;
-            }
-            None => {}
+        if let Some(post) = post {
+            self.emit_tacky_expr(post, instructions)?;
         }
         instructions.push(Instruction::Jump {
             target: start_label.clone(),

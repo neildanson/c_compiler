@@ -50,9 +50,7 @@ fn is_binop(tok: &Token) -> bool {
 fn swallow_one(exp: Token, tokens: &[Token]) -> Result<&[Token]> {
     match tokens {
         [tok, rest @ ..] if *tok == exp => Ok(rest),
-        [rest @ ..] => {
-            Err(CompilerError::Parse(format!("Expected {:?}, got {:?}", exp, rest)).into())
-        }
+        rest => Err(CompilerError::Parse(format!("Expected {:?}, got {:?}", exp, rest)).into()),
     }
 }
 
@@ -60,10 +58,10 @@ fn swallow_semicolon(tokens: &[Token]) -> Result<&[Token]> {
     swallow_one(Token::SemiColon, tokens)
 }
 
-fn optional<'a, T>(
-    parser: &dyn Fn(&[Token]) -> Result<(T, &[Token])>,
-    tokens: &'a [Token],
-) -> Result<(Option<T>, &'a [Token])> {
+fn optional<T, F>(parser: F, tokens: &[Token]) -> Result<(Option<T>, &[Token])>
+where
+    F: Fn(&[Token]) -> Result<(T, &[Token])>,
+{
     let result = parser(tokens);
     match result {
         Ok((value, rest)) => Ok((Some(value), rest)),
@@ -256,7 +254,7 @@ fn parse_expression(tokens: &[Token], min_precedence: u16) -> Result<(Expression
 }
 
 fn parse_optional_expression(tokens: &[Token]) -> Result<(Option<Expression>, &[Token])> {
-    optional(&|tokens| parse_expression(tokens, 0), tokens)
+    optional(|tokens| parse_expression(tokens, 0), tokens)
 }
 
 fn parse_for_init(tokens: &[Token]) -> Result<(ForInit, &[Token])> {
@@ -451,7 +449,7 @@ fn parse_function_definition(tokens: &[Token]) -> Result<(FunctionDefinition, &[
             let (params, rest) = parse_parameter_list(rest)?;
             let rest = swallow_one(Token::RParen, rest)?;
 
-            let (statements, rest) = optional(&|tokens| parse_function_body(tokens), rest)?;
+            let (statements, rest) = optional(parse_function_body, rest)?;
             let rest = match statements {
                 Some(_) => rest,
                 None => swallow_semicolon(rest)?,

@@ -4,7 +4,7 @@ use c_compiler::*;
 
 fn run_gcc(input: &str, output: &str) -> bool {
     let output = Command::new("gcc")
-        .args([input, "-o", &output])
+        .args([input, "-o", output])
         .output()
         .expect("failed to execute process");
 
@@ -17,7 +17,7 @@ fn run_gcc(input: &str, output: &str) -> bool {
 fn run_output(filename: &str) -> ExitStatus {
     let output = Command::new(format!("./{}", filename))
         .output()
-        .expect(format!("failed to execute process {}", filename).as_str());
+        .unwrap_or_else(|_| panic!("failed to execute process {}", filename));
 
     output.status
 }
@@ -33,8 +33,8 @@ fn run_test(input: &str) {
     write_asm(&s_file, &generate_assembly).unwrap();
     let my_status = run_gcc(&s_file, &my_out_file);
     let gcc_status = run_gcc(&c_file, &gcc_out_file);
-    assert_eq!(true, my_status, "GCC Compilation failed (my assembler)");
-    assert_eq!(true, gcc_status, "GCC Compilation failed");
+    assert!(my_status, "GCC Compilation failed (my assembler)");
+    assert!(gcc_status, "GCC Compilation failed");
 
     let my_result = run_output(&my_out_file);
     let gcc_result = run_output(&gcc_out_file);
