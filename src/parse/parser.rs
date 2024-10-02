@@ -50,7 +50,8 @@ fn is_binop(tok: &Token) -> bool {
 fn swallow_one(exp: Token, tokens: &[Token]) -> Result<&[Token]> {
     match tokens {
         [tok, rest @ ..] if *tok == exp => Ok(rest),
-        _ => Err(CompilerError::Parse(format!("Expected {:?}", exp)).into()),
+        [rest @.. ] => Err(CompilerError::Parse(format!("Expected {:?}, got {:?}", exp, rest)).into()),
+        //[] => Err(CompilerError::Parse(format!("Expected {:?}", exp)).into()),
     }
 }
 
@@ -71,14 +72,33 @@ fn parse_parameter_list(tokens: &[Token]) -> Result<(Vec<String>, &[Token])> {
             (parameters, rest)
         }
         toks => {
-            return Err(
-                CompilerError::Parse(format!("Parameter List Unexpected Tokens {:?}", toks)).into(),
-            )
+            return Err(CompilerError::Parse(format!(
+                "Parameter List Unexpected Tokens {:?}",
+                toks
+            ))
+            .into())
         }
     };
     Ok((parameters, rest))
 }
 
+fn parse_argument_list(tokens: &[Token]) -> Result<(Vec<Expression>, &[Token])> {
+    let (arguments, rest) = match tokens {
+        [Token::RParen, rest @ ..] => (Vec::new(), rest),
+        _ => {
+            let (expression, rest) = parse_expression(tokens, 0)?;
+            let mut arguments = vec![expression];
+            let mut rest = rest;
+            while let [Token::Comma, new_rest @ ..] = rest {
+                let (expression, new_rest) = parse_expression(new_rest, 0)?;
+                arguments.push(expression);
+                rest = new_rest;
+            }
+            (arguments, rest)
+        }
+    };
+    Ok((arguments, rest))
+}
 
 fn parse_factor(tokens: &[Token]) -> Result<(Expression, &[Token])> {
     let (factor, tokens) = match tokens {
@@ -137,11 +157,13 @@ fn parse_factor(tokens: &[Token]) -> Result<(Expression, &[Token])> {
             let rest = swallow_one(Token::RParen, rest)?;
             (expression, rest)
         }
-        [Token::Identifier(name), rest @ ..] => (Expression::Var(name.clone()), rest),
-
-        toks => {
-            return Err(CompilerError::Parse(format!("Factor Unexpected Tokens {:?}", toks)).into())
+        [Token::Identifier(name), Token::LParen, rest @ ..] => {
+            let (arguments, rest) = parse_argument_list(rest)?;
+            let rest = swallow_one(Token::RParen, rest)?;
+            (Expression::FunctionCall(name.clone(), arguments), rest)
         }
+        [Token::Identifier(name), rest @ ..] => (Expression::Var(name.clone()), rest),
+        toks => return Err(CompilerError::Parse(format!("Factor Unexpected Tokens {:?}", toks)).into())
     };
     Ok((factor, tokens))
 }
@@ -208,13 +230,14 @@ fn parse_expression(tokens: &[Token], min_precedence: u16) -> Result<(Expression
             );
             continue;
         }
-
+        
         let (binop, rest) = parse_binop(tokens)?;
 
         let (right_expr, new_tokens) = parse_expression(rest, precedence(next_token) + 1)?;
         tokens = new_tokens;
         left_expr = Expression::BinOp(binop, Box::new(left_expr), Box::new(right_expr));
     }
+
     let result = (left_expr, tokens);
     Ok(result)
 }
@@ -382,10 +405,9 @@ fn parse_block_item(tokens: &[Token]) -> Result<(BlockItem, &[Token])> {
     Err(CompilerError::Parse("Unexpected tokens".to_string()).into())
 }
 
-fn parse_function(tokens: &[Token]) -> Result<(FunctionDefinition, &[Token])> {
+fn parse_function_definition(tokens: &[Token]) -> Result<(FunctionDefinition, &[Token])> {
     let (function, tokens) = match tokens {
-        [Token::Int, Token::Identifier(name), Token::LParen, rest @ ..] =>
-        {
+        [Token::Int, Token::Identifier(name), Token::LParen, rest @ ..] => {
             let (params, rest) = parse_parameter_list(rest)?;
             let rest = swallow_one(Token::RParen, rest)?;
             let rest = swallow_one(Token::LBrace, rest)?;
@@ -426,8 +448,8 @@ fn parse_function(tokens: &[Token]) -> Result<(FunctionDefinition, &[Token])> {
 }
 
 pub fn parse_program(tokens: &[Token]) -> Result<Program> {
-    let (function1, rest) = parse_function(tokens)?;
-    let (function2, rest) = parse_function(rest)?;
+    let (function1, rest) = parse_function_definition(tokens)?;
+    let (function2, rest) = parse_function_definition(rest)?;
     let functions = vec![function1, function2];
     if !rest.is_empty() {
         return Err(CompilerError::Parse("Garbage found after function".to_string()).into());
@@ -474,7 +496,7 @@ mod tests {
     fn test_parse_function() {
         let tokenizer = Tokenizer::new();
         let tokens = tokenizer.tokenize("int main(void) { return 42; }").unwrap();
-        let (function, rest) = parse_function(&tokens).unwrap();
+        let (function, rest) = parse_function_definition(&tokens).unwrap();
         assert_eq!(
             function,
             FunctionDefinition {
@@ -500,7 +522,7 @@ int main(void) {
 }",
             )
             .unwrap();
-        let (function, rest) = parse_function(&tokens).unwrap();
+        let (function, rest) = parse_function_definition(&tokens).unwrap();
         assert_eq!(
             function,
             FunctionDefinition {
@@ -520,7 +542,7 @@ int main(void) {
         let tokens = tokenizer
             .tokenize("int main(void) { return 42 + 12; }")
             .unwrap();
-        let (function, rest) = parse_function(&tokens).unwrap();
+        let (function, rest) = parse_function_definition(&tokens).unwrap();
         assert_eq!(
             function,
             FunctionDefinition {

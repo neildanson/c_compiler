@@ -538,6 +538,8 @@ impl Tacky {
             functions.push(self.emit_tacky_function(f)?);
         }
 
-        Ok(Program { function : functions[0].clone() })
+        Ok(Program {
+            function: functions[0].clone(),
+        })
     }
 }

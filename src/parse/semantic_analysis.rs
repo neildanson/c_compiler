@@ -410,7 +410,10 @@ impl Analysis {
         })
     }
 
-    fn semantic_validation_function(&mut self, function : FunctionDefinition) -> Result<FunctionDefinition, CompilerError> {
+    fn semantic_validation_function(
+        &mut self,
+        function: FunctionDefinition,
+    ) -> Result<FunctionDefinition, CompilerError> {
         let function = Self::resolve_function(function)?;
         let function = self.label_function(function)?;
         let function = Self::verify_function_labels(function)?;
