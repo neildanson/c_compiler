@@ -13,7 +13,7 @@ pub enum BlockItem {
 pub struct FunctionDefinition {
     pub name: String,
     pub parameters: Vec<String>,
-    pub body: Vec<BlockItem>,
+    pub body: Option<Vec<BlockItem>>,
 }
 
 #[derive(Clone, Debug, PartialEq)]

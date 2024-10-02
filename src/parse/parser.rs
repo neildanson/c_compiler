@@ -415,32 +415,40 @@ fn parse_block_item(tokens: &[Token]) -> Result<(BlockItem, &[Token])> {
     Err(CompilerError::Parse("Unexpected tokens".to_string()).into())
 }
 
+fn parse_function_body(tokens: &[Token]) -> Result<(Vec<BlockItem>, &[Token])> {
+    let mut statements = Vec::new();
+    let rest = tokens;
+    let mut is_ok = true;
+    let mut rest = swallow_one(Token::LBrace, rest)?;
+    while is_ok {
+        let result = parse_block_item(rest);
+        match result {
+            Ok((block_item, new_rest)) => {
+                statements.push(block_item);
+                rest = new_rest;
+            }
+            Err(_) => {
+                is_ok = false;
+            }
+        }
+    }
+    let rest = swallow_one(Token::RBrace, rest)?;
+    Ok((statements, rest))
+}
+
 fn parse_function_definition(tokens: &[Token]) -> Result<(FunctionDefinition, &[Token])> {
     let (function, tokens) = match tokens {
         [Token::Int, Token::Identifier(name), Token::LParen, rest @ ..] => {
             let (params, rest) = parse_parameter_list(rest)?;
             let rest = swallow_one(Token::RParen, rest)?;
             
-            let rest = swallow_one(Token::LBrace, rest)?;
+            let (statements, rest) = optional(&|tokens| parse_function_body(tokens), rest)?;
+            let rest = 
+                match statements {
+                    Some(_) => rest,
+                    None => swallow_semicolon(rest)?,
+                };
 
-            let mut statements = Vec::new();
-            let mut rest = rest;
-            let mut is_ok = true;
-            println!("Parsing function {}", name);
-            while is_ok {
-                let result = parse_block_item(rest);
-                match result {
-                    Ok((block_item, new_rest)) => {
-                        statements.push(block_item);
-                        rest = new_rest;
-                    }
-                    Err(_) => {
-                        is_ok = false;
-                    }
-                }
-            }
-
-            let rest =swallow_one(Token::RBrace, rest)?;
             (
                 FunctionDefinition {
                     name: name.clone(),
@@ -518,9 +526,9 @@ mod tests {
             FunctionDefinition {
                 name: "main".to_string(),
                 parameters: vec![],
-                body: vec![BlockItem::Statement(Statement::Return(
+                body: Some(vec![BlockItem::Statement(Statement::Return(
                     Expression::Constant(42)
-                ))]
+                ))])
             }
         );
         assert!(rest.is_empty());
@@ -544,9 +552,9 @@ int main(void) {
             FunctionDefinition {
                 name: "main".to_string(),
                 parameters: vec![],
-                body: vec![BlockItem::Statement(Statement::Return(
+                body: Some(vec![BlockItem::Statement(Statement::Return(
                     Expression::Constant(100)
-                ))]
+                ))])
             }
         );
         assert!(rest.is_empty());
@@ -564,11 +572,11 @@ int main(void) {
             FunctionDefinition {
                 name: "main".to_string(),
                 parameters: vec![],
-                body: vec![BlockItem::Statement(Statement::Return(Expression::BinOp(
+                body: Some(vec![BlockItem::Statement(Statement::Return(Expression::BinOp(
                     BinaryOperator::Add,
                     Box::new(Expression::Constant(42)),
                     Box::new(Expression::Constant(12))
-                )))]
+                )))])
             }
         );
         assert!(rest.is_empty());

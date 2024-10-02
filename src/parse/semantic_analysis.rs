@@ -241,7 +241,7 @@ impl Analysis {
     fn resolve_function(function: FunctionDefinition) -> Result<FunctionDefinition, CompilerError> {
         let mut variable_map = HashMap::new();
         let mut new_body = Vec::new();
-        for item in function.body {
+        for item in function.body.unwrap() {
             match item {
                 BlockItem::Declaration(Declaration::Variable(decl)) => {
                     let decl = Self::resolve_variable_declaration(decl, &mut variable_map)?;
@@ -261,7 +261,7 @@ impl Analysis {
         Ok(FunctionDefinition {
             name: function.name,
             parameters: function.parameters,
-            body: new_body,
+            body: Some(new_body),
         })
     }
 
@@ -345,11 +345,11 @@ impl Analysis {
         &mut self,
         function: FunctionDefinition,
     ) -> Result<FunctionDefinition, CompilerError> {
-        let new_body = self.label_block(&function.body, None)?;
+        let new_body = self.label_block(&function.body.unwrap(), None)?;
         Ok(FunctionDefinition {
             name: function.name,
             parameters: function.parameters,
-            body: new_body,
+            body: Some(new_body),
         })
     }
 
@@ -392,7 +392,8 @@ impl Analysis {
         function: FunctionDefinition,
     ) -> Result<FunctionDefinition, CompilerError> {
         let mut new_body = Vec::new();
-        for item in function.body {
+        
+        for item in function.body.unwrap() { //TODO: Fix this unwrap
             match item {
                 BlockItem::Declaration(decl) => {
                     new_body.push(BlockItem::Declaration(decl));
@@ -406,7 +407,7 @@ impl Analysis {
         Ok(FunctionDefinition {
             name: function.name,
             parameters: function.parameters,
-            body: new_body,
+            body: Some(new_body), //TODO: Fix this unwrap
         })
     }
 

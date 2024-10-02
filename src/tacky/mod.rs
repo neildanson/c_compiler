@@ -519,7 +519,7 @@ impl Tacky {
         f: parse::FunctionDefinition,
     ) -> Result<Function, CompilerError> {
         let mut body = Vec::new();
-        for statement in f.body {
+        for statement in f.body.unwrap() {
             match statement {
                 parse::BlockItem::Statement(s) => self.emit_tacky_statement(&s, &mut body)?,
                 parse::BlockItem::Declaration(parse::Declaration::Variable(decl)) => {
