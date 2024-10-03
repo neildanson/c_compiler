@@ -3,11 +3,11 @@ cargo test --release
 cargo build --release
 
 ../writing-a-c-compiler-tests/test_compiler ./target/release/c_compiler --chapter 8 --stage codegen
-../writing-a-c-compiler-tests/test_compiler ./target/release/c_compiler --chapter 9 --stage parse
+../writing-a-c-compiler-tests/test_compiler ./target/release/c_compiler --chapter 9 --stage validate
  
 
 gcc -E -P main.c -o a.c
-cargo run --release -- --codegen a.c --S
+cargo run --release -- --validate a.c --S
 
 echo "Running the code"
 
