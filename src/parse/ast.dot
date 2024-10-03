@@ -33,3 +33,4 @@ digraph ASTDependencies {
     Expression -> Expression [label="Conditional"];
     Expression -> Expression [label="Conditional"];
     Expression -> Expression [label="FunctionCall"];
+}
