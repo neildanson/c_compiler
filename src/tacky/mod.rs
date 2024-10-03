@@ -532,8 +532,6 @@ impl Tacky {
             functions.push(self.emit_tacky_function(f)?);
         }
 
-        Ok(Program {
-            functions,
-        })
+        Ok(Program { functions })
     }
 }

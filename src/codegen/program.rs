@@ -1,4 +1,4 @@
-use super::{function, Function};
+use super::Function;
 use crate::{error::CompilerError, tacky};
 use std::fmt::Display;
 
@@ -19,7 +19,11 @@ impl Display for Program {
 impl TryFrom<tacky::Program> for Program {
     type Error = CompilerError;
     fn try_from(ast: tacky::Program) -> Result<Self, Self::Error> {
-        let functions = ast.functions.into_iter().map(Function::try_from).collect::<Result<Vec<_>, _>>()?;
+        let functions = ast
+            .functions
+            .into_iter()
+            .map(Function::try_from)
+            .collect::<Result<Vec<_>, _>>()?;
         Ok(Program { functions })
     }
 }
