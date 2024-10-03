@@ -533,7 +533,7 @@ impl Tacky {
         }
 
         Ok(Program {
-            function: functions[0].clone(),
+            functions,
         })
     }
 }
