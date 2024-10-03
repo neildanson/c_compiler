@@ -25,6 +25,7 @@ fn run_output(filename: &str) -> ExitStatus {
 fn run_test(input: &str) {
     let path = "tests";
     let c_file = format!("{}/source/{}.c", path, input);
+    let _dont_care_if_fails = std::fs::create_dir(format!("{}/temp", path));
     let s_file = format!("{}/temp/{}.s", path, input);
     let my_out_file = format!("{}/temp/my_{}.out", path, input);
     let gcc_out_file = format!("{}/temp/gcc_{}.out", path, input);
