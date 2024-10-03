@@ -1,3 +1,5 @@
+pub type Identifier = String;
+
 #[derive(Debug, PartialEq)]
 pub struct Program {
     pub functions: Vec<FunctionDefinition>,
@@ -11,8 +13,8 @@ pub enum BlockItem {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct FunctionDefinition {
-    pub name: String,
-    pub parameters: Vec<String>,
+    pub name: Identifier,
+    pub parameters: Vec<Identifier>,
     pub body: Option<Vec<BlockItem>>,
 }
 
@@ -24,7 +26,7 @@ pub enum Declaration {
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct VariableDeclaration {
-    pub name: String,
+    pub name: Identifier,
     pub value: Option<Expression>,
 }
 
@@ -34,7 +36,7 @@ pub enum ForInit {
     InitExpression(Option<Expression>),
 }
 
-type LoopIdentifier = Option<String>;
+type LoopIdentifier = Option<Identifier>;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Statement {
@@ -59,12 +61,12 @@ pub enum Statement {
 #[derive(Clone, Debug, PartialEq)]
 pub enum Expression {
     Constant(i32),
-    Var(String),
+    Var(Identifier),
     Unary(UnaryOperator, Box<Expression>),
     BinOp(BinaryOperator, Box<Expression>, Box<Expression>),
     Assignment(Box<Expression>, Box<Expression>),
     Conditional(Box<Expression>, Box<Expression>, Box<Expression>),
-    FunctionCall(String, Vec<Expression>),
+    FunctionCall(Identifier, Vec<Expression>),
 }
 
 #[derive(Clone, Debug, PartialEq)]

@@ -69,7 +69,7 @@ where
     }
 }
 
-fn parse_parameter_list(tokens: &[Token]) -> Result<(Vec<String>, &[Token])> {
+fn parse_parameter_list(tokens: &[Token]) -> Result<(Vec<Identifier>, &[Token])> {
     let (parameters, rest) = match tokens {
         [Token::Void, rest @ ..] => (Vec::new(), rest),
         [Token::Int, Token::Identifier(name), rest @ ..] => {
