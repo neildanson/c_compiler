@@ -6,6 +6,17 @@ use std::collections::HashMap;
 struct MapEntry {
     unique_name: String,
     from_current_scope: bool,
+    has_external_linkage: bool,
+}
+
+impl MapEntry {
+    fn new(unique_name: String, from_current_scope: bool, has_external_linkage: bool) -> Self {
+        MapEntry {
+            unique_name,
+            from_current_scope,
+            has_external_linkage,
+        }
+    }
 }
 
 impl Clone for MapEntry {
@@ -13,6 +24,7 @@ impl Clone for MapEntry {
         MapEntry {
             unique_name: self.unique_name.clone(),
             from_current_scope: false, //Is this a bit naughty changing on clone?
+            has_external_linkage: self.has_external_linkage,
         }
     }
 }
@@ -22,6 +34,7 @@ impl From<String> for MapEntry {
         MapEntry {
             unique_name: name,
             from_current_scope: true,
+            has_external_linkage: false,
         }
     }
 }
@@ -40,9 +53,9 @@ impl Analysis {
 }
 
 impl Analysis {
-    fn copy_variable_map(variable_map: &HashMap<String, MapEntry>) -> HashMap<String, MapEntry> {
+    fn copy_identifier_map(identifier_map: &HashMap<String, MapEntry>) -> HashMap<String, MapEntry> {
         let mut new_map = HashMap::new();
-        for (key, value) in variable_map.iter() {
+        for (key, value) in identifier_map.iter() {
             new_map.insert(key.clone(), value.clone());
         }
         new_map
@@ -50,11 +63,11 @@ impl Analysis {
 
     fn resolve_expression(
         expr: &Expression,
-        variable_map: &mut HashMap<String, MapEntry>,
+        identifier_map: &mut HashMap<String, MapEntry>,
     ) -> Result<Expression, CompilerError> {
         match expr {
             Expression::Var(name) => {
-                let map_entry = variable_map
+                let map_entry = identifier_map
                     .get(name)
                     .ok_or(CompilerError::SemanticAnalysis(
                         SemanticAnalysisError::VariableNotDeclared(name.clone()),
@@ -62,12 +75,12 @@ impl Analysis {
                 Ok(Expression::Var(map_entry.unique_name.clone()))
             }
             Expression::Unary(op, expr) => {
-                let expr = Self::resolve_expression(expr, variable_map)?;
+                let expr = Self::resolve_expression(expr, identifier_map)?;
                 Ok(Expression::Unary(op.clone(), Box::new(expr)))
             }
             Expression::BinOp(op, expr1, expr2) => {
-                let expr1 = Self::resolve_expression(expr1, variable_map)?;
-                let expr2 = Self::resolve_expression(expr2, variable_map)?;
+                let expr1 = Self::resolve_expression(expr1, identifier_map)?;
+                let expr2 = Self::resolve_expression(expr2, identifier_map)?;
                 Ok(Expression::BinOp(
                     op.clone(),
                     Box::new(expr1),
@@ -76,8 +89,8 @@ impl Analysis {
             }
             Expression::Assignment(expr1, expr2) => match expr1.as_ref() {
                 Expression::Var(_name) => {
-                    let expr1 = Self::resolve_expression(expr1, variable_map)?;
-                    let expr2 = Self::resolve_expression(expr2, variable_map)?;
+                    let expr1 = Self::resolve_expression(expr1, identifier_map)?;
+                    let expr2 = Self::resolve_expression(expr2, identifier_map)?;
                     Ok(Expression::Assignment(Box::new(expr1), Box::new(expr2)))
                 }
                 _ => Err(CompilerError::SemanticAnalysis(
@@ -86,9 +99,9 @@ impl Analysis {
             },
             Expression::Constant(_) => Ok(expr.clone()),
             Expression::Conditional(cond, then, els) => {
-                let cond = Self::resolve_expression(cond, variable_map)?;
-                let then = Self::resolve_expression(then, variable_map)?;
-                let els = Self::resolve_expression(els, variable_map)?;
+                let cond = Self::resolve_expression(cond, identifier_map)?;
+                let then = Self::resolve_expression(then, identifier_map)?;
+                let els = Self::resolve_expression(els, identifier_map)?;
                 Ok(Expression::Conditional(
                     Box::new(cond),
                     Box::new(then),
@@ -96,29 +109,40 @@ impl Analysis {
                 ))
             }
             Expression::FunctionCall(name, args) => {
-                let args = args
-                    .iter()
-                    .map(|arg| Self::resolve_expression(arg, variable_map))
-                    .collect::<Result<Vec<Expression>, CompilerError>>()?;
-                Ok(Expression::FunctionCall(name.clone(), args))
+                let ident = identifier_map.get(name);
+                match ident {
+                    Some(ident) => {
+                        let unique_name = ident.unique_name.clone();
+                        let args = args
+                            .iter()
+                            .map(|arg| Self::resolve_expression(arg, identifier_map))
+                            .collect::<Result<Vec<Expression>, CompilerError>>()?;
+                        Ok(Expression::FunctionCall(unique_name, args))
+                    }
+                    None => {
+                        Err(CompilerError::SemanticAnalysis(
+                            SemanticAnalysisError::FunctionNotDeclared(name.clone()),
+                        ))
+                    }
+                }
             }
         }
     }
 
     fn resolve_variable_declaration(
         decl: VariableDeclaration,
-        variable_map: &mut HashMap<String, MapEntry>,
+        identifier_map: &mut HashMap<String, MapEntry>,
     ) -> Result<VariableDeclaration, CompilerError> {
-        if variable_map.contains_key(&decl.name) && variable_map[&decl.name].from_current_scope {
+        if identifier_map.contains_key(&decl.name) && identifier_map[&decl.name].from_current_scope {
             return Err(CompilerError::SemanticAnalysis(
                 crate::error::SemanticAnalysisError::VariableAlreadyDeclared(decl.name),
             ));
         }
-        let unique_name = format!("{}__{}", decl.name, variable_map.len());
-        variable_map.insert(decl.name, unique_name.clone().into());
+        let unique_name = format!("{}__{}", decl.name, identifier_map.len());
+        identifier_map.insert(decl.name, unique_name.clone().into());
         let init = match decl.value {
             Some(expr) => {
-                let expression = Self::resolve_expression(&expr, variable_map)?;
+                let expression = Self::resolve_expression(&expr, identifier_map)?;
                 Some(expression)
             }
             None => None,
@@ -129,27 +153,63 @@ impl Analysis {
         })
     }
 
+    fn resolve_function_declaration(
+        decl: FunctionDefinition,
+        identifier_map: &mut HashMap<String, MapEntry>,
+    ) -> Result<FunctionDefinition, CompilerError> {
+        //This is a bit ugly - should be a pattern match
+        if identifier_map.contains_key(&decl.name) && identifier_map[&decl.name].from_current_scope {
+            return Err(CompilerError::SemanticAnalysis(
+                SemanticAnalysisError::VariableAlreadyDeclared(decl.name),
+            ));
+        }
+
+        let unique_name = format!("{}__{}", decl.name, identifier_map.len());
+        let map_entry = MapEntry::new(unique_name.clone(), true, true);
+        identifier_map.insert(decl.name, map_entry);
+
+        let mut inner_map = Self::copy_identifier_map(identifier_map);
+
+        let body = 
+            if let Some(body) = decl.body {
+                let body = Self::resolve_block(&body, &mut inner_map)?;
+                Some(body)
+            } else {
+                None
+            };
+
+
+        Ok(FunctionDefinition {
+            name: unique_name,
+            parameters: decl.parameters,
+            body,
+        })
+    }
+
     fn resolve_block(
         blocks: &[BlockItem],
-        variable_map: &mut HashMap<String, MapEntry>,
+        identifier_map: &mut HashMap<String, MapEntry>,
     ) -> Result<Vec<BlockItem>, CompilerError> {
         let mut new_block = Vec::new();
         for item in blocks {
             match item {
                 BlockItem::Declaration(Declaration::Variable(decl)) => {
-                    //Dont nest
-                    let decl = Self::resolve_variable_declaration(decl.clone(), variable_map)?;
+                    let decl = Self::resolve_variable_declaration(decl.clone(), identifier_map)?;
                     new_block.push(BlockItem::Declaration(Declaration::Variable(decl)));
                 }
+                BlockItem::Declaration(Declaration::Function(decl)) => {
+                    let decl = Self::resolve_function_declaration(decl.clone(), identifier_map)?;
+                    new_block.push(BlockItem::Declaration(Declaration::Function(decl)));
+                }
                 BlockItem::Statement(stmt) => {
-                    let stmt = Self::resolve_statement(stmt, variable_map)?;
+                    let stmt = Self::resolve_statement(stmt, identifier_map)?;
                     new_block.push(BlockItem::Statement(stmt));
                 }
-                _ => {
-                    return Err(CompilerError::SemanticAnalysis(
-                        SemanticAnalysisError::InvalidBlockItem,
-                    ))
-                }
+                //_ => {
+                //    return Err(CompilerError::SemanticAnalysis(
+                //        SemanticAnalysisError::InvalidBlockItem,
+                //    ))
+                //}
             }
         }
         Ok(new_block)
@@ -157,15 +217,15 @@ impl Analysis {
 
     fn resolve_for_init(
         init: &ForInit,
-        variable_map: &mut HashMap<String, MapEntry>,
+        identifier_map: &mut HashMap<String, MapEntry>,
     ) -> Result<ForInit, CompilerError> {
         match init {
             ForInit::InitDeclaration(decl) => {
-                let decl = Self::resolve_variable_declaration(decl.clone(), variable_map)?;
+                let decl = Self::resolve_variable_declaration(decl.clone(), identifier_map)?;
                 Ok(ForInit::InitDeclaration(decl))
             }
             ForInit::InitExpression(Some(expr)) => {
-                let expr = Self::resolve_expression(expr, variable_map)?;
+                let expr = Self::resolve_expression(expr, identifier_map)?;
                 Ok(ForInit::InitExpression(Some(expr)))
             }
             ForInit::InitExpression(None) => Ok(ForInit::InitExpression(None)),
@@ -174,44 +234,44 @@ impl Analysis {
 
     fn resolve_statement(
         stmt: &Statement,
-        variable_map: &mut HashMap<String, MapEntry>,
+        identifier_map: &mut HashMap<String, MapEntry>,
     ) -> Result<Statement, CompilerError> {
         match stmt {
             Statement::Return(expr) => {
-                let expr = Self::resolve_expression(expr, variable_map)?;
+                let expr = Self::resolve_expression(expr, identifier_map)?;
                 Ok(Statement::Return(expr))
             }
             Statement::Expression(expr) => {
-                let expr = Self::resolve_expression(expr, variable_map)?;
+                let expr = Self::resolve_expression(expr, identifier_map)?;
                 Ok(Statement::Expression(expr))
             }
             Statement::If(expr, then, els) => {
-                let expr = Self::resolve_expression(expr, variable_map)?;
-                let then = Self::resolve_statement(then.as_ref(), variable_map)?;
+                let expr = Self::resolve_expression(expr, identifier_map)?;
+                let then = Self::resolve_statement(then.as_ref(), identifier_map)?;
                 let els = match els {
-                    Some(els) => Some(Box::new(Self::resolve_statement(els, variable_map)?)),
+                    Some(els) => Some(Box::new(Self::resolve_statement(els, identifier_map)?)),
                     None => None,
                 };
                 Ok(Statement::If(expr, Box::new(then), els))
             }
             Statement::Compound(blocks) => {
-                let mut new_variable_map = Self::copy_variable_map(variable_map);
-                let blocks = Self::resolve_block(blocks, &mut new_variable_map)?;
+                let mut new_identifier_map = Self::copy_identifier_map(identifier_map);
+                let blocks = Self::resolve_block(blocks, &mut new_identifier_map)?;
                 Ok(Statement::Compound(blocks))
             }
             Statement::Null => Ok(Statement::Null),
             Statement::For(init, cond, post, body, loop_id) => {
-                let mut new_variable_map = Self::copy_variable_map(variable_map);
-                let for_init = Self::resolve_for_init(init, &mut new_variable_map)?;
+                let mut new_identifier_map = Self::copy_identifier_map(identifier_map);
+                let for_init = Self::resolve_for_init(init, &mut new_identifier_map)?;
                 let cond = cond
                     .clone()
-                    .map(|expr| Self::resolve_expression(&expr, &mut new_variable_map))
+                    .map(|expr| Self::resolve_expression(&expr, &mut new_identifier_map))
                     .transpose()?;
                 let post = post
                     .clone()
-                    .map(|expr| Self::resolve_expression(&expr, &mut new_variable_map))
+                    .map(|expr| Self::resolve_expression(&expr, &mut new_identifier_map))
                     .transpose()?;
-                let body = Self::resolve_statement(body, &mut new_variable_map)?;
+                let body = Self::resolve_statement(body, &mut new_identifier_map)?;
                 Ok(Statement::For(
                     for_init,
                     cond,
@@ -221,15 +281,15 @@ impl Analysis {
                 ))
             }
             Statement::DoWhile(body, cond, loop_id) => {
-                let mut new_variable_map = Self::copy_variable_map(variable_map);
-                let body = Self::resolve_statement(body, &mut new_variable_map)?;
-                let cond = Self::resolve_expression(cond, variable_map)?;
+                let mut new_identifier_map = Self::copy_identifier_map(identifier_map);
+                let body = Self::resolve_statement(body, &mut new_identifier_map)?;
+                let cond = Self::resolve_expression(cond, identifier_map)?;
                 Ok(Statement::DoWhile(Box::new(body), cond, loop_id.clone()))
             }
             Statement::While(cond, body, loop_id) => {
-                let cond = Self::resolve_expression(cond, variable_map)?;
-                let mut new_variable_map = Self::copy_variable_map(variable_map);
-                let body = Self::resolve_statement(body, &mut new_variable_map)?;
+                let cond = Self::resolve_expression(cond, identifier_map)?;
+                let mut new_identifier_map = Self::copy_identifier_map(identifier_map);
+                let body = Self::resolve_statement(body, &mut new_identifier_map)?;
                 Ok(Statement::While(cond, Box::new(body), loop_id.clone()))
             }
             Statement::Break(loop_id) => Ok(Statement::Break(loop_id.clone())),
@@ -239,16 +299,16 @@ impl Analysis {
     }
 
     fn resolve_function(function: FunctionDefinition) -> Result<FunctionDefinition, CompilerError> {
-        let mut variable_map = HashMap::new();
+        let mut identifier_map = HashMap::new();
         let mut new_body = Vec::new();
         for item in function.body.unwrap() {
             match item {
                 BlockItem::Declaration(Declaration::Variable(decl)) => {
-                    let decl = Self::resolve_variable_declaration(decl, &mut variable_map)?;
+                    let decl = Self::resolve_variable_declaration(decl, &mut identifier_map)?;
                     new_body.push(BlockItem::Declaration(Declaration::Variable(decl)));
                 }
                 BlockItem::Statement(stmt) => {
-                    let stmt = Self::resolve_statement(&stmt, &mut variable_map)?;
+                    let stmt = Self::resolve_statement(&stmt, &mut identifier_map)?;
                     new_body.push(BlockItem::Statement(stmt));
                 }
                 _ => {
@@ -393,23 +453,30 @@ impl Analysis {
     ) -> Result<FunctionDefinition, CompilerError> {
         let mut new_body = Vec::new();
 
-        for item in function.body.unwrap() {
-            //TODO: Fix this unwrap
-            match item {
-                BlockItem::Declaration(decl) => {
-                    new_body.push(BlockItem::Declaration(decl));
-                }
-                BlockItem::Statement(stmt) => {
-                    let stmt = Self::verify_statement_labels(stmt)?;
-                    new_body.push(BlockItem::Statement(stmt));
+        if let Some(body) = function.body {
+            for item in body {
+                match item {
+                    BlockItem::Declaration(decl) => {
+                        new_body.push(BlockItem::Declaration(decl.clone()));
+                    }
+                    BlockItem::Statement(stmt) => {
+                        let stmt = Self::verify_statement_labels(stmt.clone())?;
+                        new_body.push(BlockItem::Statement(stmt));
+                    }
                 }
             }
+            Ok(FunctionDefinition {
+                name: function.name,
+                parameters: function.parameters,
+                body: Some(new_body), 
+            })
+        } else {
+            Ok(FunctionDefinition {
+                name: function.name,
+                parameters: function.parameters,
+                body: None,
+            })
         }
-        Ok(FunctionDefinition {
-            name: function.name,
-            parameters: function.parameters,
-            body: Some(new_body), //TODO: Fix this unwrap
-        })
     }
 
     fn semantic_validation_function(

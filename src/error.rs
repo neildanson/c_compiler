@@ -24,6 +24,7 @@ pub enum SemanticAnalysisError {
     InvalidBreak,
     InvalidContinue,
     InvalidBlockItem,
+    FunctionNotDeclared(String),
 }
 
 impl Display for SemanticAnalysisError {
@@ -40,6 +41,9 @@ impl Display for SemanticAnalysisError {
             SemanticAnalysisError::InvalidBreak => write!(f, "Invalid Break"),
             SemanticAnalysisError::InvalidContinue => write!(f, "Invalid Continue"),
             SemanticAnalysisError::InvalidBlockItem => write!(f, "Invalid Block Item"),
+            SemanticAnalysisError::FunctionNotDeclared(s) => {
+                write!(f, "Function {} not declared", s)
+            }
         }
     }
 }

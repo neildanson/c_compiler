@@ -440,8 +440,8 @@ fn parse_function_body(tokens: &[Token]) -> Result<(Vec<BlockItem>, &[Token])> {
     let rest = swallow_one(Token::RBrace, rest);
     match (rest, error) {
         (Ok(rest), _) => Ok((statements, rest)),
-         (_, Some(err)) => return Err(err),
-         _ => return Err(CompilerError::Parse("Unexpected tokens".to_string()).into()),
+         (_, Some(err)) => Err(err),
+         _ => Err(CompilerError::Parse("Unexpected tokens".to_string()).into()),
     }
 }
 
@@ -494,7 +494,7 @@ pub fn parse_program(tokens: &[Token]) -> Result<Program> {
 
     if let Some(err)  = error {
         if !tokens.is_empty() {
-            return Err(err.into());
+            return Err(err);
         }  
     }
     Ok(Program { functions })
