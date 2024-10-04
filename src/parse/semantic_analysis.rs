@@ -53,7 +53,9 @@ impl Analysis {
 }
 
 impl Analysis {
-    fn copy_identifier_map(identifier_map: &HashMap<Identifier, MapEntry>) -> HashMap<Identifier, MapEntry> {
+    fn copy_identifier_map(
+        identifier_map: &HashMap<Identifier, MapEntry>,
+    ) -> HashMap<Identifier, MapEntry> {
         let mut new_map = HashMap::new();
         for (key, value) in identifier_map.iter() {
             new_map.insert(key.clone(), value.clone());
@@ -119,11 +121,9 @@ impl Analysis {
                             .collect::<Result<Vec<Expression>, CompilerError>>()?;
                         Ok(Expression::FunctionCall(unique_name, args))
                     }
-                    None => {
-                        Err(CompilerError::SemanticAnalysis(
-                            SemanticAnalysisError::FunctionNotDeclared(name.clone()),
-                        ))
-                    }
+                    None => Err(CompilerError::SemanticAnalysis(
+                        SemanticAnalysisError::FunctionNotDeclared(name.clone()),
+                    )),
                 }
             }
         }
@@ -133,7 +133,8 @@ impl Analysis {
         decl: VariableDeclaration,
         identifier_map: &mut HashMap<Identifier, MapEntry>,
     ) -> Result<VariableDeclaration, CompilerError> {
-        if identifier_map.contains_key(&decl.name) && identifier_map[&decl.name].from_current_scope {
+        if identifier_map.contains_key(&decl.name) && identifier_map[&decl.name].from_current_scope
+        {
             return Err(CompilerError::SemanticAnalysis(
                 crate::error::SemanticAnalysisError::VariableAlreadyDeclared(decl.name),
             ));
@@ -165,8 +166,7 @@ impl Analysis {
             ));
         }
         let unique_name = format!("{}__{}", param, identifier_map.len());
-        identifier_map.insert(param, unique_name.clone().into());
-        
+        identifier_map.insert(param.clone(), unique_name.clone().into());
         Ok(unique_name)
     }
 
@@ -176,14 +176,15 @@ impl Analysis {
     ) -> Result<FunctionDefinition, CompilerError> {
         match identifier_map.get(&decl.name) {
             Some(entry) if entry.from_current_scope => {
-            return Err(CompilerError::SemanticAnalysis(
-                SemanticAnalysisError::VariableAlreadyDeclared(decl.name),
-            ));
+                return Err(CompilerError::SemanticAnalysis(
+                    SemanticAnalysisError::VariableAlreadyDeclared(decl.name),
+                ));
             }
             _ => {}
         }
 
-        let unique_name = format!("{}__{}", decl.name, identifier_map.len());
+        let unique_name = 
+            if decl.name == "main" { "main".to_string() }  else { format!("{}__{}", decl.name, identifier_map.len())};
         let map_entry = MapEntry::new(unique_name.clone(), true, true);
         identifier_map.insert(decl.name, map_entry);
 
@@ -191,18 +192,16 @@ impl Analysis {
 
         let parameters = decl
             .parameters
-        .iter()
+            .iter()
             .map(|param| Self::resolve_param(param.clone(), &mut inner_map))
             .collect::<Result<Vec<Identifier>, CompilerError>>()?;
 
-        let body = 
-            if let Some(body) = decl.body {
-                let body = Self::resolve_block(&body, &mut inner_map)?;
-                Some(body)
-            } else {
-                None
-            };
-
+        let body = if let Some(body) = decl.body {
+            let body = Self::resolve_block(&body, &mut inner_map)?;
+            Some(body)
+        } else {
+            None
+        };
 
         Ok(FunctionDefinition {
             name: unique_name,
@@ -229,12 +228,11 @@ impl Analysis {
                 BlockItem::Statement(stmt) => {
                     let stmt = Self::resolve_statement(stmt, identifier_map)?;
                     new_block.push(BlockItem::Statement(stmt));
-                }
-                //_ => {
-                //    return Err(CompilerError::SemanticAnalysis(
-                //        SemanticAnalysisError::InvalidBlockItem,
-                //    ))
-                //}
+                } //_ => {
+                  //    return Err(CompilerError::SemanticAnalysis(
+                  //        SemanticAnalysisError::InvalidBlockItem,
+                  //    ))
+                  //}
             }
         }
         Ok(new_block)
@@ -321,33 +319,6 @@ impl Analysis {
             Statement::Continue(loop_id) => Ok(Statement::Continue(loop_id.clone())),
             //d => Ok(d.clone()), //TODO: Implement the rest of the statements
         }
-    }
-
-    fn resolve_function(function: FunctionDefinition) -> Result<FunctionDefinition, CompilerError> {
-        let mut identifier_map = HashMap::new();
-        let mut new_body = Vec::new();
-        for item in function.body.unwrap() {
-            match item {
-                BlockItem::Declaration(Declaration::Variable(decl)) => {
-                    let decl = Self::resolve_variable_declaration(decl, &mut identifier_map)?;
-                    new_body.push(BlockItem::Declaration(Declaration::Variable(decl)));
-                }
-                BlockItem::Statement(stmt) => {
-                    let stmt = Self::resolve_statement(&stmt, &mut identifier_map)?;
-                    new_body.push(BlockItem::Statement(stmt));
-                }
-                _ => {
-                    return Err(CompilerError::SemanticAnalysis(
-                        SemanticAnalysisError::InvalidBlockItem,
-                    ))
-                }
-            }
-        }
-        Ok(FunctionDefinition {
-            name: function.name,
-            parameters: function.parameters,
-            body: Some(new_body),
-        })
     }
 
     fn label_block(
@@ -493,7 +464,7 @@ impl Analysis {
             Ok(FunctionDefinition {
                 name: function.name,
                 parameters: function.parameters,
-                body: Some(new_body), 
+                body: Some(new_body),
             })
         } else {
             Ok(FunctionDefinition {
@@ -507,8 +478,10 @@ impl Analysis {
     fn semantic_validation_function(
         &mut self,
         function: FunctionDefinition,
+        identifier_map: &mut HashMap<Identifier, MapEntry>
     ) -> Result<FunctionDefinition, CompilerError> {
-        let function = Self::resolve_function(function)?;
+        
+        let function = Self::resolve_function_declaration(function, identifier_map)?;
         let function = self.label_function(function)?;
         let function = Self::verify_function_labels(function)?;
 
@@ -517,8 +490,9 @@ impl Analysis {
 
     pub fn semantic_validation(&mut self, program: Program) -> Result<Program, CompilerError> {
         let mut functions = Vec::new();
+        let mut identifier_map = HashMap::new();
         for function in program.functions {
-            let function = self.semantic_validation_function(function)?;
+            let function = self.semantic_validation_function(function, &mut identifier_map)?;
             functions.push(function);
         }
 
