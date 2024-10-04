@@ -134,7 +134,7 @@ impl Analysis {
         identifier_map: &mut HashMap<Identifier, MapEntry>,
     ) -> Result<VariableDeclaration, CompilerError> {
         match identifier_map.get(&decl.name) {
-            Some(entry) if entry.from_current_scope  => { // !entry.has_external_linkage
+            Some(entry) if entry.from_current_scope  => { 
                 return Err(CompilerError::SemanticAnalysis(
                     SemanticAnalysisError::VariableAlreadyDeclared(decl.name),
                 ));
@@ -178,7 +178,7 @@ impl Analysis {
         nested : bool
     ) -> Result<FunctionDefinition, CompilerError> {
         match identifier_map.get(&decl.name) {
-            Some(entry) if entry.from_current_scope => {
+            Some(entry) if entry.from_current_scope && !entry.has_external_linkage => {
                 return Err(CompilerError::SemanticAnalysis(
                     SemanticAnalysisError::VariableAlreadyDeclared(decl.name),
                 ));
