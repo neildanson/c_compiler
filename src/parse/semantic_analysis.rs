@@ -153,6 +153,20 @@ impl Analysis {
         })
     }
 
+    fn resolve_param(
+        param: &Identifier,
+        identifier_map: &mut HashMap<String, MapEntry>,
+    ) -> Result<Identifier, CompilerError> {
+        if identifier_map.contains_key(param) {
+            return Err(CompilerError::SemanticAnalysis(
+                SemanticAnalysisError::VariableAlreadyDeclared(param.clone()),
+            ));
+        }
+        let unique_name = format!("{}__{}", param, identifier_map.len());
+        identifier_map.insert(param.clone(), unique_name.clone().into());
+        Ok(unique_name)
+    }
+
     fn resolve_function_declaration(
         decl: FunctionDefinition,
         identifier_map: &mut HashMap<String, MapEntry>,
@@ -170,6 +184,12 @@ impl Analysis {
 
         let mut inner_map = Self::copy_identifier_map(identifier_map);
 
+        let parameters = decl
+            .parameters
+            .iter()
+            .map(|param| Self::resolve_param(param, &mut inner_map))
+            .collect::<Result<Vec<Identifier>, CompilerError>>()?;
+
         let body = 
             if let Some(body) = decl.body {
                 let body = Self::resolve_block(&body, &mut inner_map)?;
@@ -181,7 +201,7 @@ impl Analysis {
 
         Ok(FunctionDefinition {
             name: unique_name,
-            parameters: decl.parameters,
+            parameters: parameters,
             body,
         })
     }
