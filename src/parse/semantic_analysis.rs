@@ -4,13 +4,13 @@ use std::collections::HashMap;
 
 #[derive(Debug)]
 struct MapEntry {
-    unique_name: String,
+    unique_name: Identifier,
     from_current_scope: bool,
     has_external_linkage: bool,
 }
 
 impl MapEntry {
-    fn new(unique_name: String, from_current_scope: bool, has_external_linkage: bool) -> Self {
+    fn new(unique_name: Identifier, from_current_scope: bool, has_external_linkage: bool) -> Self {
         MapEntry {
             unique_name,
             from_current_scope,
@@ -53,7 +53,7 @@ impl Analysis {
 }
 
 impl Analysis {
-    fn copy_identifier_map(identifier_map: &HashMap<String, MapEntry>) -> HashMap<String, MapEntry> {
+    fn copy_identifier_map(identifier_map: &HashMap<Identifier, MapEntry>) -> HashMap<Identifier, MapEntry> {
         let mut new_map = HashMap::new();
         for (key, value) in identifier_map.iter() {
             new_map.insert(key.clone(), value.clone());
@@ -63,7 +63,7 @@ impl Analysis {
 
     fn resolve_expression(
         expr: &Expression,
-        identifier_map: &mut HashMap<String, MapEntry>,
+        identifier_map: &mut HashMap<Identifier, MapEntry>,
     ) -> Result<Expression, CompilerError> {
         match expr {
             Expression::Var(name) => {
@@ -131,7 +131,7 @@ impl Analysis {
 
     fn resolve_variable_declaration(
         decl: VariableDeclaration,
-        identifier_map: &mut HashMap<String, MapEntry>,
+        identifier_map: &mut HashMap<Identifier, MapEntry>,
     ) -> Result<VariableDeclaration, CompilerError> {
         if identifier_map.contains_key(&decl.name) && identifier_map[&decl.name].from_current_scope {
             return Err(CompilerError::SemanticAnalysis(
@@ -153,23 +153,26 @@ impl Analysis {
         })
     }
 
+    //This is very similar to resolve_variable_declaration
+    //Consider refactoring
     fn resolve_param(
-        param: &Identifier,
-        identifier_map: &mut HashMap<String, MapEntry>,
+        param: Identifier,
+        identifier_map: &mut HashMap<Identifier, MapEntry>,
     ) -> Result<Identifier, CompilerError> {
-        if identifier_map.contains_key(param) {
+        if identifier_map.contains_key(&param) && identifier_map[&param].from_current_scope {
             return Err(CompilerError::SemanticAnalysis(
-                SemanticAnalysisError::VariableAlreadyDeclared(param.clone()),
+                crate::error::SemanticAnalysisError::VariableAlreadyDeclared(param.clone()),
             ));
         }
         let unique_name = format!("{}__{}", param, identifier_map.len());
-        identifier_map.insert(param.clone(), unique_name.clone().into());
+        identifier_map.insert(param, unique_name.clone().into());
+        
         Ok(unique_name)
     }
 
     fn resolve_function_declaration(
         decl: FunctionDefinition,
-        identifier_map: &mut HashMap<String, MapEntry>,
+        identifier_map: &mut HashMap<Identifier, MapEntry>,
     ) -> Result<FunctionDefinition, CompilerError> {
         match identifier_map.get(&decl.name) {
             Some(entry) if entry.from_current_scope => {
@@ -189,7 +192,7 @@ impl Analysis {
         let parameters = decl
             .parameters
         .iter()
-            .map(|param| Self::resolve_param(param, &mut inner_map))
+            .map(|param| Self::resolve_param(param.clone(), &mut inner_map))
             .collect::<Result<Vec<Identifier>, CompilerError>>()?;
 
         let body = 
@@ -210,7 +213,7 @@ impl Analysis {
 
     fn resolve_block(
         blocks: &[BlockItem],
-        identifier_map: &mut HashMap<String, MapEntry>,
+        identifier_map: &mut HashMap<Identifier, MapEntry>,
     ) -> Result<Vec<BlockItem>, CompilerError> {
         let mut new_block = Vec::new();
         for item in blocks {
@@ -239,7 +242,7 @@ impl Analysis {
 
     fn resolve_for_init(
         init: &ForInit,
-        identifier_map: &mut HashMap<String, MapEntry>,
+        identifier_map: &mut HashMap<Identifier, MapEntry>,
     ) -> Result<ForInit, CompilerError> {
         match init {
             ForInit::InitDeclaration(decl) => {
@@ -256,7 +259,7 @@ impl Analysis {
 
     fn resolve_statement(
         stmt: &Statement,
-        identifier_map: &mut HashMap<String, MapEntry>,
+        identifier_map: &mut HashMap<Identifier, MapEntry>,
     ) -> Result<Statement, CompilerError> {
         match stmt {
             Statement::Return(expr) => {
