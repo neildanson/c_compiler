@@ -1,6 +1,6 @@
-int three(void) {
-    return 3;
-}
 int main(void) {
-    return three();
+    int a = 0;
+    while (a < 5)
+        a = a + 2;
+    return a;
 }

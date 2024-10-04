@@ -294,21 +294,25 @@ fn parse_statement(tokens: &[Token]) -> Result<(Statement, &[Token])> {
         [Token::LBrace, rest @ ..] => {
             let mut statements = Vec::new();
             let mut rest = rest;
-            let mut is_ok = true;
-            while is_ok {
+            let mut error = None;
+            while error.is_none() {
                 let result = parse_block_item(rest);
                 match result {
                     Ok((block_item, new_rest)) => {
                         statements.push(block_item);
                         rest = new_rest;
                     }
-                    Err(_) => { //Combine the two error cases
-                        is_ok = false;
+                    Err(err) => { 
+                        error = Some(err);
                     }
                 }
             }
-            let rest = swallow_one(Token::RBrace, rest)?;
-            (Statement::Compound(statements), rest)
+            let rest = swallow_one(Token::RBrace, rest);
+            match (rest, error) {
+                (Ok(rest), _) => (Statement::Compound(statements), rest),
+                (_, Some(err)) => return Err(err),
+                _ => return Err(CompilerError::Parse("Unexpected tokens".to_string()).into()),
+            }
         }
         [Token::Do, rest @ ..] => {
             let (statement, rest) = parse_statement(rest)?;
@@ -418,22 +422,27 @@ fn parse_block_item(tokens: &[Token]) -> Result<(BlockItem, &[Token])> {
 fn parse_function_body(tokens: &[Token]) -> Result<(Vec<BlockItem>, &[Token])> {
     let mut statements = Vec::new();
     let rest = tokens;
-    let mut is_ok = true;
+    let mut error = None;
     let mut rest = swallow_one(Token::LBrace, rest)?;
-    while is_ok {
+    while error.is_none() {
         let result = parse_block_item(rest);
         match result {
             Ok((block_item, new_rest)) => {
                 statements.push(block_item);
                 rest = new_rest;
             }
-            Err(_) => { //Combine the two error cases
-                is_ok = false;
+            Err(err) => { 
+                error = Some(err);
             }
         }
     }
-    let rest = swallow_one(Token::RBrace, rest)?;
-    Ok((statements, rest))
+    
+    let rest = swallow_one(Token::RBrace, rest);
+    match (rest, error) {
+        (Ok(rest), _) => Ok((statements, rest)),
+         (_, Some(err)) => return Err(err),
+         _ => return Err(CompilerError::Parse("Unexpected tokens".to_string()).into()),
+    }
 }
 
 fn parse_function_definition(tokens: &[Token]) -> Result<(FunctionDefinition, &[Token])> {
@@ -469,17 +478,24 @@ fn parse_function_definition(tokens: &[Token]) -> Result<(FunctionDefinition, &[
 pub fn parse_program(tokens: &[Token]) -> Result<Program> {
     let mut tokens = tokens;
     let mut functions = Vec::new();
-    while let Ok((function, rest)) = parse_function_definition(tokens) {
-        tokens = rest;
-        functions.push(function);
-    }
+    let mut error = None;
+    while error.is_none() {
+        let definition = parse_function_definition(tokens);
+        match definition {
+            Ok((function, rest)) => {
+                functions.push(function);
+                tokens = rest;
+            }
+            Err(err) => {
+                error = Some(err);
+            }
+        }
+    }    
 
-    if !tokens.is_empty() {
-        return Err(CompilerError::Parse(format!(
-            "Garbage found after function {:?}, parsed \n\n{:?}",
-            tokens, functions
-        ))
-        .into());
+    if let Some(err)  = error {
+        if !tokens.is_empty() {
+            return Err(err.into());
+        }  
     }
     Ok(Program { functions })
 }
