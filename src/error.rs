@@ -45,10 +45,10 @@ impl Display for SemanticAnalysisError {
             SemanticAnalysisError::InvalidBlockItem => write!(f, "Invalid Block Item"),
             SemanticAnalysisError::FunctionNotDeclared(s) => {
                 write!(f, "Function {} not declared", s)
-            },
+            }
             SemanticAnalysisError::FunctionAlreadyDeclared(s) => {
                 write!(f, "Function {} already declared", s)
-            },
+            }
             SemanticAnalysisError::NestedFunction => write!(f, "Nested Function"),
         }
     }
