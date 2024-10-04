@@ -186,8 +186,8 @@ impl Analysis {
             _ => {}
         }
 
-        let unique_name = 
-            if decl.name == "main" { "main".to_string() }  else { format!("{}__{}", decl.name, identifier_map.len())};
+        let unique_name = decl.name.clone();
+            //if decl.name == "main" { "main".to_string() }  else { format!("{}__{}", decl.name, identifier_map.len())};
         let map_entry = MapEntry::new(unique_name.clone(), true, true);
         identifier_map.insert(decl.name, map_entry);
 
