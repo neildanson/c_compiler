@@ -171,8 +171,6 @@ impl Analysis {
         decl: FunctionDefinition,
         identifier_map: &mut HashMap<String, MapEntry>,
     ) -> Result<FunctionDefinition, CompilerError> {
-        //This is a bit ugly - should be a pattern match
-
         match identifier_map.get(&decl.name) {
             Some(entry) if entry.from_current_scope => {
             return Err(CompilerError::SemanticAnalysis(
