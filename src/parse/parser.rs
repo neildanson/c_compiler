@@ -302,19 +302,12 @@ fn parse_statement(tokens: &[Token]) -> Result<(Statement, &[Token])> {
                         statements.push(block_item);
                         rest = new_rest;
                     }
-                    Err(_) => {
+                    Err(_) => { //Combine the two error cases
                         is_ok = false;
                     }
                 }
             }
-            let rest = match rest {
-                [Token::RBrace, rest @ ..] => rest,
-                rest => {
-                    return Err(
-                        CompilerError::Parse(format!("Expected RBrace, got {:?}", rest)).into(),
-                    )
-                }
-            };
+            let rest = swallow_one(Token::RBrace, rest)?;
             (Statement::Compound(statements), rest)
         }
         [Token::Do, rest @ ..] => {
@@ -434,7 +427,7 @@ fn parse_function_body(tokens: &[Token]) -> Result<(Vec<BlockItem>, &[Token])> {
                 statements.push(block_item);
                 rest = new_rest;
             }
-            Err(_) => {
+            Err(_) => { //Combine the two error cases
                 is_ok = false;
             }
         }
