@@ -133,11 +133,13 @@ impl Analysis {
         decl: VariableDeclaration,
         identifier_map: &mut HashMap<Identifier, MapEntry>,
     ) -> Result<VariableDeclaration, CompilerError> {
-        if identifier_map.contains_key(&decl.name) && identifier_map[&decl.name].from_current_scope
-        {
-            return Err(CompilerError::SemanticAnalysis(
-                crate::error::SemanticAnalysisError::VariableAlreadyDeclared(decl.name),
-            ));
+        match identifier_map.get(&decl.name) {
+            Some(entry) if entry.from_current_scope  => { // !entry.has_external_linkage
+                return Err(CompilerError::SemanticAnalysis(
+                    SemanticAnalysisError::VariableAlreadyDeclared(decl.name),
+                ));
+            }
+            _ => {}
         }
         let unique_name = format!("{}__{}", decl.name, identifier_map.len());
         identifier_map.insert(decl.name, unique_name.clone().into());
@@ -173,6 +175,7 @@ impl Analysis {
     fn resolve_function_declaration(
         decl: FunctionDefinition,
         identifier_map: &mut HashMap<Identifier, MapEntry>,
+        nested : bool
     ) -> Result<FunctionDefinition, CompilerError> {
         match identifier_map.get(&decl.name) {
             Some(entry) if entry.from_current_scope => {
@@ -197,6 +200,11 @@ impl Analysis {
             .collect::<Result<Vec<Identifier>, CompilerError>>()?;
 
         let body = if let Some(body) = decl.body {
+            if nested {
+                return Err(CompilerError::SemanticAnalysis(
+                    SemanticAnalysisError::NestedFunction,
+                ));
+            }
             let body = Self::resolve_block(&body, &mut inner_map)?;
             Some(body)
         } else {
@@ -222,7 +230,7 @@ impl Analysis {
                     new_block.push(BlockItem::Declaration(Declaration::Variable(decl)));
                 }
                 BlockItem::Declaration(Declaration::Function(decl)) => {
-                    let decl = Self::resolve_function_declaration(decl.clone(), identifier_map)?;
+                    let decl = Self::resolve_function_declaration(decl.clone(), identifier_map, true)?;
                     new_block.push(BlockItem::Declaration(Declaration::Function(decl)));
                 }
                 BlockItem::Statement(stmt) => {
@@ -486,7 +494,7 @@ impl Analysis {
         identifier_map: &mut HashMap<Identifier, MapEntry>
     ) -> Result<FunctionDefinition, CompilerError> {
         
-        let function = Self::resolve_function_declaration(function, identifier_map)?;
+        let function = Self::resolve_function_declaration(function, identifier_map, false)?;
         let function = self.label_function(function)?;
         let function = Self::verify_function_labels(function)?;
 

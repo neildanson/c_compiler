@@ -1,7 +1,9 @@
-int sixty(int parameter) {
-    return 60 + parameter;
+int main(void) {
+    int f(void);
+    int f(void);
+    return f();
 }
 
-int main(void) {
-    return sixty(9);
+int f(void) {
+    return 3;
 }

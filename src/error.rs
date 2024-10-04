@@ -25,6 +25,7 @@ pub enum SemanticAnalysisError {
     InvalidContinue,
     InvalidBlockItem,
     FunctionNotDeclared(String),
+    NestedFunction,
 }
 
 impl Display for SemanticAnalysisError {
@@ -43,7 +44,8 @@ impl Display for SemanticAnalysisError {
             SemanticAnalysisError::InvalidBlockItem => write!(f, "Invalid Block Item"),
             SemanticAnalysisError::FunctionNotDeclared(s) => {
                 write!(f, "Function {} not declared", s)
-            }
+            },
+            SemanticAnalysisError::NestedFunction => write!(f, "Nested Function"),
         }
     }
 }
