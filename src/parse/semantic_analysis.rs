@@ -401,12 +401,17 @@ impl Analysis {
         &mut self,
         function: FunctionDefinition,
     ) -> Result<FunctionDefinition, CompilerError> {
-        let new_body = self.label_block(&function.body.unwrap(), None)?;
-        Ok(FunctionDefinition {
-            name: function.name,
-            parameters: function.parameters,
-            body: Some(new_body),
-        })
+        match function.body {
+            Some(body) => {
+                let new_body = self.label_block(&body, None)?;
+                Ok(FunctionDefinition {
+                    name: function.name,
+                    parameters: function.parameters,
+                    body: Some(new_body),
+                })
+            }
+            None => Ok(function.clone()),
+        }
     }
 
     fn verify_statement_labels(stmt: Statement) -> Result<Statement, CompilerError> {
