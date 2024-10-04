@@ -1,8 +1,10 @@
-int main(void) {
-    int f(void);
-    int f(void);
-    return f();
-}
-int f(void) {
+int foo(void){
     return 3;
+}
+int main(void) {
+    int foo(void);
+    return foo();
+}
+int foo(void){
+    return 4;
 }

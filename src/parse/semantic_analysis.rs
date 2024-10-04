@@ -178,16 +178,16 @@ impl Analysis {
         nested : bool
     ) -> Result<FunctionDefinition, CompilerError> {
         match identifier_map.get(&decl.name) {
+            // this never hits, but matches the book. Re-evaluate
             Some(entry) if entry.from_current_scope && !entry.has_external_linkage => {
                 return Err(CompilerError::SemanticAnalysis(
-                    SemanticAnalysisError::VariableAlreadyDeclared(decl.name),
+                    SemanticAnalysisError::FunctionAlreadyDeclared(decl.name),
                 ));
             }
             _ => {}
         }
 
         let unique_name = decl.name.clone();
-            //if decl.name == "main" { "main".to_string() }  else { format!("{}__{}", decl.name, identifier_map.len())};
         let map_entry = MapEntry::new(unique_name.clone(), true, true);
         identifier_map.insert(decl.name, map_entry);
 
