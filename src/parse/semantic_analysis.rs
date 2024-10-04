@@ -172,10 +172,14 @@ impl Analysis {
         identifier_map: &mut HashMap<String, MapEntry>,
     ) -> Result<FunctionDefinition, CompilerError> {
         //This is a bit ugly - should be a pattern match
-        if identifier_map.contains_key(&decl.name) && identifier_map[&decl.name].from_current_scope {
+
+        match identifier_map.get(&decl.name) {
+            Some(entry) if entry.from_current_scope => {
             return Err(CompilerError::SemanticAnalysis(
                 SemanticAnalysisError::VariableAlreadyDeclared(decl.name),
             ));
+            }
+            _ => {}
         }
 
         let unique_name = format!("{}__{}", decl.name, identifier_map.len());
@@ -186,7 +190,7 @@ impl Analysis {
 
         let parameters = decl
             .parameters
-            .iter()
+        .iter()
             .map(|param| Self::resolve_param(param, &mut inner_map))
             .collect::<Result<Vec<Identifier>, CompilerError>>()?;
 
@@ -201,7 +205,7 @@ impl Analysis {
 
         Ok(FunctionDefinition {
             name: unique_name,
-            parameters: parameters,
+            parameters,
             body,
         })
     }
