@@ -4,13 +4,14 @@ pub mod error;
 pub mod lex;
 pub mod parse;
 pub mod tacky;
+pub mod validate;
 
 use crate::lex::*;
 use crate::parse::parse_program;
 use crate::tacky::Tacky;
 use anyhow::Result;
-use parse::Analysis;
 use std::io::{Read, Write};
+use validate::Analysis;
 
 pub fn read_file(filename: &str) -> Result<String> {
     let file = std::fs::File::open(filename)?;

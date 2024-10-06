@@ -1,5 +1,5 @@
-use super::ast::*;
 use crate::error::*;
+use crate::parse::ast::*;
 use std::collections::HashMap;
 
 #[derive(Debug)]
@@ -181,7 +181,9 @@ impl Analysis {
             // this never hits, but matches the book when checking has external linkage
             // more tests pass when this is commented, but it's not clear why
             Some(entry) => {
-                if entry.from_current_scope /*&& !entry.has_external_linkage*/ {
+                if entry.from_current_scope
+                /*&& !entry.has_external_linkage*/
+                {
                     return Err(CompilerError::SemanticAnalysis(
                         SemanticAnalysisError::FunctionAlreadyDeclared(decl.name),
                     ));
