@@ -11,7 +11,7 @@ use crate::parse::parse_program;
 use crate::tacky::Tacky;
 use anyhow::Result;
 use std::io::{Read, Write};
-use validate::Analysis;
+use validate::SemanticAnalysis;
 
 pub fn read_file(filename: &str) -> Result<String> {
     let file = std::fs::File::open(filename)?;
@@ -44,8 +44,7 @@ pub fn parse(filename: &str) -> Result<parse::Program> {
 
 pub fn validate(filename: &str) -> Result<parse::Program> {
     let program = parse(filename)?;
-    let mut analysis = Analysis::default();
-    let program = analysis.semantic_validation(program)?;
+    let program = SemanticAnalysis::semantic_validation(program)?;
     Ok(program)
 }
 
