@@ -61,6 +61,13 @@ impl Clone for IdentifierResolution {
 }
 
 impl IdentifierResolution {
+    fn make_unique_name(&mut self, name: String) -> String {
+        let unique_name = format!("{}__{}", name, self.identifier_map.len());
+        self.identifier_map.insert(name, unique_name.clone().into());
+
+        unique_name
+    }
+
     fn resolve_expression(&mut self, expr: &Expression) -> Result<Expression, CompilerError> {
         match expr {
             Expression::Var(name) => {
@@ -137,10 +144,7 @@ impl IdentifierResolution {
             }
             _ => {}
         }
-        //TODO this can now be a method!
-        let unique_name = format!("{}__{}", decl.name, self.identifier_map.len());
-        self.identifier_map
-            .insert(decl.name, unique_name.clone().into());
+        let unique_name = self.make_unique_name(decl.name);
 
         let init = match decl.value {
             Some(expr) => {
@@ -165,10 +169,7 @@ impl IdentifierResolution {
                 crate::error::SemanticAnalysisError::VariableAlreadyDeclared(param.clone()),
             ));
         }
-        //TODO this can now be a method!
-        let unique_name = format!("{}__{}", param, self.identifier_map.len());
-        self.identifier_map
-            .insert(param.clone(), unique_name.clone().into());
+        let unique_name = self.make_unique_name(param);
         Ok(unique_name)
     }
 
