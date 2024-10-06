@@ -44,40 +44,41 @@ impl From<String> for MapEntry {
 }
 
 #[derive(Default)]
-pub struct IdentifierResolution;
+pub struct IdentifierResolution {
+    identifier_map: HashMap<Identifier, MapEntry>,
+}
 
-impl IdentifierResolution {
-    fn copy_identifier_map(
-        identifier_map: &HashMap<Identifier, MapEntry>,
-    ) -> HashMap<Identifier, MapEntry> {
+impl Clone for IdentifierResolution {
+    fn clone(&self) -> Self {
         let mut new_map = HashMap::new();
-        for (key, value) in identifier_map.iter() {
+        for (key, value) in self.identifier_map.iter() {
             new_map.insert(key.clone(), value.clone());
         }
-        new_map
+        IdentifierResolution {
+            identifier_map: new_map,
+        }
     }
+}
 
-    fn resolve_expression(
-        &self,
-        expr: &Expression,
-        identifier_map: &mut HashMap<Identifier, MapEntry>,
-    ) -> Result<Expression, CompilerError> {
+impl IdentifierResolution {
+    fn resolve_expression(&mut self, expr: &Expression) -> Result<Expression, CompilerError> {
         match expr {
             Expression::Var(name) => {
-                let map_entry = identifier_map
-                    .get(name)
-                    .ok_or(CompilerError::SemanticAnalysis(
-                        SemanticAnalysisError::VariableNotDeclared(name.clone()),
-                    ))?;
+                let map_entry =
+                    self.identifier_map
+                        .get(name)
+                        .ok_or(CompilerError::SemanticAnalysis(
+                            SemanticAnalysisError::VariableNotDeclared(name.clone()),
+                        ))?;
                 Ok(Expression::Var(map_entry.unique_name.clone()))
             }
             Expression::Unary(op, expr) => {
-                let expr = self.resolve_expression(expr, identifier_map)?;
+                let expr = self.resolve_expression(expr)?;
                 Ok(Expression::Unary(op.clone(), Box::new(expr)))
             }
             Expression::BinOp(op, expr1, expr2) => {
-                let expr1 = self.resolve_expression(expr1, identifier_map)?;
-                let expr2 = self.resolve_expression(expr2, identifier_map)?;
+                let expr1 = self.resolve_expression(expr1)?;
+                let expr2 = self.resolve_expression(expr2)?;
                 Ok(Expression::BinOp(
                     op.clone(),
                     Box::new(expr1),
@@ -86,8 +87,8 @@ impl IdentifierResolution {
             }
             Expression::Assignment(expr1, expr2) => match expr1.as_ref() {
                 Expression::Var(_name) => {
-                    let expr1 = self.resolve_expression(expr1, identifier_map)?;
-                    let expr2 = self.resolve_expression(expr2, identifier_map)?;
+                    let expr1 = self.resolve_expression(expr1)?;
+                    let expr2 = self.resolve_expression(expr2)?;
                     Ok(Expression::Assignment(Box::new(expr1), Box::new(expr2)))
                 }
                 _ => Err(CompilerError::SemanticAnalysis(
@@ -96,9 +97,9 @@ impl IdentifierResolution {
             },
             Expression::Constant(_) => Ok(expr.clone()),
             Expression::Conditional(cond, then, els) => {
-                let cond = self.resolve_expression(cond, identifier_map)?;
-                let then = self.resolve_expression(then, identifier_map)?;
-                let els = self.resolve_expression(els, identifier_map)?;
+                let cond = self.resolve_expression(cond)?;
+                let then = self.resolve_expression(then)?;
+                let els = self.resolve_expression(els)?;
                 Ok(Expression::Conditional(
                     Box::new(cond),
                     Box::new(then),
@@ -106,13 +107,13 @@ impl IdentifierResolution {
                 ))
             }
             Expression::FunctionCall(name, args) => {
-                let ident = identifier_map.get(name);
+                let ident = self.identifier_map.get(name);
                 match ident {
                     Some(ident) => {
                         let unique_name = ident.unique_name.clone();
                         let args = args
                             .iter()
-                            .map(|arg| self.resolve_expression(arg, identifier_map))
+                            .map(|arg| self.resolve_expression(arg))
                             .collect::<Result<Vec<Expression>, CompilerError>>()?;
                         Ok(Expression::FunctionCall(unique_name, args))
                     }
@@ -125,11 +126,10 @@ impl IdentifierResolution {
     }
 
     fn resolve_variable_declaration(
-        &self,
+        &mut self,
         decl: VariableDeclaration,
-        identifier_map: &mut HashMap<Identifier, MapEntry>,
     ) -> Result<VariableDeclaration, CompilerError> {
-        match identifier_map.get(&decl.name) {
+        match self.identifier_map.get(&decl.name) {
             Some(entry) if entry.from_current_scope => {
                 return Err(CompilerError::SemanticAnalysis(
                     SemanticAnalysisError::VariableAlreadyDeclared(decl.name),
@@ -137,11 +137,14 @@ impl IdentifierResolution {
             }
             _ => {}
         }
-        let unique_name = format!("{}__{}", decl.name, identifier_map.len());
-        identifier_map.insert(decl.name, unique_name.clone().into());
+        //TODO this can now be a method!
+        let unique_name = format!("{}__{}", decl.name, self.identifier_map.len());
+        self.identifier_map
+            .insert(decl.name, unique_name.clone().into());
+
         let init = match decl.value {
             Some(expr) => {
-                let expression = self.resolve_expression(&expr, identifier_map)?;
+                let expression = self.resolve_expression(&expr)?;
                 Some(expression)
             }
             None => None,
@@ -154,27 +157,27 @@ impl IdentifierResolution {
 
     //This is very similar to resolve_variable_declaration
     //Consider refactoring
-    fn resolve_param(
-        param: Identifier,
-        identifier_map: &mut HashMap<Identifier, MapEntry>,
-    ) -> Result<Identifier, CompilerError> {
-        if identifier_map.contains_key(&param) && identifier_map[&param].from_current_scope {
+    fn resolve_param(&mut self, param: Identifier) -> Result<Identifier, CompilerError> {
+        if self.identifier_map.contains_key(&param)
+            && self.identifier_map[&param].from_current_scope
+        {
             return Err(CompilerError::SemanticAnalysis(
                 crate::error::SemanticAnalysisError::VariableAlreadyDeclared(param.clone()),
             ));
         }
-        let unique_name = format!("{}__{}", param, identifier_map.len());
-        identifier_map.insert(param.clone(), unique_name.clone().into());
+        //TODO this can now be a method!
+        let unique_name = format!("{}__{}", param, self.identifier_map.len());
+        self.identifier_map
+            .insert(param.clone(), unique_name.clone().into());
         Ok(unique_name)
     }
 
     pub fn resolve_function_declaration(
-        &self,
+        &mut self,
         decl: FunctionDefinition,
-        identifier_map: &mut HashMap<Identifier, MapEntry>,
         nested: bool,
     ) -> Result<FunctionDefinition, CompilerError> {
-        match identifier_map.get(&decl.name) {
+        match self.identifier_map.get(&decl.name) {
             // this never hits, but matches the book when checking has external linkage
             // more tests pass when this is commented, but it's not clear why
             Some(entry) => {
@@ -191,14 +194,14 @@ impl IdentifierResolution {
 
         let unique_name = decl.name.clone();
         let map_entry = MapEntry::new(unique_name.clone(), true, true);
-        identifier_map.insert(decl.name, map_entry);
+        self.identifier_map.insert(decl.name, map_entry);
 
-        let mut inner_map = Self::copy_identifier_map(identifier_map);
+        let mut inner_scope = self.clone();
 
         let parameters = decl
             .parameters
             .iter()
-            .map(|param| Self::resolve_param(param.clone(), &mut inner_map))
+            .map(|param| inner_scope.resolve_param(param.clone()))
             .collect::<Result<Vec<Identifier>, CompilerError>>()?;
 
         let body = if let Some(body) = decl.body {
@@ -207,7 +210,7 @@ impl IdentifierResolution {
                     SemanticAnalysisError::NestedFunction,
                 ));
             }
-            let body = self.resolve_block(&body, &mut inner_map)?;
+            let body = inner_scope.resolve_block(&body)?;
             Some(body)
         } else {
             None
@@ -220,25 +223,20 @@ impl IdentifierResolution {
         })
     }
 
-    fn resolve_block(
-        &self,
-        blocks: &[BlockItem],
-        identifier_map: &mut HashMap<Identifier, MapEntry>,
-    ) -> Result<Vec<BlockItem>, CompilerError> {
+    fn resolve_block(&mut self, blocks: &[BlockItem]) -> Result<Vec<BlockItem>, CompilerError> {
         let mut new_block = Vec::new();
         for item in blocks {
             match item {
                 BlockItem::Declaration(Declaration::Variable(decl)) => {
-                    let decl = self.resolve_variable_declaration(decl.clone(), identifier_map)?;
+                    let decl = self.resolve_variable_declaration(decl.clone())?;
                     new_block.push(BlockItem::Declaration(Declaration::Variable(decl)));
                 }
                 BlockItem::Declaration(Declaration::Function(decl)) => {
-                    let decl =
-                        self.resolve_function_declaration(decl.clone(), identifier_map, true)?;
+                    let decl = self.resolve_function_declaration(decl.clone(), true)?;
                     new_block.push(BlockItem::Declaration(Declaration::Function(decl)));
                 }
                 BlockItem::Statement(stmt) => {
-                    let stmt = self.resolve_statement(stmt, identifier_map)?;
+                    let stmt = self.resolve_statement(stmt)?;
                     new_block.push(BlockItem::Statement(stmt));
                 } //_ => {
                   //    return Err(CompilerError::SemanticAnalysis(
@@ -250,65 +248,57 @@ impl IdentifierResolution {
         Ok(new_block)
     }
 
-    fn resolve_for_init(
-        &self,
-        init: &ForInit,
-        identifier_map: &mut HashMap<Identifier, MapEntry>,
-    ) -> Result<ForInit, CompilerError> {
+    fn resolve_for_init(&mut self, init: &ForInit) -> Result<ForInit, CompilerError> {
         match init {
             ForInit::InitDeclaration(decl) => {
-                let decl = self.resolve_variable_declaration(decl.clone(), identifier_map)?;
+                let decl = self.resolve_variable_declaration(decl.clone())?;
                 Ok(ForInit::InitDeclaration(decl))
             }
             ForInit::InitExpression(Some(expr)) => {
-                let expr = self.resolve_expression(expr, identifier_map)?;
+                let expr = self.resolve_expression(expr)?;
                 Ok(ForInit::InitExpression(Some(expr)))
             }
             ForInit::InitExpression(None) => Ok(ForInit::InitExpression(None)),
         }
     }
 
-    fn resolve_statement(
-        &self,
-        stmt: &Statement,
-        identifier_map: &mut HashMap<Identifier, MapEntry>,
-    ) -> Result<Statement, CompilerError> {
+    fn resolve_statement(&mut self, stmt: &Statement) -> Result<Statement, CompilerError> {
         match stmt {
             Statement::Return(expr) => {
-                let expr = self.resolve_expression(expr, identifier_map)?;
+                let expr = self.resolve_expression(expr)?;
                 Ok(Statement::Return(expr))
             }
             Statement::Expression(expr) => {
-                let expr = self.resolve_expression(expr, identifier_map)?;
+                let expr = self.resolve_expression(expr)?;
                 Ok(Statement::Expression(expr))
             }
             Statement::If(expr, then, els) => {
-                let expr = self.resolve_expression(expr, identifier_map)?;
-                let then = self.resolve_statement(then.as_ref(), identifier_map)?;
+                let expr = self.resolve_expression(expr)?;
+                let then = self.resolve_statement(then.as_ref())?;
                 let els = match els {
-                    Some(els) => Some(Box::new(self.resolve_statement(els, identifier_map)?)),
+                    Some(els) => Some(Box::new(self.resolve_statement(els)?)),
                     None => None,
                 };
                 Ok(Statement::If(expr, Box::new(then), els))
             }
             Statement::Compound(blocks) => {
-                let mut new_identifier_map = Self::copy_identifier_map(identifier_map);
-                let blocks = self.resolve_block(blocks, &mut new_identifier_map)?;
+                let mut inner_scope = self.clone();
+                let blocks = inner_scope.resolve_block(blocks)?;
                 Ok(Statement::Compound(blocks))
             }
             Statement::Null => Ok(Statement::Null),
             Statement::For(init, cond, post, body, loop_id) => {
-                let mut new_identifier_map = Self::copy_identifier_map(identifier_map);
-                let for_init = self.resolve_for_init(init, &mut new_identifier_map)?;
+                let mut inner_scope = self.clone();
+                let for_init = inner_scope.resolve_for_init(init)?;
                 let cond = cond
                     .clone()
-                    .map(|expr| self.resolve_expression(&expr, &mut new_identifier_map))
+                    .map(|expr| inner_scope.resolve_expression(&expr))
                     .transpose()?;
                 let post = post
                     .clone()
-                    .map(|expr| self.resolve_expression(&expr, &mut new_identifier_map))
+                    .map(|expr| inner_scope.resolve_expression(&expr))
                     .transpose()?;
-                let body = self.resolve_statement(body, &mut new_identifier_map)?;
+                let body = inner_scope.resolve_statement(body)?;
                 Ok(Statement::For(
                     for_init,
                     cond,
@@ -318,15 +308,15 @@ impl IdentifierResolution {
                 ))
             }
             Statement::DoWhile(body, cond, loop_id) => {
-                let mut new_identifier_map = Self::copy_identifier_map(identifier_map);
-                let body = self.resolve_statement(body, &mut new_identifier_map)?;
-                let cond = self.resolve_expression(cond, identifier_map)?;
+                let mut inner_scope = self.clone();
+                let body = inner_scope.resolve_statement(body)?;
+                let cond = self.resolve_expression(cond)?;
                 Ok(Statement::DoWhile(Box::new(body), cond, loop_id.clone()))
             }
             Statement::While(cond, body, loop_id) => {
-                let cond = self.resolve_expression(cond, identifier_map)?;
-                let mut new_identifier_map = Self::copy_identifier_map(identifier_map);
-                let body = self.resolve_statement(body, &mut new_identifier_map)?;
+                let cond = self.resolve_expression(cond)?;
+                let mut inner_scope = self.clone();
+                let body = inner_scope.resolve_statement(body)?;
                 Ok(Statement::While(cond, Box::new(body), loop_id.clone()))
             }
             Statement::Break(loop_id) => Ok(Statement::Break(loop_id.clone())),
