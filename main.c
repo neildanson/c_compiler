@@ -9,8 +9,3 @@ int main(void) {
     int foo(void);
     return foo();
 }
-
-//This decl shoudl fail
-int foo(void){
-    return 4;
-}
