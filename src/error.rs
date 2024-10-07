@@ -27,6 +27,8 @@ pub enum SemanticAnalysisError {
     FunctionNotDeclared(String),
     FunctionAlreadyDeclared(String),
     NestedFunction,
+    IncompatibleFunctionDeclarations,
+    VariableUsedAsFunctionName,
 }
 
 impl Display for SemanticAnalysisError {
@@ -50,6 +52,10 @@ impl Display for SemanticAnalysisError {
                 write!(f, "Function {} already declared", s)
             }
             SemanticAnalysisError::NestedFunction => write!(f, "Nested Function"),
+            SemanticAnalysisError::IncompatibleFunctionDeclarations => {
+                write!(f, "Incompatible Function Declarations")
+            }            
+            SemanticAnalysisError::VariableUsedAsFunctionName => write!(f, "Variable used as function name"),
         }
     }
 }
