@@ -54,8 +54,10 @@ impl Display for SemanticAnalysisError {
             SemanticAnalysisError::NestedFunction => write!(f, "Nested Function"),
             SemanticAnalysisError::IncompatibleFunctionDeclarations => {
                 write!(f, "Incompatible Function Declarations")
-            }            
-            SemanticAnalysisError::VariableUsedAsFunctionName => write!(f, "Variable used as function name"),
+            }
+            SemanticAnalysisError::VariableUsedAsFunctionName => {
+                write!(f, "Variable used as function name")
+            }
         }
     }
 }
