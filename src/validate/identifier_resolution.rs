@@ -44,7 +44,7 @@ impl From<String> for MapEntry {
 }
 
 #[derive(Default)]
-pub struct IdentifierResolution {
+pub (crate) struct IdentifierResolution {
     identifier_map: HashMap<Identifier, MapEntry>,
 }
 

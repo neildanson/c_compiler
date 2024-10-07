@@ -7,7 +7,7 @@ pub(crate) struct LoopLabelling {
 }
 
 impl LoopLabelling {
-    pub fn make_label(&mut self) -> String {
+    fn make_label(&mut self) -> String {
         let name = format!("__{}", self.label_count);
         self.label_count += 1;
         name
