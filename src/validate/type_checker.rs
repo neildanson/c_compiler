@@ -55,7 +55,7 @@ impl TypeChecker {
                         }
                     } else {
                         return Err(CompilerError::SemanticAnalysis(
-                            SemanticAnalysisError::FunctionNotDeclared(name.clone()),
+                            SemanticAnalysisError::VariableUsedAsFunctionName,
                         ));
                     }
                 } else {
@@ -76,7 +76,23 @@ impl TypeChecker {
                     }
                 }
             }
-            _ => {}
+            Expression::BinOp(_, left, right) => {
+                self.type_check_expression(left)?;
+                self.type_check_expression(right)?;
+            }
+            Expression::Unary(_, expression) => {
+                self.type_check_expression(expression)?;
+            }
+            Expression::Assignment(left, right) => {
+                self.type_check_expression(left)?;
+                self.type_check_expression(right)?;
+            }
+            Expression::Conditional(condition, then_expression, else_expression) => {
+                self.type_check_expression(condition)?;
+                self.type_check_expression(then_expression)?;
+                self.type_check_expression(else_expression)?;
+            }
+            Expression::Constant(_) => {}
         }
         Ok(())
     }
@@ -159,7 +175,7 @@ impl TypeChecker {
     pub fn type_check_function_declaration(
         &mut self,
         function_declaration: &FunctionDefinition,
-    ) -> Result<FunctionDefinition, CompilerError> {
+    ) -> Result<(), CompilerError> {
         let fun_type = TypeDefinition::FunType(function_declaration.parameters.len());
         let has_body = function_declaration.body.is_some();
         let mut already_defined = false;
@@ -172,6 +188,7 @@ impl TypeChecker {
             }
             already_defined = old_decl.is_defined;
             if already_defined && has_body {
+                println!("Function {} already defined", function_declaration.name);
                 return Err(CompilerError::SemanticAnalysis(
                     SemanticAnalysisError::FunctionAlreadyDeclared(
                         function_declaration.name.clone(),
@@ -195,6 +212,6 @@ impl TypeChecker {
                 self.type_check_block_item(block_item)?;
             }
         }
-        Ok(function_declaration.clone())
+        Ok(())
     }
 }

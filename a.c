@@ -1,7 +1,5 @@
-int foo(void){
-    return 3;
-}
+int x(void);
 int main(void) {
-    int foo(void);
-    return foo();
+    int a = 10 / x;
+    return 0;
 }
