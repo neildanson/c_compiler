@@ -178,17 +178,14 @@ impl IdentifierResolution {
         decl: FunctionDefinition,
         nested: bool,
     ) -> Result<FunctionDefinition, CompilerError> {
-        match self.identifier_map.get(&decl.name) {
-            Some(entry) => {
-                if entry.from_current_scope && !entry.has_external_linkage {
-                    {
-                        return Err(CompilerError::SemanticAnalysis(
-                            SemanticAnalysisError::FunctionAlreadyDeclared(decl.name),
-                        ));
-                    }
+        if let Some(entry) = self.identifier_map.get(&decl.name) {
+            if entry.from_current_scope && !entry.has_external_linkage {
+                {
+                    return Err(CompilerError::SemanticAnalysis(
+                        SemanticAnalysisError::FunctionAlreadyDeclared(decl.name),
+                    ));
                 }
             }
-            _ => {}
         }
 
         let unique_name = decl.name.clone();
