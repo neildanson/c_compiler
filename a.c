@@ -1,5 +1,5 @@
 int putchar(int c);
-int main(void) {
+int helloworld(void) {
     putchar(72);
     putchar(101);
     putchar(108);
@@ -14,4 +14,7 @@ int main(void) {
     putchar(100);
     putchar(33);
     return 66;
+}
+int main(void) {
+    return helloworld();
 }
