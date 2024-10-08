@@ -106,7 +106,7 @@ impl Display for Instruction {
                 writeln!(f, "\taddq ${}, %rsp", size)
             }
             Instruction::Call(name) => {
-                write!(f, "\tcall {}", format_fn_call(name))
+                write!(f, "\tcall {}@PLT", format_fn_call(name)) //In principal we dont need the @PLT for defined functions by us
             }
             //instruction => unimplemented!("Instruction {}", instruction), //Add the rest of the instructions
         }

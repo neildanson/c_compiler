@@ -13,6 +13,10 @@ impl Display for Program {
             write!(f, "{}", function)?;
             writeln!(f)?;
         }
+        if cfg!(target_os = "linux") {
+            writeln!(f, ".section .note.GNU-stack,\"\",@progbits")?;
+        } 
+
         Ok(())
     }
 }
