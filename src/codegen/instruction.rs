@@ -90,7 +90,7 @@ impl Display for Instruction {
             }
             Instruction::SetCC(cc, dst) => {
                 let dst = match dst {
-                    Operand::Register(register) => register.asm(RegisterSize::OneByte),
+                    Operand::Register(register) => format!("{:.1}", register),
                     d => format!("{}", d),
                 };
 

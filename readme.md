@@ -91,7 +91,7 @@ idiv -4(%rdp)       # eax div by local. result in
 
 # MacOS
 
-TODO
+TODO (Done?)
 
 * arch -x86_64 zsh
 * Labels shouldn't have . prefix

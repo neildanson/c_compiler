@@ -1,3 +1,5 @@
+use std::fmt::{Display, Formatter};
+
 pub enum RegisterSize {
     OneByte,
     FourByte,
@@ -54,5 +56,20 @@ impl Reg {
                 Reg::R11 => "%r11".to_string(),
             },
         }
+    }
+}
+
+impl Display for Reg {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+        if let Some(precision) = f.precision() {
+            write!(f, "{}", self.asm(match precision {
+                1 => RegisterSize::OneByte,
+                4 => RegisterSize::FourByte,
+                8 => RegisterSize::EightByte,
+                _ => panic!("Invalid precision"),
+            }))
+        } else {
+            panic!("Precision not set - expect format strings like {{:1}}, {{:4}}, or {{:8}}");
+       }
     }
 }
