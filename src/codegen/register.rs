@@ -1,4 +1,8 @@
-use std::fmt::{Display, Formatter, Result};
+pub enum RegisterSize {
+    OneByte,
+    FourByte,
+    EightByte,
+}
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Reg {
@@ -13,18 +17,42 @@ pub enum Reg {
     R11,
 }
 
-impl Display for Reg {
-    fn fmt(&self, f: &mut Formatter) -> Result {
-        match self {
-            Reg::AX => write!(f, "%eax"),
-            Reg::DX => write!(f, "%edx"),
-            Reg::R10 => write!(f, "%r10d"),
-            Reg::R11 => write!(f, "%r11d"),
-            Reg::R8 => write!(f, "%r8d"),
-            Reg::R9 => write!(f, "%r9d"),
-            Reg::CX => write!(f, "%ecx"),
-            Reg::DI => write!(f, "%edi"),
-            Reg::SI => write!(f, "%esi"),
+impl Reg {
+    pub fn asm(&self, size : RegisterSize) -> String {
+        match size {
+            RegisterSize::OneByte => match self {
+                Reg::AX => "%al".to_string(),
+                Reg::CX => "%cl".to_string(),
+                Reg::DX => "%dl".to_string(),
+                Reg::DI => "%dil".to_string(),
+                Reg::SI => "%sil".to_string(),
+                Reg::R8 => "%r8b".to_string(),
+                Reg::R9 => "%r9b".to_string(),
+                Reg::R10 => "%r10b".to_string(),
+                Reg::R11 => "%r11b".to_string(),
+            },
+            RegisterSize::FourByte => match self {
+                Reg::AX => "%eax".to_string(),
+                Reg::CX => "%ecx".to_string(),
+                Reg::DX => "%edx".to_string(),
+                Reg::DI => "%edi".to_string(),
+                Reg::SI => "%esi".to_string(),
+                Reg::R8 => "%r8d".to_string(),
+                Reg::R9 => "%r9d".to_string(),
+                Reg::R10 => "%r10d".to_string(),
+                Reg::R11 => "%r11d".to_string(),
+            },
+            RegisterSize::EightByte => match self {
+                Reg::AX => "%rax".to_string(),
+                Reg::CX => "%rcx".to_string(),
+                Reg::DX => "%rdx".to_string(),
+                Reg::DI => "%rdi".to_string(),
+                Reg::SI => "%rsi".to_string(),
+                Reg::R8 => "%r8".to_string(),
+                Reg::R9 => "%r9".to_string(),
+                Reg::R10 => "%r10".to_string(),
+                Reg::R11 => "%r11".to_string(),
+            },
         }
     }
 }

@@ -15,7 +15,7 @@ pub enum Operand {
 impl Display for Operand {
     fn fmt(&self, f: &mut Formatter) -> Result {
         match self {
-            Operand::Register(reg) => write!(f, "{}", reg),
+            Operand::Register(reg) => write!(f, "{}", reg.asm(super::RegisterSize::FourByte)), //TODO
             Operand::Immediate { imm } => write!(f, "${}", imm),
             Operand::Stack(offset) => write!(f, "-{}(%rbp)", offset),
             op => unimplemented!("Operand Display not implemented for {:?}", op),

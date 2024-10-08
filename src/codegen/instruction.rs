@@ -74,11 +74,8 @@ impl Display for Instruction {
             }
             Instruction::SetCC(cc, dst) => {
                 let dst = match dst {
-                    Operand::Register(Reg::AX) => "al",
-                    Operand::Register(Reg::DX) => "dl",
-                    Operand::Register(Reg::R10) => "r10b",
-                    Operand::Register(Reg::R11) => "r11b",
-                    d => &format!("{}", d),
+                    Operand::Register(register) => register.asm(RegisterSize::OneByte),
+                    d => format!("{}", d),
                 };
 
                 write!(f, "\tset{} {}", cc, dst)
