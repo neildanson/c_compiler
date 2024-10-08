@@ -218,7 +218,7 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
             }]),
             tacky::Instruction::Label { name } => Ok(vec![Instruction::Label(name)]),
             tacky::Instruction::Jump { target } => Ok(vec![Instruction::Jmp(target)]),
-            //x => unimplemented!("{:?}", x),
+            x => unimplemented!("{:?}", x),
         }
     }
 }

@@ -58,8 +58,23 @@ impl Tacky {
                     });
                     Ok(Value::Var(v.clone()))
                 }
+                
                 e => self.emit_tacky_expr(e, instructions),
             },
+            parse::Expression::FunctionCall(ident, params) => {
+                let mut args = Vec::new();
+                for p in params {
+                    let arg = self.emit_tacky_expr(p, instructions)?;
+                    args.push(arg);
+                }
+                let result = Value::Var(self.make_name());
+                instructions.push(Instruction::FunCall {
+                    name: ident.clone(),
+                    args,
+                    dst: result.clone(),
+                });
+                Ok(result)
+            }
             e => self.emit_tacky_factor(e, instructions),
         }
     }
@@ -517,7 +532,6 @@ impl Tacky {
             match statement {
                 parse::BlockItem::Statement(s) => self.emit_tacky_statement(&s, &mut body)?,
                 parse::BlockItem::Declaration(parse::Declaration::Variable(decl)) => {
-                    //Dont nest?
                     self.emit_tacky_decl(&decl, &mut body)?;
                 }
                 s => unimplemented!("Unimplemented Tacky statement {:?}", s),

@@ -32,4 +32,9 @@ pub enum Instruction {
     Label {
         name: String,
     },
+    FunCall {
+        name: String,
+        args: Vec<Value>,
+        dst: Value,
+    },
 }
