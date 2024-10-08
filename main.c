@@ -6,5 +6,13 @@ int main(void) {
     putchar(108);
     putchar(108);
     putchar(111);
+    putchar(44);
+    putchar(32);
+    putchar(87);
+    putchar(111);
+    putchar(114);
+    putchar(108);
+    putchar(100);
+    putchar(33);
     return 66;
 }
