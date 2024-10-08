@@ -1,6 +1,10 @@
 int putchar(int c);
 
-int helloworld(int x) {
+int simple(int param) {
+    return param;
+}
+
+int helloworld(void) {
     putchar(72);
     putchar(101);
     putchar(108);
@@ -16,13 +20,12 @@ int helloworld(int x) {
     putchar(33);
     putchar(10);
     putchar(0);
-    return x;
 }
 
 int main(void) {
 
     for (int i = 0; i < 100; i = i + 1) {
-        helloworld(66);
+        helloworld();
     }
     return 0;
 }

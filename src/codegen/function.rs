@@ -32,6 +32,11 @@ impl TryFrom<tacky::Function> for Function {
     fn try_from(ast: tacky::Function) -> Result<Self, Self::Error> {
         if let Some(body_ast) = ast.body {
             let mut body = Vec::new();
+
+            for parameter in ast.params {
+                body.insert(0, Instruction::Mov { src : Operand::Register(Reg::DI), dst : Operand::Pseudo(parameter) });
+            }
+
             for statement in body_ast {
                 let mut instructions: Vec<_> = statement.try_into()?;
                 body.append(&mut instructions);
