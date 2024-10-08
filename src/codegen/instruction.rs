@@ -125,8 +125,6 @@ fn convert_function_call(
     args: Vec<tacky::Value>,
     dst: tacky::Value,
 ) -> Result<Vec<Instruction>, CompilerError> {
-    let arg_registers = vec![Reg::DI, Reg::SI, Reg::DX, Reg::CX, Reg::R8, Reg::R9]; //This screams for a refactor
-
     let register_args: Vec<_> = args.iter().take(6).collect();
     let stack_args: Vec<_> = args.iter().skip(6).collect();
     let stack_padding = //if length stack args is odd, then pad
@@ -142,11 +140,10 @@ fn convert_function_call(
     }
 
     for (i, arg) in register_args.iter().enumerate() {
-        let r = arg_registers[i].clone();
         let assembly_arg = (*arg).clone().into();
         instructions.push(Instruction::Mov {
             src: assembly_arg,
-            dst: Operand::Register(r),
+            dst: i.into(),
         });
     }
 

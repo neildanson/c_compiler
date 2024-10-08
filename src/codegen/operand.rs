@@ -31,3 +31,15 @@ impl From<tacky::Value> for Operand {
         }
     }
 }
+
+impl From<usize> for Operand {
+    fn from(offset: usize) -> Self {
+        let arg_registers = vec![Reg::DI, Reg::SI, Reg::DX, Reg::CX, Reg::R8, Reg::R9];
+
+        if offset < arg_registers.len() {
+            Operand::Register(arg_registers[offset].clone())
+        } else {
+            Operand::Stack((offset - arg_registers.len()) as i32 * 8)
+        }
+    }
+}

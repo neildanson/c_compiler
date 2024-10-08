@@ -33,11 +33,11 @@ impl TryFrom<tacky::Function> for Function {
         if let Some(body_ast) = ast.body {
             let mut body = Vec::new();
 
-            for parameter in ast.params {
+            for (i, parameter) in ast.params.into_iter().enumerate() {
                 body.insert(
                     0,
                     Instruction::Mov {
-                        src: Operand::Register(Reg::DI),
+                        src: i.into(),
                         dst: Operand::Pseudo(parameter),
                     },
                 );
