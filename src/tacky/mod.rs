@@ -553,8 +553,11 @@ impl Tacky {
             for block_item in body_stmt {
                 self.emit_tacky_block_item(&block_item, &mut body)?;
             }
+            Ok(Function { name: f.name, body : Some(body) })
+        } else {
+            Ok(Function { name: f.name, body : None })
         }
-        Ok(Function { name: f.name, body })
+        
     }
 
     pub fn emit_tacky(&mut self, p: parse::Program) -> Result<Program, CompilerError> {

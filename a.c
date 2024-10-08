@@ -1,5 +1,5 @@
 int putchar(int c);
-int helloworld(void) {
+int helloworld(int x) {
     putchar(72);
     putchar(101);
     putchar(108);
@@ -15,11 +15,11 @@ int helloworld(void) {
     putchar(33);
     putchar(10);
     putchar(0);
-    return 66;
+    return x;
 }
 int main(void) {
-    for (int i = 0; i < 10; i = i + 1) {
-        helloworld();
+    for (int i = 0; i < 100; i = i + 1) {
+        helloworld(66);
     }
     return 0;
 }
