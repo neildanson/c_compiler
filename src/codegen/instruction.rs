@@ -42,6 +42,14 @@ fn format_label(label: &str) -> String {
     }
 }
 
+pub fn format_fn_call(name: &str) -> String {
+    if cfg!(target_os = "macos") {
+        return format!("_{}", name);
+    } else {
+        return format!("{}", name);
+    }
+}
+
 impl Display for Instruction {
     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
         match self {
@@ -98,7 +106,7 @@ impl Display for Instruction {
                 writeln!(f, "\taddq ${}, %rsp", size)
             }
             Instruction::Call(name) => {
-                write!(f, "\tcall {}", name)
+                write!(f, "\tcall {}", format_fn_call(name))
             }
             //instruction => unimplemented!("Instruction {}", instruction), //Add the rest of the instructions
         }

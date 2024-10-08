@@ -13,7 +13,7 @@ pub struct Function {
 impl Display for Function {
     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
         writeln!(f, "\t.globl {}", self.name)?;
-        writeln!(f, "{}:", self.name)?;
+        writeln!(f, "{}:", format_fn_call(&self.name))?;
         writeln!(f, "\t# Function Preamble")?;
         writeln!(f, "\tpushq %rbp")?;
         writeln!(f, "\tmovq %rsp, %rbp")?;
