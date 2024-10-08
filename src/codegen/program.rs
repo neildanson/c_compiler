@@ -11,6 +11,7 @@ impl Display for Program {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         for function in &self.functions {
             write!(f, "{}", function)?;
+            writeln!(f)?;
         }
         Ok(())
     }
