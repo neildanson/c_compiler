@@ -7,7 +7,7 @@ cargo build --release
  
 
 gcc -E -P main.c -o a.c
-cargo run --release -- --validate a.c --S
+cargo run --release -- --codegen a.c --S
 
 echo "Running the code"
 

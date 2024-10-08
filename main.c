@@ -1,15 +1,7 @@
-int main(void) {
-    int foo = 3;
-    int bar = 4;
-    if (foo + bar > 0) {
-        /* Function declaration foo shadows variable foo */
-        int foo(void);
-        bar = foo();
-    }
-    /* Variable foo becomes visible again */
-    return foo + bar;
+int simple(int param) {
+    return param;
 }
 
-int foo(void) {
-    return 8;
+int main(void) {
+    return simple(3);
 }

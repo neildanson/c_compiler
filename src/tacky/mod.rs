@@ -58,7 +58,7 @@ impl Tacky {
                     });
                     Ok(Value::Var(v.clone()))
                 }
-                
+
                 e => self.emit_tacky_expr(e, instructions),
             },
             parse::Expression::FunctionCall(ident, params) => {
@@ -318,7 +318,8 @@ impl Tacky {
         Ok(())
     }
 
-    fn emit_tacky_decl(&mut self, 
+    fn emit_tacky_decl(
+        &mut self,
         d: &parse::Declaration,
         instructions: &mut Vec<Instruction>,
     ) -> Result<(), CompilerError> {

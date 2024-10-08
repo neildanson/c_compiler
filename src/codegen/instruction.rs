@@ -23,12 +23,15 @@ pub enum Instruction {
     },
     Cdq,
     AllocateStack(usize),
+    DeallocateStack(usize),
     Ret,
     Cmp(Operand, Operand),
     Jmp(String),
     JmpCC(ConditionCode, String),
     SetCC(ConditionCode, Operand),
     Label(String),
+    Push(Operand),
+    Call(String),
 }
 
 impl Display for Instruction {
@@ -82,9 +85,68 @@ impl Display for Instruction {
             }
             Instruction::Label(name) => {
                 write!(f, ".L{}:", name)
-            } //instruction => unimplemented!("Instruction {}", instruction), //Add the rest of the instructions
+            }
+            instruction => unimplemented!("Instruction {}", instruction), //Add the rest of the instructions
         }
     }
+}
+
+fn convert_function_call(
+    name: String,
+    args: Vec<tacky::Value>,
+    dst: tacky::Value,
+) -> Result<Vec<Instruction>, CompilerError> {
+    let arg_registers = vec![Reg::DI, Reg::SI, Reg::DX, Reg::CX, Reg::R8, Reg::R9]; //This screams for a refactor
+
+    let (register_args, stack_args) = args.split_at(6);
+    let stack_padding = //if length stack args is odd, then pad
+     if stack_args.len() % 2 == 1 {
+        8
+    } else {
+        0
+    };
+    let mut instructions = vec![];
+
+    if stack_padding > 0 {
+        instructions.push(Instruction::AllocateStack(stack_padding));
+    }
+    
+    for (i, arg) in register_args.iter().enumerate() {
+        let r = arg_registers[i].clone();
+        let assembly_arg = arg.clone().into();
+        instructions.push(Instruction::Mov {
+            src: assembly_arg,
+            dst: Operand::Register(r),
+        });
+    }
+
+    for arg in stack_args.into_iter().rev() {
+        let assembly_arg = arg.clone().into();
+        match assembly_arg {
+            Operand::Register(_) | Operand::Immediate { imm : _ } => {
+                instructions.push(Instruction::Push(assembly_arg));
+            }
+            _ => {
+                instructions.push(Instruction::Mov {
+                    src: assembly_arg,
+                    dst: Operand::Register(Reg::AX),
+                });
+                instructions.push(Instruction::Push(Operand::Register(Reg::AX)));
+            }
+        }
+    }
+
+    instructions.push(Instruction::Call(name));
+    let bytes_to_remove = 8 * stack_args.len() + stack_padding;
+    if bytes_to_remove > 0 {
+        instructions.push(Instruction::DeallocateStack(bytes_to_remove));
+    }
+    instructions.push(Instruction::Mov {
+        src: Operand::Register(Reg::AX),
+        dst: dst.into(),
+    });
+
+    Ok(instructions)
 }
 
 impl TryFrom<tacky::Instruction> for Vec<Instruction> {
@@ -218,7 +280,9 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
             }]),
             tacky::Instruction::Label { name } => Ok(vec![Instruction::Label(name)]),
             tacky::Instruction::Jump { target } => Ok(vec![Instruction::Jmp(target)]),
-            x => unimplemented!("{:?}", x),
+            tacky::Instruction::FunCall { name, args, dst } => {
+                convert_function_call(name, args, dst)
+            }
         }
     }
 }

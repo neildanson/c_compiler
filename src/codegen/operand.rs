@@ -11,6 +11,7 @@ pub enum Operand {
     Stack(i32),
 }
 
+
 impl Display for Operand {
     fn fmt(&self, f: &mut Formatter) -> Result {
         match self {
