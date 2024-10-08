@@ -33,7 +33,7 @@ impl TryFrom<tacky::Function> for Function {
         if let Some(body_ast) = ast.body {
             let mut body = Vec::new();
 
-            for (i, parameter) in ast.params.into_iter().enumerate() {
+            for (i, parameter) in ast.params.into_iter().enumerate().rev() {
                 body.insert(
                     0,
                     Instruction::Mov {

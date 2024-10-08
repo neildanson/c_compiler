@@ -39,7 +39,7 @@ impl From<usize> for Operand {
         if offset < arg_registers.len() {
             Operand::Register(arg_registers[offset].clone())
         } else {
-            Operand::Stack((offset - arg_registers.len()) as i32 * 8)
+            Operand::Stack((offset - arg_registers.len() + 1) as i32 * 8)
         }
     }
 }
