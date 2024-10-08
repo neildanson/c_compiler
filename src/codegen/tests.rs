@@ -34,7 +34,7 @@ fn test_replace_pseudo_with_stack() {
             },
         ]
     );
-    assert_eq!(stack_size, 2);
+    assert_eq!(stack_size, 4); //Pad stack size to nearest 16 bytes
 }
 
 #[test]

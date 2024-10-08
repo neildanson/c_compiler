@@ -89,3 +89,10 @@ idiv -4(%rdp)       # eax div by local. result in
 ```
 
 
+# MacOS
+
+TODO
+
+* arch -x86_64 zsh
+* Labels shouldn't have . prefix
+* Method names Begin with _

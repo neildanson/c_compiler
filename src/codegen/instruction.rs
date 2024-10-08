@@ -114,6 +114,7 @@ fn convert_function_call(
     };
     let mut instructions = vec![];
 
+    println!("StackPadding {:?}", stack_padding);
     if stack_padding > 0 {
         instructions.push(Instruction::AllocateStack(stack_padding));
     }

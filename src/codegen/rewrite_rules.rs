@@ -15,6 +15,7 @@ fn fixup_pseudo(name: String, stack: &mut HashMap<String, i32>) -> Operand {
 pub(crate) fn rewrite_pseudo_with_stack(body: Vec<Instruction>) -> (Vec<Instruction>, usize) {
     let mut stack = HashMap::new();
     let mut new_body = Vec::new();
+    let mut stack_size = 0;
     for instruction in body {
         match instruction {
             Instruction::Mov { src, dst } => {
@@ -72,13 +73,16 @@ pub(crate) fn rewrite_pseudo_with_stack(body: Vec<Instruction>) -> (Vec<Instruct
                 new_body.push(Instruction::Push(operand));
             }
             Instruction::AllocateStack(size) => {
-                new_body.push(Instruction::AllocateStack(size));
+                stack_size = size;
             }
             
             any_other => new_body.push(any_other),
         }
     }
-    (new_body, stack.len())
+
+    let stack_size = stack.len() + stack_size;
+    let stack_size_rounded_to_nearest_16 = stack_size + (4 - stack_size % 4);
+    (new_body, stack_size_rounded_to_nearest_16)
 }
 
 pub(crate) fn fixup_stack_operations(body: Vec<Instruction>) -> Vec<Instruction> {
