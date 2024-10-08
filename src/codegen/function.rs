@@ -12,6 +12,9 @@ pub struct Function {
 
 impl Display for Function {
     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+        if self.body.is_empty() {
+            return Ok(());
+        }
         writeln!(f, "\t.globl {}", format_fn_call(&self.name))?;
         writeln!(f, "{}:", format_fn_call(&self.name))?;
         writeln!(f, "\t# Function Preamble")?;
@@ -34,6 +37,13 @@ impl TryFrom<tacky::Function> for Function {
             body.append(&mut instructions);
         }
 
+        if body.is_empty() {
+            return Ok(Function {
+                name: ast.name,
+                body,
+            });
+        }
+        
         let (mut body, stack_size) = rewrite_pseudo_with_stack(body);
         body.insert(0, Instruction::AllocateStack(stack_size));
         let body = fixup_stack_operations(body);

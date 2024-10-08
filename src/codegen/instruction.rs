@@ -100,6 +100,10 @@ impl Display for Instruction {
                 write!(f, "{}:", format_label(name))
             }
             Instruction::Push(operand) => {
+                let operand = match operand {
+                    Operand::Register(register) => format!("{:.8}", register),
+                    d => format!("{}", d),
+                }; 
                 write!(f, "\tpushq {}", operand)
             }
             Instruction::DeallocateStack(size) => {

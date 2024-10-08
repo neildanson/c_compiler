@@ -1,11 +1,10 @@
-int simple(int param1, int param2) {
-    if (param1 > 0) {
-        return param2;
-    }
-    return param1;
-}
+int putchar(int c);
 
 int main(void) {
-    int x = 3;
-    return simple(x, 2);
+    putchar(72);
+    putchar(101);
+    putchar(108);
+    putchar(108);
+    putchar(111);
+    return 66;
 }
