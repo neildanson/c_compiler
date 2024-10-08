@@ -13,8 +13,13 @@ int helloworld(void) {
     putchar(108);
     putchar(100);
     putchar(33);
+    putchar(10);
+    putchar(0);
     return 66;
 }
 int main(void) {
-    return helloworld();
+    for (int i = 0; i < 10; i = i + 1) {
+        helloworld();
+    }
+    return 0;
 }
