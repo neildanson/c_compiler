@@ -34,6 +34,14 @@ pub enum Instruction {
     Call(String),
 }
 
+fn format_label(label: &str) -> String {
+    if cfg!(target_os = "macos") {
+        return format!("L{}", label);
+    } else {
+        return format!(".L{}", label);
+    }
+}
+
 impl Display for Instruction {
     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
         match self {
@@ -67,10 +75,10 @@ impl Display for Instruction {
                 write!(f, "\tcmpl {}, {}", src1, src2)
             }
             Instruction::Jmp(target) => {
-                write!(f, "\tjmp .L{}", target)
+                write!(f, "\tjmp {}", format_label(target))
             }
             Instruction::JmpCC(cc, target) => {
-                write!(f, "\tj{} .L{}", cc, target)
+                write!(f, "\tj{} {}", cc, format_label(target))
             }
             Instruction::SetCC(cc, dst) => {
                 let dst = match dst {
@@ -81,7 +89,7 @@ impl Display for Instruction {
                 write!(f, "\tset{} {}", cc, dst)
             }
             Instruction::Label(name) => {
-                write!(f, ".L{}:", name)
+                write!(f, "{}:", format_label(name))
             }
             Instruction::Push(operand) => {
                 write!(f, "\tpushq {}", operand)
