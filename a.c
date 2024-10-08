@@ -1,12 +1,6 @@
-int main(void) {
-    int foo = 3;
-    int bar = 4;
-    if (foo + bar > 0) {
-        int foo(void);
-        bar = foo();
-    }
-    return foo + bar;
+int simple(int param) {
+    return param;
 }
-int foo(void) {
-    return 8;
+int main(void) {
+    return simple(3);
 }

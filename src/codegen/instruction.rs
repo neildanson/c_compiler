@@ -86,7 +86,16 @@ impl Display for Instruction {
             Instruction::Label(name) => {
                 write!(f, ".L{}:", name)
             }
-            instruction => unimplemented!("Instruction {}", instruction), //Add the rest of the instructions
+            Instruction::Push(operand) => {
+                write!(f, "\tpushq {}", operand)
+            }
+            Instruction::DeallocateStack(size) => {
+                writeln!(f, "\taddq ${}, %rsp", size)
+            }
+            Instruction::Call(name) => {
+                write!(f, "\tcall {}", name)
+            }
+            //instruction => unimplemented!("Instruction {}", instruction), //Add the rest of the instructions
         }
     }
 }
@@ -98,7 +107,8 @@ fn convert_function_call(
 ) -> Result<Vec<Instruction>, CompilerError> {
     let arg_registers = vec![Reg::DI, Reg::SI, Reg::DX, Reg::CX, Reg::R8, Reg::R9]; //This screams for a refactor
 
-    let (register_args, stack_args) = args.split_at(6);
+    let register_args :Vec<_> = args.iter().take(6).collect();
+    let stack_args :Vec<_> = args.iter().skip(6).collect();
     let stack_padding = //if length stack args is odd, then pad
      if stack_args.len() % 2 == 1 {
         8
@@ -113,15 +123,15 @@ fn convert_function_call(
     
     for (i, arg) in register_args.iter().enumerate() {
         let r = arg_registers[i].clone();
-        let assembly_arg = arg.clone().into();
+        let assembly_arg = (*arg).clone().into();
         instructions.push(Instruction::Mov {
             src: assembly_arg,
             dst: Operand::Register(r),
         });
     }
 
-    for arg in stack_args.into_iter().rev() {
-        let assembly_arg = arg.clone().into();
+    for arg in stack_args.iter().rev() {
+        let assembly_arg = (*arg).clone().into();
         match assembly_arg {
             Operand::Register(_) | Operand::Immediate { imm : _ } => {
                 instructions.push(Instruction::Push(assembly_arg));
