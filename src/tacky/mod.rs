@@ -299,7 +299,7 @@ impl Tacky {
         }
     }
 
-    fn emit_tacky_decl(
+    fn emit_tacky_variable_decl(
         &mut self,
         d: &parse::VariableDeclaration,
         instructions: &mut Vec<Instruction>,
@@ -315,6 +315,35 @@ impl Tacky {
             src: value,
             dst: Value::Var(name),
         });
+        Ok(())
+    }
+
+    fn emit_tacky_decl(&mut self, 
+        d: &parse::Declaration,
+        instructions: &mut Vec<Instruction>,
+    ) -> Result<(), CompilerError> {
+        match d {
+            parse::Declaration::Variable(decl) => {
+                self.emit_tacky_variable_decl(decl, instructions)?;
+            }
+            parse::Declaration::Function(_) => {}
+        }
+        Ok(())
+    }
+
+    fn emit_tacky_block_item(
+        &mut self,
+        item: &parse::BlockItem,
+        instructions: &mut Vec<Instruction>,
+    ) -> Result<(), CompilerError> {
+        match item {
+            parse::BlockItem::Declaration(decl) => {
+                self.emit_tacky_decl(decl, instructions)?;
+            }
+            parse::BlockItem::Statement(s) => {
+                self.emit_tacky_statement(s, instructions)?;
+            }
+        }
         Ok(())
     }
 
@@ -395,7 +424,7 @@ impl Tacky {
 
         match for_init {
             parse::ForInit::InitDeclaration(decl) => {
-                self.emit_tacky_decl(decl, instructions)?;
+                self.emit_tacky_variable_decl(decl, instructions)?;
             }
             parse::ForInit::InitExpression(Some(e)) => {
                 self.emit_tacky_expr(e, instructions)?; //Value?
@@ -484,19 +513,7 @@ impl Tacky {
             parse::Statement::Null => Ok(()),
             parse::Statement::Compound(block) => {
                 for item in block {
-                    match item {
-                        parse::BlockItem::Declaration(parse::Declaration::Variable(decl)) => {
-                            //Dont nest?
-                            self.emit_tacky_decl(decl, instructions)?;
-                        }
-                        parse::BlockItem::Statement(s) => {
-                            self.emit_tacky_statement(s, instructions)?;
-                        }
-                        parse::BlockItem::Declaration(parse::Declaration::Function(_)) => {
-                            Ok(())?;
-                        }
-                        //_ => unimplemented!("Unimplemented Tacky block item {:?}", item),
-                    }
+                    self.emit_tacky_block_item(item, instructions)?;
                 }
                 Ok(())
             }
@@ -532,17 +549,8 @@ impl Tacky {
     ) -> Result<Function, CompilerError> {
         let mut body = Vec::new();
         if let Some(body_stmt) = f.body {
-            for statement in body_stmt {
-                match statement {
-                    parse::BlockItem::Statement(s) => self.emit_tacky_statement(&s, &mut body)?,
-                    parse::BlockItem::Declaration(parse::Declaration::Variable(decl)) => {
-                        self.emit_tacky_decl(&decl, &mut body)?;
-                    }
-                    parse::BlockItem::Declaration(parse::Declaration::Function(_decl)) => {
-                        
-                    }
-                    //s => unimplemented!("Unimplemented Tacky statement {:?}", s),
-                }
+            for block_item in body_stmt {
+                self.emit_tacky_block_item(&block_item, &mut body)?;
             }
         }
         Ok(Function { name: f.name, body })
