@@ -492,7 +492,10 @@ impl Tacky {
                         parse::BlockItem::Statement(s) => {
                             self.emit_tacky_statement(s, instructions)?;
                         }
-                        _ => unimplemented!("Unimplemented Tacky block item {:?}", item),
+                        parse::BlockItem::Declaration(parse::Declaration::Function(_)) => {
+                            Ok(())?;
+                        }
+                        //_ => unimplemented!("Unimplemented Tacky block item {:?}", item),
                     }
                 }
                 Ok(())
@@ -528,13 +531,18 @@ impl Tacky {
         f: parse::FunctionDefinition,
     ) -> Result<Function, CompilerError> {
         let mut body = Vec::new();
-        for statement in f.body.unwrap() {
-            match statement {
-                parse::BlockItem::Statement(s) => self.emit_tacky_statement(&s, &mut body)?,
-                parse::BlockItem::Declaration(parse::Declaration::Variable(decl)) => {
-                    self.emit_tacky_decl(&decl, &mut body)?;
+        if let Some(body_stmt) = f.body {
+            for statement in body_stmt {
+                match statement {
+                    parse::BlockItem::Statement(s) => self.emit_tacky_statement(&s, &mut body)?,
+                    parse::BlockItem::Declaration(parse::Declaration::Variable(decl)) => {
+                        self.emit_tacky_decl(&decl, &mut body)?;
+                    }
+                    parse::BlockItem::Declaration(parse::Declaration::Function(_decl)) => {
+                        
+                    }
+                    //s => unimplemented!("Unimplemented Tacky statement {:?}", s),
                 }
-                s => unimplemented!("Unimplemented Tacky statement {:?}", s),
             }
         }
         Ok(Function { name: f.name, body })

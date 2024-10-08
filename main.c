@@ -1,8 +1,15 @@
-int x(int i, int j) {
-    return i + j;
+int main(void) {
+    int foo = 3;
+    int bar = 4;
+    if (foo + bar > 0) {
+        /* Function declaration foo shadows variable foo */
+        int foo(void);
+        bar = foo();
+    }
+    /* Variable foo becomes visible again */
+    return foo + bar;
 }
 
-int main(void) {
-    int a = 10 + x(1,2);
-    return a;
+int foo(void) {
+    return 8;
 }
