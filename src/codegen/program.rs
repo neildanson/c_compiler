@@ -15,7 +15,7 @@ impl Display for Program {
         }
         if cfg!(target_os = "linux") {
             writeln!(f, ".section .note.GNU-stack,\"\",@progbits")?;
-        } 
+        }
 
         Ok(())
     }

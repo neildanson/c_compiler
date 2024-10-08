@@ -75,7 +75,7 @@ pub(crate) fn rewrite_pseudo_with_stack(body: Vec<Instruction>) -> (Vec<Instruct
             Instruction::AllocateStack(size) => {
                 stack_size = size;
             }
-            
+
             any_other => new_body.push(any_other),
         }
     }

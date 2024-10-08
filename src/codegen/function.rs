@@ -12,7 +12,7 @@ pub struct Function {
 
 impl Display for Function {
     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
-        if let Some(body) = &self.body {       
+        if let Some(body) = &self.body {
             writeln!(f, "\t.globl {}", format_fn_call(&self.name))?;
             writeln!(f, "{}:", format_fn_call(&self.name))?;
             writeln!(f, "\t# Function Preamble")?;
@@ -34,7 +34,13 @@ impl TryFrom<tacky::Function> for Function {
             let mut body = Vec::new();
 
             for parameter in ast.params {
-                body.insert(0, Instruction::Mov { src : Operand::Register(Reg::DI), dst : Operand::Pseudo(parameter) });
+                body.insert(
+                    0,
+                    Instruction::Mov {
+                        src: Operand::Register(Reg::DI),
+                        dst: Operand::Pseudo(parameter),
+                    },
+                );
             }
 
             for statement in body_ast {
@@ -48,11 +54,10 @@ impl TryFrom<tacky::Function> for Function {
                 name: ast.name,
                 body: Some(body),
             })
-        }
-        else {
+        } else {
             return Ok(Function {
                 name: ast.name,
-                body:None,
+                body: None,
             });
         }
     }

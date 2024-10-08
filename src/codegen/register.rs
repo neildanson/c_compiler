@@ -20,7 +20,7 @@ pub enum Reg {
 }
 
 impl Reg {
-    pub fn asm(&self, size : RegisterSize) -> String {
+    pub fn asm(&self, size: RegisterSize) -> String {
         match size {
             RegisterSize::OneByte => match self {
                 Reg::AX => "%al".to_string(),
@@ -62,14 +62,18 @@ impl Reg {
 impl Display for Reg {
     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
         if let Some(precision) = f.precision() {
-            write!(f, "{}", self.asm(match precision {
-                1 => RegisterSize::OneByte,
-                4 => RegisterSize::FourByte,
-                8 => RegisterSize::EightByte,
-                _ => panic!("Invalid precision"),
-            }))
+            write!(
+                f,
+                "{}",
+                self.asm(match precision {
+                    1 => RegisterSize::OneByte,
+                    4 => RegisterSize::FourByte,
+                    8 => RegisterSize::EightByte,
+                    _ => panic!("Invalid precision"),
+                })
+            )
         } else {
             panic!("Precision not set - expect format strings like {{:1}}, {{:4}}, or {{:8}}");
-       }
+        }
     }
 }

@@ -103,16 +103,19 @@ impl Display for Instruction {
                 let operand = match operand {
                     Operand::Register(register) => format!("{:.8}", register),
                     d => format!("{}", d),
-                }; 
+                };
                 write!(f, "\tpushq {}", operand)
             }
             Instruction::DeallocateStack(size) => {
                 writeln!(f, "\taddq ${}, %rsp", size)
             }
             Instruction::Call(name) => {
-                write!(f, "\tcall {}@PLT", format_fn_call(name)) //In principal we dont need the @PLT for defined functions by us
-            }
-            //instruction => unimplemented!("Instruction {}", instruction), //Add the rest of the instructions
+                if cfg!(target_os = "macos") {
+                    write!(f, "\tcall _{}", name)
+                } else {
+                    write!(f, "\tcall {}@PLT", format_fn_call(name)) //In principal we dont need the @PLT for defined functions by us
+                }
+            } //instruction => unimplemented!("Instruction {}", instruction), //Add the rest of the instructions
         }
     }
 }
@@ -124,8 +127,8 @@ fn convert_function_call(
 ) -> Result<Vec<Instruction>, CompilerError> {
     let arg_registers = vec![Reg::DI, Reg::SI, Reg::DX, Reg::CX, Reg::R8, Reg::R9]; //This screams for a refactor
 
-    let register_args :Vec<_> = args.iter().take(6).collect();
-    let stack_args :Vec<_> = args.iter().skip(6).collect();
+    let register_args: Vec<_> = args.iter().take(6).collect();
+    let stack_args: Vec<_> = args.iter().skip(6).collect();
     let stack_padding = //if length stack args is odd, then pad
      if stack_args.len() % 2 == 1 {
         8
@@ -133,11 +136,11 @@ fn convert_function_call(
         0
     };
     let mut instructions = vec![];
-   
+
     if stack_padding > 0 {
         instructions.push(Instruction::AllocateStack(stack_padding));
     }
-    
+
     for (i, arg) in register_args.iter().enumerate() {
         let r = arg_registers[i].clone();
         let assembly_arg = (*arg).clone().into();
@@ -150,7 +153,7 @@ fn convert_function_call(
     for arg in stack_args.iter().rev() {
         let assembly_arg = (*arg).clone().into();
         match assembly_arg {
-            Operand::Register(_) | Operand::Immediate { imm : _ } => {
+            Operand::Register(_) | Operand::Immediate { imm: _ } => {
                 instructions.push(Instruction::Push(assembly_arg));
             }
             _ => {

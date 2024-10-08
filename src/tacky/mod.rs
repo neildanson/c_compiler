@@ -553,9 +553,17 @@ impl Tacky {
             for block_item in body_stmt {
                 self.emit_tacky_block_item(&block_item, &mut body)?;
             }
-            Ok(Function { name: f.name, params : f.parameters, body : Some(body) })
+            Ok(Function {
+                name: f.name,
+                params: f.parameters,
+                body: Some(body),
+            })
         } else {
-            Ok(Function { name: f.name, params : f.parameters, body : None })
+            Ok(Function {
+                name: f.name,
+                params: f.parameters,
+                body: None,
+            })
         }
     }
 
