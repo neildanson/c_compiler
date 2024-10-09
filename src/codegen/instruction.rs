@@ -36,17 +36,17 @@ pub enum Instruction {
 
 fn format_label(label: &str) -> String {
     if cfg!(target_os = "macos") {
-        return format!("L{}", label);
+        format!("L{}", label)
     } else {
-        return format!(".L{}", label);
+        format!(".L{}", label)
     }
 }
 
 pub fn format_fn_call(name: &str) -> String {
     if cfg!(target_os = "macos") {
-        return format!("_{}", name);
+        format!("_{}", name)
     } else {
-        return format!("{}", name);
+        name.to_string()
     }
 }
 
@@ -69,6 +69,9 @@ impl Display for Instruction {
             Instruction::AllocateStack(size) => {
                 writeln!(f, "\t# Allocating stack of size {}", size)?;
                 writeln!(f, "\tsubq ${}, %rsp", size * 4)
+            }
+            Instruction::DeallocateStack(size) => {
+                writeln!(f, "\taddq ${}, %rsp", size * 4)
             }
             Instruction::Idiv { src } => {
                 write!(f, "\tidivl {}", src)
@@ -106,9 +109,6 @@ impl Display for Instruction {
                 };
                 write!(f, "\tpushq {}", operand)
             }
-            Instruction::DeallocateStack(size) => {
-                writeln!(f, "\taddq ${}, %rsp", size)
-            }
             Instruction::Call(name) => {
                 if cfg!(target_os = "macos") {
                     write!(f, "\tcall _{}", name)
@@ -127,12 +127,13 @@ fn convert_function_call(
 ) -> Result<Vec<Instruction>, CompilerError> {
     let register_args: Vec<_> = args.iter().take(6).collect();
     let stack_args: Vec<_> = args.iter().skip(6).collect();
+
     let stack_padding = //if length stack args is odd, then pad
-     if stack_args.len() % 2 == 1 {
-        8
-    } else {
-        0
-    };
+        if stack_args.len() % 2 == 1 {
+            8
+        } else {
+            0
+        };
     let mut instructions = vec![];
 
     if stack_padding > 0 {
@@ -172,6 +173,8 @@ fn convert_function_call(
         src: Operand::Register(Reg::AX),
         dst: dst.into(),
     });
+
+    println!("Instructions: {:#?}", instructions);
 
     Ok(instructions)
 }

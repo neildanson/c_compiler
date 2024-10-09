@@ -96,5 +96,5 @@ TODO (Done?)
 * arch -x86_64 zsh ✅
 * Labels shouldn't have . prefix ✅
 * Method names Begin with _ ✅
-* External methods should not be marked with _
+* External methods should not be marked with _ ✅
 * Some weirdness with @PLT

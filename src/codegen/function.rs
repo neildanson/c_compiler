@@ -47,6 +47,8 @@ impl TryFrom<tacky::Function> for Function {
                 let mut instructions: Vec<_> = statement.try_into()?;
                 body.append(&mut instructions);
             }
+
+            println!("Function: {:?}", ast.name);
             let (mut body, stack_size) = rewrite_pseudo_with_stack(body);
             body.insert(0, Instruction::AllocateStack(stack_size));
             let body = fixup_stack_operations(body);
@@ -55,10 +57,10 @@ impl TryFrom<tacky::Function> for Function {
                 body: Some(body),
             })
         } else {
-            return Ok(Function {
+            Ok(Function {
                 name: ast.name,
                 body: None,
-            });
+            })
         }
     }
 }
