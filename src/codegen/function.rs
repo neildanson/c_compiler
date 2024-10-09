@@ -48,9 +48,8 @@ impl TryFrom<tacky::Function> for Function {
                 body.append(&mut instructions);
             }
 
-            println!("Function: {:?}", ast.name);
             let (mut body, stack_size) = rewrite_pseudo_with_stack(body);
-            body.insert(0, Instruction::AllocateStack(stack_size));
+            body.insert(0, Instruction::AllocateStack(stack_size * 4)); //* 4 as ints are 4 bytes */
             let body = fixup_stack_operations(body);
             Ok(Function {
                 name: ast.name,

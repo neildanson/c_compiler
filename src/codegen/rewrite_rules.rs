@@ -73,7 +73,6 @@ pub(crate) fn rewrite_pseudo_with_stack(body: Vec<Instruction>) -> (Vec<Instruct
                 new_body.push(Instruction::Push(operand));
             }
             Instruction::AllocateStack(size) => {
-                println!("AllocateStack({})", size);
                 stack_size = size;
             }
 
@@ -81,7 +80,7 @@ pub(crate) fn rewrite_pseudo_with_stack(body: Vec<Instruction>) -> (Vec<Instruct
         }
     }
 
-    (new_body, stack_size)
+    (new_body, stack.len() + stack_size)
 }
 
 pub(crate) fn fixup_stack_operations(body: Vec<Instruction>) -> Vec<Instruction> {

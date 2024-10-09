@@ -68,10 +68,10 @@ impl Display for Instruction {
 
             Instruction::AllocateStack(size) => {
                 writeln!(f, "\t# Allocating stack of size {}", size)?;
-                writeln!(f, "\tsubq ${}, %rsp", size * 4)
+                writeln!(f, "\tsubq ${}, %rsp", size)
             }
             Instruction::DeallocateStack(size) => {
-                writeln!(f, "\taddq ${}, %rsp", size * 4)
+                writeln!(f, "\taddq ${}, %rsp", size)
             }
             Instruction::Idiv { src } => {
                 write!(f, "\tidivl {}", src)
@@ -173,8 +173,6 @@ fn convert_function_call(
         src: Operand::Register(Reg::AX),
         dst: dst.into(),
     });
-
-    println!("Instructions: {:#?}", instructions);
 
     Ok(instructions)
 }
