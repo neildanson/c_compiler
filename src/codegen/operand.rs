@@ -8,7 +8,7 @@ pub enum Operand {
     Register(Reg),
     Immediate { imm: i32 },
     Pseudo(String),
-    Stack(i32),
+    Stack(usize),
 }
 
 //https://doc.rust-lang.org/std/fmt/struct.Formatter.html
@@ -39,7 +39,7 @@ impl From<usize> for Operand {
         if offset < arg_registers.len() {
             Operand::Register(arg_registers[offset].clone())
         } else {
-            Operand::Stack((offset - arg_registers.len() + 1) as i32 * 8)
+            Operand::Stack(offset * 8) //I think this is bogus
         }
     }
 }

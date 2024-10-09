@@ -2,11 +2,11 @@ use std::collections::HashMap;
 
 use super::*;
 
-fn fixup_pseudo(name: String, stack: &mut HashMap<String, i32>) -> Operand {
+fn fixup_pseudo(name: String, stack: &mut HashMap<String, usize>) -> Operand {
     if let Some(offset) = stack.get(&name) {
         Operand::Stack(*offset)
     } else {
-        let offset = (stack.len() + 1) as i32 * 4;
+        let offset = (stack.len() + 1) * 4;
         stack.insert(name, offset);
         Operand::Stack(offset)
     }
@@ -15,7 +15,6 @@ fn fixup_pseudo(name: String, stack: &mut HashMap<String, i32>) -> Operand {
 pub(crate) fn rewrite_pseudo_with_stack(body: Vec<Instruction>) -> (Vec<Instruction>, usize) {
     let mut stack = HashMap::new();
     let mut new_body = Vec::new();
-    let mut stack_size = 0;
     for instruction in body {
         match instruction {
             Instruction::Mov { src, dst } => {
@@ -72,15 +71,11 @@ pub(crate) fn rewrite_pseudo_with_stack(body: Vec<Instruction>) -> (Vec<Instruct
                 };
                 new_body.push(Instruction::Push(operand));
             }
-            Instruction::AllocateStack(size) => {
-                stack_size = size;
-            }
-
             any_other => new_body.push(any_other),
         }
     }
 
-    (new_body, stack.len() + stack_size)
+    (new_body, stack.len())
 }
 
 pub(crate) fn fixup_stack_operations(body: Vec<Instruction>) -> Vec<Instruction> {

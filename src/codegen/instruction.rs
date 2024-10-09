@@ -138,6 +138,14 @@ fn convert_function_call(
 
     if stack_padding > 0 {
         instructions.push(Instruction::AllocateStack(stack_padding));
+    }    
+
+    for (i, arg) in register_args.iter().enumerate() {
+        let assembly_arg = (*arg).clone().into();
+        instructions.push(Instruction::Mov {
+            src: assembly_arg,
+            dst: i.into(),
+        });
     }
 
     for arg in stack_args.iter().rev() {
@@ -154,14 +162,6 @@ fn convert_function_call(
                 instructions.push(Instruction::Push(Operand::Register(Reg::AX)));
             }
         }
-    }
-
-    for (i, arg) in register_args.iter().enumerate().rev() {
-        let assembly_arg = (*arg).clone().into();
-        instructions.push(Instruction::Mov {
-            src: assembly_arg,
-            dst: i.into(),
-        });
     }
 
     instructions.push(Instruction::Call(name));
