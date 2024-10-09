@@ -67,3 +67,18 @@ fn pre_increment() {
 fn post_increment() {
     run_test("post_increment");
 }
+
+#[test]
+fn function_call_6_params() {
+    run_test("function_call_6_params");
+}
+
+#[test]
+fn function_call_7_params() {
+    run_test("function_call_7_params");
+}
+
+#[test]
+fn function_call_8_params() {
+    run_test("function_call_8_params");
+}
