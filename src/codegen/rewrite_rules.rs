@@ -3,7 +3,6 @@ use std::collections::HashMap;
 use super::*;
 
 fn fixup_pseudo(name: String, stack: &mut HashMap<String, i32>) -> Operand {
-    println!("Fixing up pseudo {}", name);
     if let Some(offset) = stack.get(&name) {
         Operand::Stack(*offset)
     } else {

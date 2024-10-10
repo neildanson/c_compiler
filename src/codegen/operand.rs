@@ -36,12 +36,11 @@ const ARG_REGISTERS: [Reg; 6] = [Reg::DI, Reg::SI, Reg::DX, Reg::CX, Reg::R8, Re
 
 impl From<usize> for Operand {
     fn from(offset: usize) -> Self {
-        
-
         if offset < ARG_REGISTERS.len() {
             Operand::Register(ARG_REGISTERS[offset].clone())
         } else {
-            Operand::Stack((offset * 8) as i32) //I think this is bogus
+            println!("Converting offset to stack {}", offset);
+            Operand::Stack(((offset - 2)* 4) as i32) //I think this is bogus
         }
     }
 }
