@@ -9,7 +9,7 @@ fn fixup_pseudo(name: String, stack: &mut HashMap<String, i32>) -> Operand {
         //Do parameters need to be 8?
         let offset = (stack.len() + 1) as i32 * 4;
         stack.insert(name, -offset);
-        Operand::Stack(-offset)
+        Operand::local(offset)
     }
 }
 

@@ -34,8 +34,12 @@ impl From<tacky::Value> for Operand {
 
 const ARG_REGISTERS: [Reg; 6] = [Reg::DI, Reg::SI, Reg::DX, Reg::CX, Reg::R8, Reg::R9];
 
-impl From<usize> for Operand {
-    fn from(offset: usize) -> Self {
+impl Operand {
+    pub fn local(offset: i32) -> Self {
+        Operand::Stack(-offset)
+    }
+
+    pub fn arg(offset: usize) -> Self {
         if offset < ARG_REGISTERS.len() {
             Operand::Register(ARG_REGISTERS[offset].clone())
         } else {

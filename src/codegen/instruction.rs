@@ -144,7 +144,7 @@ fn convert_function_call(
         let assembly_arg = (*arg).clone().into();
         instructions.push(Instruction::Mov {
             src: assembly_arg,
-            dst: i.into(),
+            dst: Operand::arg(i),
         });
     }
 

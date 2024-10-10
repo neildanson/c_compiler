@@ -37,7 +37,7 @@ impl TryFrom<tacky::Function> for Function {
                 body.insert(
                     0,
                     Instruction::Mov {
-                        src: i.into(),
+                        src: Operand::arg(i),
                         dst: Operand::Pseudo(parameter),
                     },
                 );
