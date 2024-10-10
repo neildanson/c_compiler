@@ -39,8 +39,7 @@ impl From<usize> for Operand {
         if offset < ARG_REGISTERS.len() {
             Operand::Register(ARG_REGISTERS[offset].clone())
         } else {
-            println!("Converting offset to stack {}", offset);
-            Operand::Stack(((offset - 2)* 4) as i32) //I think this is bogus
+            Operand::Stack(((offset - ARG_REGISTERS.len() + 2) * 8) as i32) // 8 bytes per argument
         }
     }
 }
