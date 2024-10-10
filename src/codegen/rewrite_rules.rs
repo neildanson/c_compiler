@@ -2,13 +2,15 @@ use std::collections::HashMap;
 
 use super::*;
 
-fn fixup_pseudo(name: String, stack: &mut HashMap<String, usize>) -> Operand {
+fn fixup_pseudo(name: String, stack: &mut HashMap<String, i32>) -> Operand {
+    println!("Fixing up pseudo {}", name);
     if let Some(offset) = stack.get(&name) {
         Operand::Stack(*offset)
     } else {
-        let offset = (stack.len() + 1) * 4;
-        stack.insert(name, offset);
-        Operand::Stack(offset)
+        //Do parameters need to be 8?
+        let offset = (stack.len() + 1) as i32 * 4;
+        stack.insert(name, -offset);
+        Operand::Stack(-offset)
     }
 }
 

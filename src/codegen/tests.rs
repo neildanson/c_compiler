@@ -21,15 +21,15 @@ fn test_replace_pseudo_with_stack() {
         new_body,
         vec![
             Instruction::Mov {
-                src: Operand::Stack(4),
+                src: Operand::Stack(-4),
                 dst: Operand::Register(Reg::AX)
             },
             Instruction::Mov {
-                src: Operand::Stack(8),
+                src: Operand::Stack(-8),
                 dst: Operand::Register(Reg::AX)
             },
             Instruction::Mov {
-                src: Operand::Stack(4),
+                src: Operand::Stack(-4),
                 dst: Operand::Register(Reg::AX)
             },
         ]
@@ -49,8 +49,8 @@ fn fixup_binary_pseudo_with_stack() {
         new_body,
         vec![Instruction::Binary {
             op: BinaryOp::Add,
-            src2: Operand::Stack(4),
-            dst: Operand::Stack(8)
+            src2: Operand::Stack(-4),
+            dst: Operand::Stack(-8)
         }]
     );
 }
