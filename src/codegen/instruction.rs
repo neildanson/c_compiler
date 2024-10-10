@@ -148,7 +148,7 @@ fn convert_function_call(
         });
     }
 
-    for arg in stack_args.iter().rev() {
+    for arg in stack_args.iter() {
         let assembly_arg = (*arg).clone().into();
         match assembly_arg {
             Operand::Register(_) | Operand::Immediate { imm: _ } => {
