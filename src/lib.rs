@@ -66,3 +66,49 @@ pub fn write_asm(filename: &str, asm: &codegen::Program) -> Result<()> {
     write_file(filename, &asm)?;
     Ok(())
 }
+
+pub fn pre_process_c(filename: &str) -> Result<String> {
+    let filename = if filename.ends_with(".c") {
+        filename
+    } else {
+        return Err(anyhow::anyhow!("Invalid file extension"));
+    };
+
+    let dir = tempfile::tempdir()?;
+    let temp_file = format!("temp/{}.c", dir.path().file_name().unwrap().to_str().unwrap().to_string());
+
+    println!("output_name: {}", temp_file);
+
+    let output = std::process::Command::new("gcc")
+        .args(vec!["-E", "-P", filename, "-o", &temp_file])
+        .output()?;
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(anyhow::anyhow!("gcc failed: {}", stderr));
+    }
+
+    Ok(temp_file)
+}
+
+pub fn compile(filename: &str, original_filename:&str) -> Result<()> {
+    let filename = if filename.ends_with(".c") {
+        filename
+    } else {
+        return Err(anyhow::anyhow!("Invalid file extension"));
+    };
+    let s_file = filename.replace(".c", ".s");
+    let o_file = original_filename.replace(".c", "");
+
+    let asm = codegen(filename)?;
+    write_asm(&s_file, &asm)?;
+
+
+    let output = std::process::Command::new("gcc")
+        .args(vec![&s_file, "-o", &o_file])
+        .output()?;
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(anyhow::anyhow!("gcc failed: {}", stderr));
+    }
+    Ok(())
+}

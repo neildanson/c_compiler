@@ -2,11 +2,10 @@
 cargo test --release
 cargo build --release
 
-../writing-a-c-compiler-tests/test_compiler ./target/release/c_compiler --chapter 9 --stage codegen
+../writing-a-c-compiler-tests/test_compiler ./target/release/c_compiler --chapter 5
  
 
-gcc -E -P main.c -o a.c
-cargo run --release -- --codegen a.c --S
+cargo run --release -- --codegen main.c --S
 
 echo "Running the code"
 

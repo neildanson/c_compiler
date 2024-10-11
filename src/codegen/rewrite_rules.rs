@@ -72,6 +72,13 @@ pub(crate) fn rewrite_pseudo_with_stack(body: Vec<Instruction>) -> (Vec<Instruct
                 };
                 new_body.push(Instruction::Push(operand));
             }
+            Instruction::Idiv { src } => 
+                new_body.push(Instruction::Idiv {
+                    src: match src {
+                        Operand::Pseudo(name) => fixup_pseudo(name, &mut stack),
+                        _ => src,
+                    },
+                }),
             any_other => new_body.push(any_other),
         }
     }

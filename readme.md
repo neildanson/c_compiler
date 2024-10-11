@@ -98,3 +98,9 @@ TODO (Done?)
 * Method names Begin with _ ✅
 * External methods should not be marked with _ ✅
 * Some weirdness with @PLT
+
+accept -c as parameter and pass into gcc as 
+
+gcc -c ASSEMBLY_FILE -o OUTPUT_FILE 
+
+where ASSEMBLY_FILE == OUTPUT_FILE with .o suffix

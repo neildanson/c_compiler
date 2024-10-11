@@ -24,12 +24,12 @@ fn main() -> Result<()> {
         .arg(arg!(--codegen).required(false))
         .arg(arg!(--validate).required(false)) //unused
         .arg(arg!(--run).required(false)) //unused
-        .arg(arg!(--c).required(false)) //unused
+        .arg(arg!(--c).required(false).short('c')) 
         //.arg(arg!(--eliminate-unreachable-code).required(false)) //unused
         //.arg(arg!(--eliminate-dead-stores).required(false)) //unused
         //.arg(arg!(--fold-constants).required(false)) //unused
         .arg(arg!(--optimize).required(false)) //unused
-        .arg(arg!(--S).required(false))
+        .arg(arg!(--S).required(false).short('S'))
         .arg(arg!(--verbose).required(false))
         .get_matches();
 
@@ -41,29 +41,32 @@ fn main() -> Result<()> {
     let validate_file = matches.get_flag("validate");
     let s_flag = matches.get_flag("S");
     let verbose_flag = matches.get_flag("verbose");
+    let c_flag = matches.get_flag("c");
+
+    let processed_filename = pre_process_c(filename)?;
 
     if lex_file {
-        let tokens = lex(filename)?;
+        let tokens = lex(&processed_filename)?;
         if verbose_flag {
             println!("{:#?}", tokens);
         }
     } else if parse_file {
-        let ast = parse(filename)?;
+        let ast = parse(&processed_filename)?;
         if verbose_flag {
             println!("{:#?}", ast);
         }
     } else if validate_file {
-        let asm = validate(filename)?;
+        let asm = validate(&processed_filename)?;
         if verbose_flag {
             println!("{:#?}", asm);
         }
     } else if tacky_file {
-        let ast = tacky(filename)?;
+        let ast = tacky(&processed_filename)?;
         if verbose_flag {
             println!("{:#?}", ast);
         }
     } else if codegen_file {
-        let asm = codegen(filename)?;
+        let asm = codegen(&processed_filename)?;
         if verbose_flag {
             println!("{:#?}", asm);
         }
@@ -71,6 +74,8 @@ fn main() -> Result<()> {
         if s_flag {
             write_asm("a.s", &asm)?;
         }
+    } else {
+        compile(&processed_filename, &filename)?; 
     }
 
     Ok(())
