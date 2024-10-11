@@ -41,7 +41,7 @@ fn main() -> Result<()> {
     let validate_file = matches.get_flag("validate");
     let s_flag = matches.get_flag("S");
     let verbose_flag = matches.get_flag("verbose");
-    let c_flag = matches.get_flag("c");
+    let _c_flag = matches.get_flag("c");
 
     let processed_filename = pre_process_c(filename)?;
 

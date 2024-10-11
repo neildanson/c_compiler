@@ -2,7 +2,7 @@
 cargo test --release
 cargo build --release
 
-../writing-a-c-compiler-tests/test_compiler ./target/release/c_compiler --chapter 5
+../writing-a-c-compiler-tests/test_compiler ./target/release/c_compiler --chapter 8
  
 
 cargo run --release -- --codegen main.c --S
