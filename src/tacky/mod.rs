@@ -581,17 +581,9 @@ impl Tacky {
 
     pub fn fixup_missing_return(instructions: &mut Vec<Instruction>)  {
         let last = instructions.last();
-        if let Some(instruction) = last {
-            if let Instruction::Return(_) = instruction {
-                println!("Already has return");
-                println!("{:?}", instruction);
-                return;
-            }
-            println!("Adding return");
-            println!("{:?}", instruction);
+        if let Some(Instruction::Return(_)) = last {
+            return;
         }
-
-
         instructions.push(Instruction::Return(Value::Constant(0)));
     }
 }

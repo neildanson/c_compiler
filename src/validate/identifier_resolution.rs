@@ -45,6 +45,7 @@ impl From<String> for MapEntry {
 
 #[derive(Default)]
 pub(crate) struct IdentifierResolution {
+    count : usize,
     identifier_map: HashMap<Identifier, MapEntry>,
 }
 
@@ -55,6 +56,7 @@ impl Clone for IdentifierResolution {
             new_map.insert(key.clone(), value.clone());
         }
         IdentifierResolution {
+            count: self.count,
             identifier_map: new_map,
         }
     }
@@ -62,7 +64,8 @@ impl Clone for IdentifierResolution {
 
 impl IdentifierResolution {
     fn make_unique_name(&mut self, name: String) -> String {
-        let unique_name = format!("{}__{}", name, self.identifier_map.len());
+        self.count += 1;
+        let unique_name = format!("{}__{}", name, self.count);
         self.identifier_map.insert(name, unique_name.clone().into());
 
         unique_name
@@ -93,7 +96,7 @@ impl IdentifierResolution {
                 ))
             }
             Expression::Assignment(expr1, expr2) => match expr1.as_ref() {
-                Expression::Var(_name) => {
+                Expression::Var(_) => {
                     let expr1 = self.resolve_expression(expr1)?;
                     let expr2 = self.resolve_expression(expr2)?;
                     Ok(Expression::Assignment(Box::new(expr1), Box::new(expr2)))
@@ -294,6 +297,7 @@ impl IdentifierResolution {
                     .clone()
                     .map(|expr| inner_scope.resolve_expression(&expr))
                     .transpose()?;
+                //let mut inner_scope = inner_scope.clone();
                 let body = inner_scope.resolve_statement(body)?;
                 Ok(Statement::For(
                     for_init,

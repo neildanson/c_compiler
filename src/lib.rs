@@ -77,8 +77,6 @@ pub fn pre_process_c(filename: &str) -> Result<String> {
     let dir = tempfile::tempdir()?;
     let temp_file = format!("temp/{}.c", dir.path().file_name().unwrap().to_str().unwrap().to_string());
 
-    println!("output_name: {}", temp_file);
-
     let output = std::process::Command::new("gcc")
         .args(vec!["-E", "-P", filename, "-o", &temp_file])
         .output()?;
