@@ -583,9 +583,15 @@ impl Tacky {
         let last = instructions.last();
         if let Some(instruction) = last {
             if let Instruction::Return(_) = instruction {
+                println!("Already has return");
+                println!("{:?}", instruction);
                 return;
             }
+            println!("Adding return");
+            println!("{:?}", instruction);
         }
+
+
         instructions.push(Instruction::Return(Value::Constant(0)));
     }
 }
