@@ -69,6 +69,8 @@ impl Display for Instruction {
 
             Instruction::AllocateStack(size) => {
                 writeln!(f, "\t# Allocating stack of size {}", size)?;
+                //round size to newarest multiple of 16
+                let size = (size + 15) & !15;
                 writeln!(f, "\tsubq ${}, %rsp", size)
             }
             Instruction::DeallocateStack(size) => {
@@ -154,7 +156,7 @@ fn convert_function_call(
         });
     }
 
-    for arg in stack_args.iter() {
+    for arg in stack_args.iter().rev() {
         let assembly_arg = (*arg).clone().into();
         match assembly_arg {
             Operand::Register(_) | Operand::Immediate { imm: _ } => {
