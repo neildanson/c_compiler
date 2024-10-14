@@ -1,4 +1,4 @@
 #!/bin/bash
 gcc a.s
-time ./a.out
+./a.out
 echo "My Code : $?"

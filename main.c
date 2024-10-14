@@ -1,17 +1,19 @@
-#ifdef SUPPRESS_WARNINGS
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#endif
 int putchar(int c);
 
-/* Make sure we can correctly manage calling conventions from the callee side
- * (by accessing parameters, including parameters on the stack) and the caller side
- * (by calling a standard library function) in the same function
- */
-int foo(int a, int b, int c, int d, int e, int f, int g, int h) {
-    putchar(h);
-    return a + g;
-}
-
 int main(void) {
-    return foo(1, 2, 3, 4, 5, 6, 7, 65);
+    putchar(72);
+    putchar(101);
+    putchar(108);
+    putchar(108);
+    putchar(111);
+    putchar(44);
+    putchar(32);
+    putchar(87);
+    putchar(111);
+    putchar(114);
+    putchar(108);
+    putchar(100);
+    putchar(33);
+    putchar(10);
+    return 0;
 }
