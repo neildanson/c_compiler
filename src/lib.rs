@@ -88,21 +88,28 @@ pub fn pre_process_c(filename: &str) -> Result<String> {
     Ok(temp_file)
 }
 
-pub fn compile(filename: &str, original_filename:&str) -> Result<()> {
+pub fn compile(filename: &str, original_filename:&str, c_flag : bool) -> Result<()> {
     let filename = if filename.ends_with(".c") {
         filename
     } else {
         return Err(anyhow::anyhow!("Invalid file extension"));
     };
     let s_file = filename.replace(".c", ".s");
-    let o_file = original_filename.replace(".c", "");
+    let out_file = original_filename.replace(".c", "");
+    let o_file = original_filename.replace(".c", ".o");
+
 
     let asm = codegen(filename)?;
     write_asm(&s_file, &asm)?;
 
+    let args = if c_flag {
+        vec!["-c", &s_file, "-o", &o_file]
+    } else {
+        vec![&s_file, "-o", &out_file]
+    };
 
     let output = std::process::Command::new("gcc")
-        .args(vec![&s_file, "-o", &o_file])
+        .args(args)
         .output()?;
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);

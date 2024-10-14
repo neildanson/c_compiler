@@ -41,7 +41,7 @@ fn main() -> Result<()> {
     let validate_file = matches.get_flag("validate");
     let s_flag = matches.get_flag("S");
     let verbose_flag = matches.get_flag("verbose");
-    let _c_flag = matches.get_flag("c");
+    let c_flag = matches.get_flag("c");
 
     let processed_filename = pre_process_c(filename)?;
 
@@ -75,7 +75,7 @@ fn main() -> Result<()> {
             write_asm("a.s", &asm)?;
         }
     } else {
-        compile(&processed_filename, &filename)?; 
+        compile(&processed_filename, &filename, c_flag)?; 
     }
 
     Ok(())
