@@ -12,6 +12,7 @@ pub enum Token {
     Int,                           //int\b
     Void,                          //void\b
     Return,                        //return\b
+    Static,                        //static\b
     If,                            //if\b
     Else,                          //else\b
     LParen,                        //\(
@@ -93,6 +94,7 @@ impl Tokenizer {
             TokenMapper::new(r"^#(.*)", Box::new(Token::PreProcessorDirective)),
             TokenMapper::new(r"^void\b", Box::new(|_| Token::Void)),
             TokenMapper::new(r"^return\b", Box::new(|_| Token::Return)),
+            TokenMapper::new(r"^static\b", Box::new(|_| Token::Static)),
             TokenMapper::new(r"^int\b", Box::new(|_| Token::Int)),
             TokenMapper::new(r"^if\b", Box::new(|_| Token::If)),
             TokenMapper::new(r"^else\b", Box::new(|_| Token::Else)),
