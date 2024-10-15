@@ -31,7 +31,7 @@ pub enum Instruction {
     SetCC(ConditionCode, Operand),
     Label(String),
     Push(Operand),
-    //Pop(Reg), //Defined for pop rdi, but will be introduced later in one of last chapters !
+    Pop(Reg), //Defined for pop rdi, but will be introduced later in one of last chapters !
     Call(String),
 }
 
@@ -118,9 +118,9 @@ impl Display for Instruction {
                     write!(f, "\tcall {}@PLT", format_fn_call(name)) //In principal we dont need the @PLT for defined functions by us
                 }
             } 
-            //Instruction::Pop(register) => {
-            //    write!(f, "\tpopq {:.8}", register)
-            //}
+            Instruction::Pop(register) => {
+                write!(f, "\tpopq {:.8}", register)
+            }
             //instruction => unimplemented!("Instruction {}", instruction), //Add the rest of the instructions
         }
     }
@@ -142,8 +142,8 @@ fn convert_function_call(
         };
     let mut instructions = vec![];
 
-    //instructions.push(Instruction::Push(Operand::Register(Reg::DI)));
     if stack_padding > 0 {
+        instructions.push(Instruction::Push(Operand::Register(Reg::DI)));
         instructions.push(Instruction::AllocateStack(stack_padding));
     }    
 
@@ -175,8 +175,8 @@ fn convert_function_call(
     let bytes_to_remove = 8 * stack_args.len() + stack_padding;
     if bytes_to_remove > 0 {
         instructions.push(Instruction::DeallocateStack(bytes_to_remove));
+        instructions.push(Instruction::Pop(Reg::DI));
     }
-    //instructions.push(Instruction::Pop(Reg::DI));
     instructions.push(Instruction::Mov {
         src: Operand::Register(Reg::AX),
         dst: dst.into(),
