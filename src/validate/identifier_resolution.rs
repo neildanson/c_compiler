@@ -159,6 +159,7 @@ impl IdentifierResolution {
         Ok(VariableDeclaration {
             name: unique_name,
             value: init,
+            storage_class : decl.storage_class
         })
     }
 
@@ -219,6 +220,7 @@ impl IdentifierResolution {
             name: unique_name,
             parameters,
             body,
+            storage_class : decl.storage_class
         })
     }
 

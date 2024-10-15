@@ -371,6 +371,7 @@ fn parse_variable_declaration(tokens: &[Token]) -> Result<(VariableDeclaration, 
                 VariableDeclaration {
                     name: name.clone(),
                     value: Some(expression),
+                    storage_class: None // TODO
                 },
                 rest,
             )
@@ -379,6 +380,7 @@ fn parse_variable_declaration(tokens: &[Token]) -> Result<(VariableDeclaration, 
             VariableDeclaration {
                 name: name.clone(),
                 value: None,
+                storage_class: None // TODO
             },
             rest,
         ),
@@ -462,6 +464,7 @@ fn parse_function_definition(tokens: &[Token]) -> Result<(FunctionDefinition, &[
                     name: name.clone(),
                     parameters: params,
                     body: statements,
+                    storage_class: None // TODO
                 },
                 rest,
             )
@@ -547,7 +550,8 @@ mod tests {
                 parameters: vec![],
                 body: Some(vec![BlockItem::Statement(Statement::Return(
                     Expression::Constant(42)
-                ))])
+                ))]),
+                storage_class: None // TODO
             }
         );
         assert!(rest.is_empty());
@@ -573,7 +577,8 @@ int main(void) {
                 parameters: vec![],
                 body: Some(vec![BlockItem::Statement(Statement::Return(
                     Expression::Constant(100)
-                ))])
+                ))]),
+                storage_class: None // TODO
             }
         );
         assert!(rest.is_empty());
@@ -597,7 +602,8 @@ int main(void) {
                         Box::new(Expression::Constant(42)),
                         Box::new(Expression::Constant(12))
                     )
-                ))])
+                ))]),
+                storage_class: None // TODO
             }
         );
         assert!(rest.is_empty());

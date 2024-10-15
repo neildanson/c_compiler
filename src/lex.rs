@@ -13,6 +13,7 @@ pub enum Token {
     Void,                          //void\b
     Return,                        //return\b
     Static,                        //static\b
+    Extern,                        //extern\b
     If,                            //if\b
     Else,                          //else\b
     LParen,                        //\(
@@ -95,6 +96,7 @@ impl Tokenizer {
             TokenMapper::new(r"^void\b", Box::new(|_| Token::Void)),
             TokenMapper::new(r"^return\b", Box::new(|_| Token::Return)),
             TokenMapper::new(r"^static\b", Box::new(|_| Token::Static)),
+            TokenMapper::new(r"^extern\b", Box::new(|_| Token::Extern)),
             TokenMapper::new(r"^int\b", Box::new(|_| Token::Int)),
             TokenMapper::new(r"^if\b", Box::new(|_| Token::If)),
             TokenMapper::new(r"^else\b", Box::new(|_| Token::Else)),

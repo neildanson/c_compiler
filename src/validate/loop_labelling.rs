@@ -100,6 +100,7 @@ impl LoopLabelling {
                     name: function.name,
                     parameters: function.parameters,
                     body: Some(new_body),
+                    storage_class : function.storage_class
                 })
             }
             None => Ok(function.clone()),
@@ -163,12 +164,14 @@ impl LoopLabelling {
                 name: function.name,
                 parameters: function.parameters,
                 body: Some(new_body),
+                storage_class : function.storage_class
             })
         } else {
             Ok(FunctionDefinition {
                 name: function.name,
                 parameters: function.parameters,
                 body: None,
+                storage_class : function.storage_class
             })
         }
     }

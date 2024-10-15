@@ -6,6 +6,12 @@ pub struct Program {
 }
 
 #[derive(Clone, Debug, PartialEq)]
+pub enum StorageClass {
+    Static,
+    Extern
+}
+
+#[derive(Clone, Debug, PartialEq)]
 pub enum BlockItem {
     Declaration(Declaration),
     Statement(Statement),
@@ -16,6 +22,7 @@ pub struct FunctionDefinition {
     pub name: Identifier,
     pub parameters: Vec<Identifier>,
     pub body: Option<Vec<BlockItem>>,
+    pub storage_class : Option<StorageClass>
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -28,6 +35,7 @@ pub enum Declaration {
 pub struct VariableDeclaration {
     pub name: Identifier,
     pub value: Option<Expression>,
+    pub storage_class : Option<StorageClass>
 }
 
 #[derive(Clone, Debug, PartialEq)]
