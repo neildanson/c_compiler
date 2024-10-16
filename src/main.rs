@@ -24,7 +24,7 @@ fn main() -> Result<()> {
         .arg(arg!(--codegen).required(false))
         .arg(arg!(--validate).required(false)) //unused
         .arg(arg!(--run).required(false)) //unused
-        .arg(arg!(--c).required(false).short('c')) 
+        .arg(arg!(--c).required(false).short('c'))
         //.arg(arg!(--eliminate-unreachable-code).required(false)) //unused
         //.arg(arg!(--eliminate-dead-stores).required(false)) //unused
         //.arg(arg!(--fold-constants).required(false)) //unused
@@ -75,7 +75,7 @@ fn main() -> Result<()> {
             write_asm("a.s", &asm)?;
         }
     } else {
-        compile(&processed_filename, &filename, c_flag)?; 
+        compile(&processed_filename, &filename, c_flag)?;
     }
 
     Ok(())

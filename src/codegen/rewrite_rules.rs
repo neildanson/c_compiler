@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use super::*;
 
-fn fixup_pseudo(name: String, stack: &mut HashMap<String, i32>, parameter : bool) -> Operand {
+fn fixup_pseudo(name: String, stack: &mut HashMap<String, i32>, parameter: bool) -> Operand {
     if let Some(offset) = stack.get(&name) {
         Operand::Stack(*offset)
     } else {
@@ -78,13 +78,12 @@ pub(crate) fn rewrite_pseudo_with_stack(body: Vec<Instruction>) -> (Vec<Instruct
                 };
                 new_body.push(Instruction::Push(operand));
             }
-            Instruction::Idiv { src } => 
-                new_body.push(Instruction::Idiv {
-                    src: match src {
-                        Operand::Pseudo(name) => fixup_pseudo(name, &mut stack, false),
-                        _ => src,
-                    },
-                }),
+            Instruction::Idiv { src } => new_body.push(Instruction::Idiv {
+                src: match src {
+                    Operand::Pseudo(name) => fixup_pseudo(name, &mut stack, false),
+                    _ => src,
+                },
+            }),
             any_other => new_body.push(any_other),
         }
     }

@@ -75,7 +75,15 @@ pub fn pre_process_c(filename: &str) -> Result<String> {
     };
 
     let dir = tempfile::tempdir()?;
-    let temp_file = format!("temp/{}.c", dir.path().file_name().unwrap().to_str().unwrap().to_string());
+    let temp_file = format!(
+        "temp/{}.c",
+        dir.path()
+            .file_name()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_string()
+    );
 
     let output = std::process::Command::new("gcc")
         .args(vec!["-E", "-P", filename, "-o", &temp_file])
@@ -88,7 +96,7 @@ pub fn pre_process_c(filename: &str) -> Result<String> {
     Ok(temp_file)
 }
 
-pub fn compile(filename: &str, original_filename:&str, c_flag : bool) -> Result<()> {
+pub fn compile(filename: &str, original_filename: &str, c_flag: bool) -> Result<()> {
     let filename = if filename.ends_with(".c") {
         filename
     } else {
@@ -97,7 +105,6 @@ pub fn compile(filename: &str, original_filename:&str, c_flag : bool) -> Result<
     let s_file = filename.replace(".c", ".s");
     let out_file = original_filename.replace(".c", "");
     let o_file = original_filename.replace(".c", ".o");
-
 
     let asm = codegen(filename)?;
     write_asm(&s_file, &asm)?;
@@ -108,9 +115,7 @@ pub fn compile(filename: &str, original_filename:&str, c_flag : bool) -> Result<
         vec![&s_file, "-o", &out_file]
     };
 
-    let output = std::process::Command::new("gcc")
-        .args(args)
-        .output()?;
+    let output = std::process::Command::new("gcc").args(args).output()?;
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
         return Err(anyhow::anyhow!("gcc failed: {}", stderr));

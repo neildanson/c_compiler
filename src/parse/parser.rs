@@ -371,18 +371,19 @@ fn parse_variable_declaration(tokens: &[Token]) -> Result<(VariableDeclaration, 
                 VariableDeclaration {
                     name: name.clone(),
                     value: Some(expression),
-                    storage_class: None
+                    storage_class: None,
                 },
                 rest,
             )
         }
-        [Token::Static, Token::Int, Token::Identifier(name), Token::Assignment, rest @ ..] => {
+        [Token::Static, Token::Int, Token::Identifier(name), Token::Assignment, rest @ ..]
+        | [Token::Int, Token::Static, Token::Identifier(name), Token::Assignment, rest @ ..] => {
             let (expression, rest) = parse_expression(rest, 0)?;
             (
                 VariableDeclaration {
                     name: name.clone(),
                     value: Some(expression),
-                    storage_class: Some(StorageClass::Static)
+                    storage_class: Some(StorageClass::Static),
                 },
                 rest,
             )
@@ -391,15 +392,16 @@ fn parse_variable_declaration(tokens: &[Token]) -> Result<(VariableDeclaration, 
             VariableDeclaration {
                 name: name.clone(),
                 value: None,
-                storage_class: None
+                storage_class: None,
             },
             rest,
         ),
-        [Token::Static, Token::Int, Token::Identifier(name), rest @ ..] => (
+        [Token::Static, Token::Int, Token::Identifier(name), rest @ ..]
+        | [Token::Int, Token::Static, Token::Identifier(name), rest @ ..] => (
             VariableDeclaration {
                 name: name.clone(),
                 value: None,
-                storage_class: Some(StorageClass::Static) 
+                storage_class: Some(StorageClass::Static),
             },
             rest,
         ),
@@ -483,12 +485,13 @@ fn parse_function_definition(tokens: &[Token]) -> Result<(FunctionDefinition, &[
                     name: name.clone(),
                     parameters: params,
                     body: statements,
-                    storage_class: None // TODO
+                    storage_class: None, // TODO
                 },
                 rest,
             )
         }
-        [Token::Static, Token::Int, Token::Identifier(name), Token::LParen, rest @ ..] => {
+        [Token::Static, Token::Int, Token::Identifier(name), Token::LParen, rest @ ..]
+        | [Token::Int, Token::Static, Token::Identifier(name), Token::LParen, rest @ ..] => {
             let (params, rest) = parse_parameter_list(rest)?;
             let rest = swallow_one(Token::RParen, rest)?;
 
@@ -503,7 +506,7 @@ fn parse_function_definition(tokens: &[Token]) -> Result<(FunctionDefinition, &[
                     name: name.clone(),
                     parameters: params,
                     body: statements,
-                    storage_class: Some(StorageClass::Static)
+                    storage_class: Some(StorageClass::Static),
                 },
                 rest,
             )
@@ -590,7 +593,7 @@ mod tests {
                 body: Some(vec![BlockItem::Statement(Statement::Return(
                     Expression::Constant(42)
                 ))]),
-                storage_class: None 
+                storage_class: None
             }
         );
         assert!(rest.is_empty());
@@ -617,7 +620,7 @@ int main(void) {
                 body: Some(vec![BlockItem::Statement(Statement::Return(
                     Expression::Constant(100)
                 ))]),
-                storage_class: None 
+                storage_class: None
             }
         );
         assert!(rest.is_empty());
@@ -642,7 +645,7 @@ int main(void) {
                         Box::new(Expression::Constant(12))
                     )
                 ))]),
-                storage_class: None 
+                storage_class: None
             }
         );
         assert!(rest.is_empty());

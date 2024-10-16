@@ -117,11 +117,10 @@ impl Display for Instruction {
                 } else {
                     write!(f, "\tcall {}@PLT", format_fn_call(name)) //In principal we dont need the @PLT for defined functions by us
                 }
-            } 
+            }
             Instruction::Pop(register) => {
                 write!(f, "\tpopq {:.8}", register)
-            }
-            //instruction => unimplemented!("Instruction {}", instruction), //Add the rest of the instructions
+            } //instruction => unimplemented!("Instruction {}", instruction), //Add the rest of the instructions
         }
     }
 }
@@ -145,7 +144,7 @@ fn convert_function_call(
     if stack_padding > 0 {
         instructions.push(Instruction::Push(Operand::Register(Reg::DI)));
         instructions.push(Instruction::AllocateStack(stack_padding));
-    }    
+    }
 
     for (i, arg) in register_args.iter().enumerate() {
         let assembly_arg = (*arg).clone().into();

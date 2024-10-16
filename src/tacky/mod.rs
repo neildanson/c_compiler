@@ -555,7 +555,7 @@ impl Tacky {
             }
 
             Tacky::fixup_missing_return(&mut body);
-            
+
             Ok(Function {
                 name: f.name,
                 params: f.parameters,
@@ -579,7 +579,7 @@ impl Tacky {
         Ok(Program { functions })
     }
 
-    pub fn fixup_missing_return(instructions: &mut Vec<Instruction>)  {
+    pub fn fixup_missing_return(instructions: &mut Vec<Instruction>) {
         let last = instructions.last();
         if let Some(Instruction::Return(_)) = last {
             return;
