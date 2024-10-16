@@ -10,7 +10,7 @@ fn fixup_pseudo(name: String, stack: &mut HashMap<String, i32>, parameter: bool)
         if parameter {
             let offset = (stack.len() + 1) as i32 * 8;
             stack.insert(name, -offset);
-            return Operand::local(offset);
+            Operand::local(offset)
         } else {
             let offset = (stack.len() + 1) as i32 * 4;
             stack.insert(name, -offset);

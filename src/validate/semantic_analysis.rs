@@ -25,17 +25,26 @@ impl SemanticAnalysis {
         let mut loop_labelling = LoopLabelling::default();
         let mut type_checker = type_checker::TypeChecker::default();
 
-        let mut functions = Vec::new();
-        for function in program.functions {
-            let function = Self::semantic_validation_function(
-                function,
-                &mut identifier_resolution,
-                &mut loop_labelling,
-                &mut type_checker,
-            )?;
-            functions.push(function);
+        let mut declarations = Vec::new();
+        for declaration in program.declarations {
+            match declaration {
+                Declaration::Variable(variable) => {
+                    //let variable = identifier_resolution.resolve_variable_declaration(variable)?;
+                    //type_checker.type_check_variable_declaration(&variable)?;
+                    declarations.push(Declaration::Variable(variable));
+                }
+                Declaration::Function(function) => {
+                    let function = Self::semantic_validation_function(
+                        function,
+                        &mut identifier_resolution,
+                        &mut loop_labelling,
+                        &mut type_checker,
+                    )?;
+                    declarations.push(Declaration::Function(function));
+                }
+            }
         }
 
-        Ok(Program { functions })
+        Ok(Program { declarations })
     }
 }

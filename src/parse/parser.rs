@@ -388,6 +388,18 @@ fn parse_variable_declaration(tokens: &[Token]) -> Result<(VariableDeclaration, 
                 rest,
             )
         }
+        [Token::Extern, Token::Int, Token::Identifier(name), Token::Assignment, rest @ ..]
+        | [Token::Int, Token::Extern, Token::Identifier(name), Token::Assignment, rest @ ..] => {
+            let (expression, rest) = parse_expression(rest, 0)?;
+            (
+                VariableDeclaration {
+                    name: name.clone(),
+                    value: Some(expression),
+                    storage_class: Some(StorageClass::Extern),
+                },
+                rest,
+            )
+        }
         [Token::Int, Token::Identifier(name), rest @ ..] => (
             VariableDeclaration {
                 name: name.clone(),
@@ -402,6 +414,15 @@ fn parse_variable_declaration(tokens: &[Token]) -> Result<(VariableDeclaration, 
                 name: name.clone(),
                 value: None,
                 storage_class: Some(StorageClass::Static),
+            },
+            rest,
+        ),
+        [Token::Extern, Token::Int, Token::Identifier(name), rest @ ..]
+        | [Token::Int, Token::Extern, Token::Identifier(name), rest @ ..] => (
+            VariableDeclaration {
+                name: name.clone(),
+                value: None,
+                storage_class: Some(StorageClass::Extern),
             },
             rest,
         ),
@@ -426,7 +447,7 @@ fn parse_declaration(tokens: &[Token]) -> Result<(Declaration, &[Token])> {
     if let Ok((function, rest)) = function {
         return Ok((Declaration::Function(function), rest));
     }
-    Err(CompilerError::Parse("Unexpected tokens".to_string()).into())
+    Err(CompilerError::Parse(format!("Unexpected tokens {:?}", tokens).to_string()).into())
 }
 
 fn parse_block_item(tokens: &[Token]) -> Result<(BlockItem, &[Token])> {
@@ -511,6 +532,27 @@ fn parse_function_definition(tokens: &[Token]) -> Result<(FunctionDefinition, &[
                 rest,
             )
         }
+        [Token::Extern, Token::Int, Token::Identifier(name), Token::LParen, rest @ ..]
+        | [Token::Int, Token::Extern, Token::Identifier(name), Token::LParen, rest @ ..] => {
+            let (params, rest) = parse_parameter_list(rest)?;
+            let rest = swallow_one(Token::RParen, rest)?;
+
+            let (statements, rest) = optional(parse_function_body, rest)?;
+            let rest = match statements {
+                Some(_) => rest,
+                None => swallow_semicolon(rest)?,
+            };
+
+            (
+                FunctionDefinition {
+                    name: name.clone(),
+                    parameters: params,
+                    body: statements,
+                    storage_class: Some(StorageClass::Extern),
+                },
+                rest,
+            )
+        }
         toks => {
             return Err(
                 CompilerError::Parse(format!("Function Unexpected Tokens {:?}", toks)).into(),
@@ -522,13 +564,13 @@ fn parse_function_definition(tokens: &[Token]) -> Result<(FunctionDefinition, &[
 
 pub fn parse_program(tokens: &[Token]) -> Result<Program> {
     let mut tokens = tokens;
-    let mut functions = Vec::new();
+    let mut declarations = Vec::new();
     let mut error = None;
     while error.is_none() {
-        let definition = parse_function_definition(tokens);
+        let definition = parse_declaration(tokens);
         match definition {
-            Ok((function, rest)) => {
-                functions.push(function);
+            Ok((declaration, rest)) => {
+                declarations.push(declaration);
                 tokens = rest;
             }
             Err(err) => {
@@ -542,7 +584,7 @@ pub fn parse_program(tokens: &[Token]) -> Result<Program> {
             return Err(err);
         }
     }
-    Ok(Program { functions })
+    Ok(Program { declarations })
 }
 
 #[cfg(test)]

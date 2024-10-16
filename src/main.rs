@@ -75,7 +75,7 @@ fn main() -> Result<()> {
             write_asm("a.s", &asm)?;
         }
     } else {
-        compile(&processed_filename, &filename, c_flag)?;
+        compile(&processed_filename, filename, c_flag)?;
     }
 
     Ok(())

@@ -2,7 +2,7 @@ pub type Identifier = String;
 
 #[derive(Debug, PartialEq)]
 pub struct Program {
-    pub functions: Vec<FunctionDefinition>,
+    pub declarations: Vec<Declaration>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
