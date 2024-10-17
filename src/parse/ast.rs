@@ -18,7 +18,7 @@ pub enum BlockItem {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct FunctionDefinition {
+pub struct FunctionDeclaration {
     pub name: Identifier,
     pub parameters: Vec<Identifier>,
     pub body: Option<Vec<BlockItem>>,
@@ -28,7 +28,7 @@ pub struct FunctionDefinition {
 #[derive(Clone, Debug, PartialEq)]
 pub enum Declaration {
     Variable(VariableDeclaration),
-    Function(FunctionDefinition),
+    Function(FunctionDeclaration),
 }
 
 #[derive(Clone, Debug, PartialEq)]

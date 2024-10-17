@@ -443,7 +443,7 @@ fn parse_declaration(tokens: &[Token]) -> Result<(Declaration, &[Token])> {
         return Ok((Declaration::Variable(declaration), rest));
     }
 
-    let function = parse_function_definition(tokens);
+    let function = parse_function_declaration(tokens);
     if let Ok((function, rest)) = function {
         return Ok((Declaration::Function(function), rest));
     }
@@ -489,7 +489,7 @@ fn parse_function_body(tokens: &[Token]) -> Result<(Vec<BlockItem>, &[Token])> {
     }
 }
 
-fn parse_function_definition(tokens: &[Token]) -> Result<(FunctionDefinition, &[Token])> {
+fn parse_function_declaration(tokens: &[Token]) -> Result<(FunctionDeclaration, &[Token])> {
     let (function, tokens) = match tokens {
         [Token::Int, Token::Identifier(name), Token::LParen, rest @ ..] => {
             let (params, rest) = parse_parameter_list(rest)?;
@@ -502,7 +502,7 @@ fn parse_function_definition(tokens: &[Token]) -> Result<(FunctionDefinition, &[
             };
 
             (
-                FunctionDefinition {
+                FunctionDeclaration {
                     name: name.clone(),
                     parameters: params,
                     body: statements,
@@ -523,7 +523,7 @@ fn parse_function_definition(tokens: &[Token]) -> Result<(FunctionDefinition, &[
             };
 
             (
-                FunctionDefinition {
+                FunctionDeclaration {
                     name: name.clone(),
                     parameters: params,
                     body: statements,
@@ -544,7 +544,7 @@ fn parse_function_definition(tokens: &[Token]) -> Result<(FunctionDefinition, &[
             };
 
             (
-                FunctionDefinition {
+                FunctionDeclaration {
                     name: name.clone(),
                     parameters: params,
                     body: statements,
@@ -626,10 +626,10 @@ mod tests {
     fn test_parse_function() {
         let tokenizer = Tokenizer::new();
         let tokens = tokenizer.tokenize("int main(void) { return 42; }").unwrap();
-        let (function, rest) = parse_function_definition(&tokens).unwrap();
+        let (function, rest) = parse_function_declaration(&tokens).unwrap();
         assert_eq!(
             function,
-            FunctionDefinition {
+            FunctionDeclaration {
                 name: "main".to_string(),
                 parameters: vec![],
                 body: Some(vec![BlockItem::Statement(Statement::Return(
@@ -653,10 +653,10 @@ int main(void) {
 }",
             )
             .unwrap();
-        let (function, rest) = parse_function_definition(&tokens).unwrap();
+        let (function, rest) = parse_function_declaration(&tokens).unwrap();
         assert_eq!(
             function,
-            FunctionDefinition {
+            FunctionDeclaration {
                 name: "main".to_string(),
                 parameters: vec![],
                 body: Some(vec![BlockItem::Statement(Statement::Return(
@@ -674,10 +674,10 @@ int main(void) {
         let tokens = tokenizer
             .tokenize("int main(void) { return 42 + 12; }")
             .unwrap();
-        let (function, rest) = parse_function_definition(&tokens).unwrap();
+        let (function, rest) = parse_function_declaration(&tokens).unwrap();
         assert_eq!(
             function,
-            FunctionDefinition {
+            FunctionDeclaration {
                 name: "main".to_string(),
                 parameters: vec![],
                 body: Some(vec![BlockItem::Statement(Statement::Return(

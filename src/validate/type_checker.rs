@@ -174,7 +174,7 @@ impl TypeChecker {
 
     pub fn type_check_function_declaration(
         &mut self,
-        function_declaration: &FunctionDefinition,
+        function_declaration: &FunctionDeclaration,
     ) -> Result<(), CompilerError> {
         let fun_type = TypeDefinition::FunType(function_declaration.parameters.len());
         let has_body = function_declaration.body.is_some();

@@ -91,12 +91,12 @@ impl LoopLabelling {
 
     pub fn label_function(
         &mut self,
-        function: FunctionDefinition,
-    ) -> Result<FunctionDefinition, CompilerError> {
+        function: FunctionDeclaration,
+    ) -> Result<FunctionDeclaration, CompilerError> {
         match function.body {
             Some(body) => {
                 let new_body = self.label_block(&body, None)?;
-                Ok(FunctionDefinition {
+                Ok(FunctionDeclaration {
                     name: function.name,
                     parameters: function.parameters,
                     body: Some(new_body),
@@ -144,8 +144,8 @@ impl LoopLabelling {
 
     pub fn verify_function_labels(
         &self,
-        function: FunctionDefinition,
-    ) -> Result<FunctionDefinition, CompilerError> {
+        function: FunctionDeclaration,
+    ) -> Result<FunctionDeclaration, CompilerError> {
         let mut new_body = Vec::new();
 
         if let Some(body) = function.body {
@@ -160,14 +160,14 @@ impl LoopLabelling {
                     }
                 }
             }
-            Ok(FunctionDefinition {
+            Ok(FunctionDeclaration {
                 name: function.name,
                 parameters: function.parameters,
                 body: Some(new_body),
                 storage_class: function.storage_class,
             })
         } else {
-            Ok(FunctionDefinition {
+            Ok(FunctionDeclaration {
                 name: function.name,
                 parameters: function.parameters,
                 body: None,

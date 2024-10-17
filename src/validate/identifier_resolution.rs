@@ -179,9 +179,9 @@ impl IdentifierResolution {
 
     pub fn resolve_function_declaration(
         &mut self,
-        decl: FunctionDefinition,
+        decl: FunctionDeclaration,
         nested: bool,
-    ) -> Result<FunctionDefinition, CompilerError> {
+    ) -> Result<FunctionDeclaration, CompilerError> {
         if let Some(entry) = self.identifier_map.get(&decl.name) {
             if entry.from_current_scope && !entry.has_external_linkage {
                 {
@@ -216,7 +216,7 @@ impl IdentifierResolution {
             None
         };
 
-        Ok(FunctionDefinition {
+        Ok(FunctionDeclaration {
             name: unique_name,
             parameters,
             body,

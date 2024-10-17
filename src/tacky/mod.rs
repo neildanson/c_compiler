@@ -546,7 +546,7 @@ impl Tacky {
 
     fn emit_tacky_function(
         &mut self,
-        f: parse::FunctionDefinition,
+        f: parse::FunctionDeclaration,
     ) -> Result<Function, CompilerError> {
         let mut body = Vec::new();
         if let Some(body_stmt) = f.body {
