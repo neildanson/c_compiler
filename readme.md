@@ -4,7 +4,7 @@
 
 Works on MacOS/Linux
 
-Test Suite here 
+Test Suite here into folder _next to_ this repo. 
 
 `git clone https://github.com/nlsandler/writing-a-c-compiler-tests.git`
 
@@ -18,19 +18,19 @@ Test Suite here
 
 Run Lexer (turn text into Tokens)
 
-`cargo run -- --lex main.c`
+`cargo run -- main.c --lex `
 
 Run Parser (turn text into Tokens, parse into AST)
 
-`cargo run -- --parse main.c`
+`cargo run -- main.c --parse`
 
 Generate Code
 
-`cargo run -- --codegen main.c --S`
+`cargo run -- main.c --codegen --S`
 
 Verbose 
 
-`cargo run -- --lex main.c --parse main.c --tacky main.c --codegen main.c --verbose --S`
+`cargo run -- main.c --codegen --verbose --S`
 
 ## Other commands
 
@@ -42,9 +42,11 @@ gcc asm.s
 echo $?
 ```
 
-A Convenience script called `compile_and_run.sh` will compile `a.s` into `a.out` and run and echo the result. 
+A Convenience script called `compile_and_run.sh` will run the test suite, compile `a.s` into `a.out` and run and echo the result as well as run gcc on the c file to compare the output. 
 
 `chmod u+x compile_and_run.sh`
+
+A Convenience script called `compile_asm.sh` will compile _just_ the `a.s` file, so if you need to make manual adjustments you can quickly test without a fill build pass. 
 
 Assembly reference
 
@@ -89,18 +91,29 @@ idiv -4(%rdp)       # eax div by local. result in
 ```
 
 
-# MacOS
-
-TODO (Done?)
+# MacOS notes
 
 * arch -x86_64 zsh ✅
 * Labels shouldn't have . prefix ✅
 * Method names Begin with _ ✅
 * External methods should not be marked with _ ✅
-* Some weirdness with @PLT
 
-accept -c as parameter and pass into gcc as 
+# Helpful notes
 
-gcc -c ASSEMBLY_FILE -o OUTPUT_FILE 
+Copilot is pretty good at explaining why asm code segfaults. Use it. 
 
-where ASSEMBLY_FILE == OUTPUT_FILE with .o suffix
+[godbolt](https://godbolt.org/) is a super useful resource. Dont forget to turn off Intel asm syntax.
+
+
+# TODOs
+
+100% Implemented up to chapter 9. 
+
+Chapter 10 notes
+
+* Lexer complete
+* Parser complete
+  - Implement code p226  (parse_type_and_storage_specifier) and figure out where to integrate. 
+* Semantic analysis not started. 
+* Tacky generation not started
+* Codegen not started
