@@ -23,10 +23,26 @@ impl Symbol {
     }
 }
 
+#[derive(PartialEq, Clone)]
 enum InitialValue { 
     Tentative, 
     Initial(i32),
     NoInitializer
+}
+
+impl InitialValue { 
+    fn is_constant(&self) -> bool {
+        match self {
+            InitialValue::Initial(_) => true,
+            _ => false,
+        }
+    }
+    fn is_tentative(&self) -> bool {
+        match self {
+            InitialValue::Tentative => true,
+            _ => false,
+        }
+    }
 }
 
 enum IdentifierAttributes{
@@ -43,6 +59,13 @@ impl IdentifierAttributes {
             IdentifierAttributes::LocalAttr => false,
         }
     }
+
+    fn init(&self) -> InitialValue {
+        match self {
+            IdentifierAttributes::StaticAttr { init, .. } => init.clone(),
+            _ => InitialValue::NoInitializer,
+        }
+    }
 }
 
 #[derive(Default)]
@@ -51,6 +74,66 @@ pub(crate) struct TypeChecker {
 }
 
 impl TypeChecker {
+    pub fn type_check_file_scope_variable_declaration(
+        &mut self,
+        variable_declaration: &VariableDeclaration,
+    ) -> Result<(), CompilerError> {
+        let mut initial_value = if let Some(Expression::Constant(i)) = variable_declaration.value {
+            InitialValue::Initial(i)
+        } else if variable_declaration.storage_class == Some(StorageClass::Extern) {
+            InitialValue::NoInitializer
+        } else {
+            InitialValue::Tentative
+        };
+
+        let mut global = variable_declaration.storage_class != Some(StorageClass::Static);
+        
+        if let Some(old_decl) = self.symbol_table.get(&variable_declaration.name) {
+            if old_decl.0.type_definition != TypeDefinition::Int {
+                return Err(CompilerError::SemanticAnalysis(
+                    SemanticAnalysisError::FunctionRedclaredAsVariable(
+                        variable_declaration.name.clone(),
+                    ),
+                ));
+            }
+            if variable_declaration.storage_class == Some(StorageClass::Extern) {
+                global = old_decl.1.is_global();
+            } else if old_decl.1.is_global() != global {
+                return Err(CompilerError::SemanticAnalysis(
+                    SemanticAnalysisError::ConflictingVariableLinkage(
+                        variable_declaration.name.clone(),
+                    ),
+                ));
+            }
+
+            if let InitialValue::Initial(_) = old_decl.1.init()   {
+                if let InitialValue::Initial(_) = initial_value {
+                    return Err(CompilerError::SemanticAnalysis(
+                        SemanticAnalysisError::ConflictingFileScopeVariableDefinitions(
+                            variable_declaration.name.clone(),
+                        ),
+                    ));
+                } else {
+                    initial_value = old_decl.1.init();
+                }
+            } else {
+                if !initial_value.is_constant() && old_decl.1.init().is_tentative()  {
+                    initial_value = InitialValue::Tentative;
+                }
+            }
+        }
+
+        let attrs = IdentifierAttributes::StaticAttr {
+            init: initial_value,
+            global,
+        };
+
+        self.symbol_table.insert(variable_declaration.name.clone(), (Symbol::new(TypeDefinition::Int), attrs));
+
+        Ok(())
+    }
+
+
     fn type_check_variable_declaration(
         &mut self,
         variable_declaration: &VariableDeclaration,

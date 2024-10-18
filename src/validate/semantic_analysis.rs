@@ -32,6 +32,7 @@ impl SemanticAnalysis {
                     //let variable = identifier_resolution.resolve_variable_declaration(variable)?;
                     //type_checker.type_check_variable_declaration(&variable)?;
                     let variable = identifier_resolution.resolve_file_scope_variable_declaration(variable)?;
+                    type_checker.type_check_file_scope_variable_declaration(&variable)?;
                     declarations.push(Declaration::Variable(variable));
                 }
                 Declaration::Function(function) => {

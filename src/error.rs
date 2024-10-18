@@ -29,7 +29,10 @@ pub enum SemanticAnalysisError {
     NestedFunction,
     IncompatibleFunctionDeclarations,
     VariableUsedAsFunctionName,
-    StaticFunctionDeclarationFollowsNonStatic(String)
+    StaticFunctionDeclarationFollowsNonStatic(String),
+    FunctionRedclaredAsVariable(String),
+    ConflictingVariableLinkage(String),
+    ConflictingFileScopeVariableDefinitions(String),
 }
 
 impl Display for SemanticAnalysisError {
@@ -61,6 +64,15 @@ impl Display for SemanticAnalysisError {
             }
             SemanticAnalysisError::StaticFunctionDeclarationFollowsNonStatic(s) => {
                 write!(f, "Static function declaration {} follows non-static", s)
+            }
+            SemanticAnalysisError::FunctionRedclaredAsVariable(s) => {
+                write!(f, "Function {} redeclared as variable", s)
+            }
+            SemanticAnalysisError::ConflictingVariableLinkage(s) => {
+                write!(f, "Conflicting variable linkage for {}", s)
+            },
+            SemanticAnalysisError::ConflictingFileScopeVariableDefinitions(s) => {
+                write!(f, "Conflicting file scope variable definitions for {}", s)
             }
         }
     }
