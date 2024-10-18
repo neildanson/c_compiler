@@ -23,9 +23,31 @@ impl Symbol {
     }
 }
 
+enum InitialValue { 
+    Tentative, 
+    Initial(i32),
+    NoInitializer
+}
+
+enum IdentifierAttributes{
+    FunAttr{ defined : bool, global : bool }, 
+    StaticAttr { init : InitialValue, global : bool },
+    LocalAttr,
+}
+
+impl IdentifierAttributes {
+    fn is_global(&self) -> bool {
+        match self {
+            IdentifierAttributes::FunAttr { global, .. } => *global,
+            IdentifierAttributes::StaticAttr { global, .. } => *global,
+            IdentifierAttributes::LocalAttr => false,
+        }
+    }
+}
+
 #[derive(Default)]
 pub(crate) struct TypeChecker {
-    symbol_table: HashMap<String, Symbol>,
+    symbol_table: HashMap<String, (Symbol, IdentifierAttributes)>,
 }
 
 impl TypeChecker {
@@ -35,7 +57,7 @@ impl TypeChecker {
     ) -> Result<(), CompilerError> {
         self.symbol_table.insert(
             variable_declaration.name.clone(),
-            Symbol::new(TypeDefinition::Int),
+            (Symbol::new(TypeDefinition::Int), IdentifierAttributes::LocalAttr),
         );
         if let Some(initializer) = variable_declaration.value.as_ref() {
             self.type_check_expression(initializer)?;
@@ -47,7 +69,7 @@ impl TypeChecker {
         match expression {
             Expression::FunctionCall(name, arguments) => {
                 if let Some(symbol) = self.symbol_table.get(name) {
-                    if let TypeDefinition::FunType(expected_args) = symbol.type_definition {
+                    if let TypeDefinition::FunType(expected_args) = symbol.0.type_definition {
                         if expected_args != arguments.len() {
                             return Err(CompilerError::SemanticAnalysis(
                                 SemanticAnalysisError::FunctionNotDeclared(name.clone()),
@@ -69,7 +91,7 @@ impl TypeChecker {
             }
             Expression::Var(name) => {
                 if let Some(existing) = self.symbol_table.get(name) {
-                    if existing.type_definition != TypeDefinition::Int {
+                    if existing.0.type_definition != TypeDefinition::Int {
                         return Err(CompilerError::SemanticAnalysis(
                             SemanticAnalysisError::VariableUsedAsFunctionName,
                         ));
@@ -179,14 +201,14 @@ impl TypeChecker {
         let fun_type = TypeDefinition::FunType(function_declaration.parameters.len());
         let has_body = function_declaration.body.is_some();
         let mut already_defined = false;
-
+        let mut global = function_declaration.storage_class != Some(StorageClass::Static);
         if let Some(old_decl) = self.symbol_table.get(&function_declaration.name) {
-            if old_decl.type_definition != fun_type {
+            if old_decl.0.type_definition != fun_type {
                 return Err(CompilerError::SemanticAnalysis(
                     SemanticAnalysisError::IncompatibleFunctionDeclarations,
                 ));
             }
-            already_defined = old_decl.is_defined;
+            already_defined = old_decl.0.is_defined;
             if already_defined && has_body {
                 println!("Function {} already defined", function_declaration.name);
                 return Err(CompilerError::SemanticAnalysis(
@@ -195,18 +217,32 @@ impl TypeChecker {
                     ),
                 ));
             }
+
+            if old_decl.1.is_global() && function_declaration.storage_class == Some(StorageClass::Static) {
+                return Err(CompilerError::SemanticAnalysis(
+                    SemanticAnalysisError::StaticFunctionDeclarationFollowsNonStatic(
+                        function_declaration.name.clone(),
+                    ),
+                ));
+            }
+            global = old_decl.1.is_global();
         }
+        let attrs = IdentifierAttributes::FunAttr {
+            defined: has_body || already_defined,
+            global,
+        };
         self.symbol_table
             .insert(function_declaration.name.clone(), {
-                Symbol {
+                (Symbol {
                     type_definition: fun_type,
                     is_defined: has_body || already_defined,
-                }
+                },
+                attrs)
             });
         if let Some(body) = function_declaration.body.as_ref() {
             for param in &function_declaration.parameters {
                 self.symbol_table
-                    .insert(param.clone(), Symbol::new(TypeDefinition::Int));
+                    .insert(param.clone(), (Symbol::new(TypeDefinition::Int), IdentifierAttributes::LocalAttr));
             }
             for block_item in body {
                 self.type_check_block_item(block_item)?;

@@ -29,6 +29,7 @@ pub enum SemanticAnalysisError {
     NestedFunction,
     IncompatibleFunctionDeclarations,
     VariableUsedAsFunctionName,
+    StaticFunctionDeclarationFollowsNonStatic(String)
 }
 
 impl Display for SemanticAnalysisError {
@@ -57,6 +58,9 @@ impl Display for SemanticAnalysisError {
             }
             SemanticAnalysisError::VariableUsedAsFunctionName => {
                 write!(f, "Variable used as function name")
+            }
+            SemanticAnalysisError::StaticFunctionDeclarationFollowsNonStatic(s) => {
+                write!(f, "Static function declaration {} follows non-static", s)
             }
         }
     }
