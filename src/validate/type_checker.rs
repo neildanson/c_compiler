@@ -2,28 +2,26 @@ use std::collections::HashMap;
 
 use crate::{error::*, parse::*};
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 enum TypeDefinition {
     Int,
     FunType(usize),
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 struct Symbol {
     type_definition: TypeDefinition,
-    is_defined: bool,
 }
 
 impl Symbol {
     fn new(type_definition: TypeDefinition) -> Self {
         Symbol {
             type_definition,
-            is_defined: false,
         }
     }
 }
 
-#[derive(PartialEq, Clone)]
+#[derive(PartialEq, Clone, Debug)]
 enum InitialValue { 
     Tentative, 
     Initial(i32),
@@ -45,8 +43,15 @@ impl InitialValue {
     }
 }
 
+#[derive(PartialEq, Clone, Debug)]
+struct FunAttr {
+    defined: bool,
+    global: bool,
+}
+
+#[derive(PartialEq, Clone, Debug)]
 enum IdentifierAttributes{
-    FunAttr{ defined : bool, global : bool }, 
+    FunAttr(FunAttr), 
     StaticAttr { init : InitialValue, global : bool },
     LocalAttr,
 }
@@ -54,7 +59,7 @@ enum IdentifierAttributes{
 impl IdentifierAttributes {
     fn is_global(&self) -> bool {
         match self {
-            IdentifierAttributes::FunAttr { global, .. } => *global,
+            IdentifierAttributes::FunAttr(fun_attr) => fun_attr.global,
             IdentifierAttributes::StaticAttr { global, .. } => *global,
             IdentifierAttributes::LocalAttr => false,
         }
@@ -80,11 +85,17 @@ impl TypeChecker {
     ) -> Result<(), CompilerError> {
         let mut initial_value = if let Some(Expression::Constant(i)) = variable_declaration.value {
             InitialValue::Initial(i)
-        } else if variable_declaration.storage_class == Some(StorageClass::Extern) {
-            InitialValue::NoInitializer
+        } else if variable_declaration.value.is_none() {
+           if variable_declaration.storage_class == Some(StorageClass::Extern) {
+                InitialValue::NoInitializer
+            } else {
+                InitialValue::Tentative
+            }
         } else {
-            InitialValue::Tentative
-        };
+            return Err(CompilerError::SemanticAnalysis(
+                SemanticAnalysisError::InvalidLValue, //TODO
+            ));
+    };
 
         let mut global = variable_declaration.storage_class != Some(StorageClass::Static);
         
@@ -324,39 +335,53 @@ impl TypeChecker {
         let mut already_defined = false;
         let mut global = function_declaration.storage_class != Some(StorageClass::Static);
         if let Some(old_decl) = self.symbol_table.get(&function_declaration.name) {
-            if old_decl.0.type_definition != fun_type {
+            if let IdentifierAttributes::FunAttr(fun) = old_decl.1.clone() {
+                if old_decl.0.type_definition != fun_type {
+                    return Err(CompilerError::SemanticAnalysis(
+                        SemanticAnalysisError::IncompatibleFunctionDeclarations,
+                    ));
+                }
+
+                already_defined = fun.defined;
+                if already_defined && has_body {
+                    println!("Function {} already defined", function_declaration.name);
+                    return Err(CompilerError::SemanticAnalysis(
+                        SemanticAnalysisError::FunctionAlreadyDeclared(
+                            function_declaration.name.clone(),
+                        ),
+                    ));
+                }
+
+                println!("{:?}", old_decl);
+                println!("{:?}", function_declaration.storage_class);
+                if old_decl.1.is_global() && function_declaration.storage_class == Some(StorageClass::Static) {
+                    return Err(CompilerError::SemanticAnalysis(
+                        SemanticAnalysisError::StaticFunctionDeclarationFollowsNonStatic(
+                            function_declaration.name.clone(),
+                        ),
+                    ));
+                }
+                global = old_decl.1.is_global();
+            } else {
                 return Err(CompilerError::SemanticAnalysis(
                     SemanticAnalysisError::IncompatibleFunctionDeclarations,
                 ));
             }
-            already_defined = old_decl.0.is_defined;
-            if already_defined && has_body {
-                println!("Function {} already defined", function_declaration.name);
-                return Err(CompilerError::SemanticAnalysis(
-                    SemanticAnalysisError::FunctionAlreadyDeclared(
-                        function_declaration.name.clone(),
-                    ),
-                ));
-            }
 
-            if old_decl.1.is_global() && function_declaration.storage_class == Some(StorageClass::Static) {
-                return Err(CompilerError::SemanticAnalysis(
-                    SemanticAnalysisError::StaticFunctionDeclarationFollowsNonStatic(
-                        function_declaration.name.clone(),
-                    ),
-                ));
-            }
-            global = old_decl.1.is_global();
+            //if old_decl.0.type_definition != fun_type {
+            //    return Err(CompilerError::SemanticAnalysis(
+            //        SemanticAnalysisError::IncompatibleFunctionDeclarations,
+            //    ));
+            // }
         }
-        let attrs = IdentifierAttributes::FunAttr {
+        let attrs = IdentifierAttributes::FunAttr(FunAttr {
             defined: has_body || already_defined,
             global,
-        };
+        });
         self.symbol_table
             .insert(function_declaration.name.clone(), {
                 (Symbol {
                     type_definition: fun_type,
-                    is_defined: has_body || already_defined,
                 },
                 attrs)
             });
