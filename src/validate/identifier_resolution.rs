@@ -148,14 +148,20 @@ impl IdentifierResolution {
         &mut self,
         decl: VariableDeclaration,
     ) -> Result<VariableDeclaration, CompilerError> {
-        match self.identifier_map.get(&decl.name) {
-            Some(entry) if entry.from_current_scope => {
+        if let Some(entry) =  self.identifier_map.get(&decl.name) {
+            if entry.from_current_scope && !(entry.has_external_linkage && decl.storage_class == Some(StorageClass::Extern)) {
                 return Err(CompilerError::SemanticAnalysis(
-                    SemanticAnalysisError::VariableAlreadyDeclared(decl.name),
+                    SemanticAnalysisError::VariableAlreadyDeclared(decl.name), //TODO
                 ));
-            }
-            _ => {}
+            }   
         }
+
+        if decl.storage_class == Some(StorageClass::Extern) {
+            self.identifier_map.insert(decl.name.clone(), MapEntry::new(decl.name.clone(), true, true));
+            return Ok(decl);
+        }
+
+
         let unique_name = self.make_unique_name(decl.name);
 
         let init = match decl.value {

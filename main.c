@@ -1,19 +1,19 @@
-int putchar(int c);
-
+#ifdef SUPPRESS_WARNINGS
+#pragma GCC diagnostic ignored "-Wunused-variable"
+#endif
 int main(void) {
-    putchar(72);
-    putchar(101);
-    putchar(108);
-    putchar(108);
-    putchar(111);
-    putchar(44);
-    putchar(32);
-    putchar(87);
-    putchar(111);
-    putchar(114);
-    putchar(108);
-    putchar(100);
-    putchar(33);
-    putchar(10);
+    int outer = 1;
+    int foo = 0;
+    if (outer) {
+        /* You can declare a variable with linkage
+         * multiple times in the same block;
+         * these both refer to the 'foo' variable defined below
+         */
+        extern int foo;
+        extern int foo;
+        return foo;
+    }
     return 0;
 }
+
+int foo = 3;

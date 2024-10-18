@@ -242,6 +242,11 @@ impl TypeChecker {
             }
             ForInit::InitExpression(None) => {}
             ForInit::InitDeclaration(declaration) => {
+                if declaration.storage_class.is_some() {
+                    return Err(CompilerError::SemanticAnalysis(
+                        SemanticAnalysisError::InvalidLValue, //TODO
+                    ));
+                }
                 self.type_check_local_variable_declaration(declaration)?;
             }
         }
