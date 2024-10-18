@@ -11,12 +11,14 @@ enum TypeDefinition {
 #[derive(PartialEq, Debug)]
 struct Symbol {
     type_definition: TypeDefinition,
+    attributes: IdentifierAttributes,
 }
 
 impl Symbol {
-    fn new(type_definition: TypeDefinition) -> Self {
+    fn new(type_definition: TypeDefinition, attributes : IdentifierAttributes) -> Self {
         Symbol {
             type_definition,
+            attributes
         }
     }
 }
@@ -75,7 +77,7 @@ impl IdentifierAttributes {
 
 #[derive(Default)]
 pub(crate) struct TypeChecker {
-    symbol_table: HashMap<String, (Symbol, IdentifierAttributes)>,
+    symbol_table: HashMap<String, Symbol>,
 }
 
 impl TypeChecker {
@@ -100,7 +102,7 @@ impl TypeChecker {
         let mut global = variable_declaration.storage_class != Some(StorageClass::Static);
         
         if let Some(old_decl) = self.symbol_table.get(&variable_declaration.name) {
-            if old_decl.0.type_definition != TypeDefinition::Int {
+            if old_decl.type_definition != TypeDefinition::Int {
                 return Err(CompilerError::SemanticAnalysis(
                     SemanticAnalysisError::FunctionRedclaredAsVariable(
                         variable_declaration.name.clone(),
@@ -108,8 +110,8 @@ impl TypeChecker {
                 ));
             }
             if variable_declaration.storage_class == Some(StorageClass::Extern) {
-                global = old_decl.1.is_global();
-            } else if old_decl.1.is_global() != global {
+                global = old_decl.attributes.is_global();
+            } else if old_decl.attributes.is_global() != global {
                 return Err(CompilerError::SemanticAnalysis(
                     SemanticAnalysisError::ConflictingVariableLinkage(
                         variable_declaration.name.clone(),
@@ -117,7 +119,7 @@ impl TypeChecker {
                 ));
             }
 
-            if let InitialValue::Initial(_) = old_decl.1.init()   {
+            if let InitialValue::Initial(_) = old_decl.attributes.init()   {
                 if let InitialValue::Initial(_) = initial_value {
                     return Err(CompilerError::SemanticAnalysis(
                         SemanticAnalysisError::ConflictingFileScopeVariableDefinitions(
@@ -125,10 +127,10 @@ impl TypeChecker {
                         ),
                     ));
                 } else {
-                    initial_value = old_decl.1.init();
+                    initial_value = old_decl.attributes.init();
                 }
             } else {
-                if !initial_value.is_constant() && old_decl.1.init().is_tentative()  {
+                if !initial_value.is_constant() && old_decl.attributes.init().is_tentative()  {
                     initial_value = InitialValue::Tentative;
                 }
             }
@@ -139,7 +141,7 @@ impl TypeChecker {
             global,
         };
 
-        self.symbol_table.insert(variable_declaration.name.clone(), (Symbol::new(TypeDefinition::Int), attrs));
+        self.symbol_table.insert(variable_declaration.name.clone(), Symbol::new(TypeDefinition::Int, attrs));
 
         Ok(())
     }
@@ -156,7 +158,7 @@ impl TypeChecker {
                 ));
             }
             if let Some(old_decl) = self.symbol_table.get(&variable_declaration.name) {
-                if old_decl.0.type_definition != TypeDefinition::Int {
+                if old_decl.type_definition != TypeDefinition::Int {
                     return Err(CompilerError::SemanticAnalysis(
                         SemanticAnalysisError::FunctionRedclaredAsVariable(
                             variable_declaration.name.clone(),
@@ -166,7 +168,7 @@ impl TypeChecker {
             } else {
                 self.symbol_table.insert(
                     variable_declaration.name.clone(),
-                    (Symbol::new(TypeDefinition::Int), IdentifierAttributes::StaticAttr { init: InitialValue::NoInitializer, global: true }),
+                    Symbol::new(TypeDefinition::Int, IdentifierAttributes::StaticAttr { init: InitialValue::NoInitializer, global: true }),
                 );
             }
         } else if variable_declaration.storage_class == Some(StorageClass::Static) {
@@ -179,11 +181,11 @@ impl TypeChecker {
                     SemanticAnalysisError::InvalidLValue, //TODO
                 ));
             };
-            self.symbol_table.insert(variable_declaration.name.clone(), (Symbol::new(TypeDefinition::Int), IdentifierAttributes::StaticAttr { init: initial_value, global: false }));
+            self.symbol_table.insert(variable_declaration.name.clone(), Symbol::new(TypeDefinition::Int, IdentifierAttributes::StaticAttr { init: initial_value, global: false }));
         } else {
             self.symbol_table.insert(
                 variable_declaration.name.clone(),
-                (Symbol::new(TypeDefinition::Int), IdentifierAttributes::LocalAttr),
+                Symbol::new(TypeDefinition::Int, IdentifierAttributes::LocalAttr),
             );
             if let Some(initializer) = variable_declaration.value.as_ref() {
                 self.type_check_expression(initializer)?;
@@ -196,7 +198,7 @@ impl TypeChecker {
         match expression {
             Expression::FunctionCall(name, arguments) => {
                 if let Some(symbol) = self.symbol_table.get(name) {
-                    if let TypeDefinition::FunType(expected_args) = symbol.0.type_definition {
+                    if let TypeDefinition::FunType(expected_args) = symbol.type_definition {
                         if expected_args != arguments.len() {
                             return Err(CompilerError::SemanticAnalysis(
                                 SemanticAnalysisError::FunctionNotDeclared(name.clone()),
@@ -218,7 +220,7 @@ impl TypeChecker {
             }
             Expression::Var(name) => {
                 if let Some(existing) = self.symbol_table.get(name) {
-                    if existing.0.type_definition != TypeDefinition::Int {
+                    if existing.type_definition != TypeDefinition::Int {
                         return Err(CompilerError::SemanticAnalysis(
                             SemanticAnalysisError::VariableUsedAsFunctionName,
                         ));
@@ -335,14 +337,14 @@ impl TypeChecker {
         let mut already_defined = false;
         let mut global = function_declaration.storage_class != Some(StorageClass::Static);
         if let Some(old_decl) = self.symbol_table.get(&function_declaration.name) {
-            if let IdentifierAttributes::FunAttr(fun) = old_decl.1.clone() {
-                if old_decl.0.type_definition != fun_type {
+            if let IdentifierAttributes::FunAttr(fun_attr) = old_decl.attributes.clone() {
+                if old_decl.type_definition != fun_type {
                     return Err(CompilerError::SemanticAnalysis(
                         SemanticAnalysisError::IncompatibleFunctionDeclarations,
                     ));
                 }
 
-                already_defined = fun.defined;
+                already_defined = fun_attr.defined;
                 if already_defined && has_body {
                     println!("Function {} already defined", function_declaration.name);
                     return Err(CompilerError::SemanticAnalysis(
@@ -352,16 +354,14 @@ impl TypeChecker {
                     ));
                 }
 
-                println!("{:?}", old_decl);
-                println!("{:?}", function_declaration.storage_class);
-                if old_decl.1.is_global() && function_declaration.storage_class == Some(StorageClass::Static) {
+                if fun_attr.global && function_declaration.storage_class == Some(StorageClass::Static) {
                     return Err(CompilerError::SemanticAnalysis(
                         SemanticAnalysisError::StaticFunctionDeclarationFollowsNonStatic(
                             function_declaration.name.clone(),
                         ),
                     ));
                 }
-                global = old_decl.1.is_global();
+                global = old_decl.attributes.is_global();
             } else {
                 return Err(CompilerError::SemanticAnalysis(
                     SemanticAnalysisError::IncompatibleFunctionDeclarations,
@@ -380,15 +380,12 @@ impl TypeChecker {
         });
         self.symbol_table
             .insert(function_declaration.name.clone(), {
-                (Symbol {
-                    type_definition: fun_type,
-                },
-                attrs)
+                Symbol::new(fun_type, attrs)
             });
         if let Some(body) = function_declaration.body.as_ref() {
             for param in &function_declaration.parameters {
                 self.symbol_table
-                    .insert(param.clone(), (Symbol::new(TypeDefinition::Int), IdentifierAttributes::LocalAttr));
+                    .insert(param.clone(), Symbol::new(TypeDefinition::Int, IdentifierAttributes::LocalAttr));
             }
             for block_item in body {
                 self.type_check_block_item(block_item)?;
