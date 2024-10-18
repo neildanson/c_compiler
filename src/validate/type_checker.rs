@@ -134,16 +134,49 @@ impl TypeChecker {
     }
 
 
-    fn type_check_variable_declaration(
+    fn type_check_local_variable_declaration(
         &mut self,
         variable_declaration: &VariableDeclaration,
     ) -> Result<(), CompilerError> {
-        self.symbol_table.insert(
-            variable_declaration.name.clone(),
-            (Symbol::new(TypeDefinition::Int), IdentifierAttributes::LocalAttr),
-        );
-        if let Some(initializer) = variable_declaration.value.as_ref() {
-            self.type_check_expression(initializer)?;
+        if variable_declaration.storage_class == Some(StorageClass::Extern) {
+            if variable_declaration.value.is_some() {
+                return Err(CompilerError::SemanticAnalysis(
+                    SemanticAnalysisError::InvalidLValue, //Wrong wrror
+                ));
+            }
+            if let Some(old_decl) = self.symbol_table.get(&variable_declaration.name) {
+                if old_decl.0.type_definition != TypeDefinition::Int {
+                    return Err(CompilerError::SemanticAnalysis(
+                        SemanticAnalysisError::FunctionRedclaredAsVariable(
+                            variable_declaration.name.clone(),
+                        ),
+                    ));
+                }
+            } else {
+                self.symbol_table.insert(
+                    variable_declaration.name.clone(),
+                    (Symbol::new(TypeDefinition::Int), IdentifierAttributes::StaticAttr { init: InitialValue::NoInitializer, global: true }),
+                );
+            }
+        } else if variable_declaration.storage_class == Some(StorageClass::Static) {
+            let initial_value = if let Some(Expression::Constant(i)) = variable_declaration.value {
+                InitialValue::Initial(i)
+            } else if variable_declaration.value.is_none() {
+                InitialValue::Initial(0)
+            } else {
+                return Err(CompilerError::SemanticAnalysis(
+                    SemanticAnalysisError::InvalidLValue, //TODO
+                ));
+            };
+            self.symbol_table.insert(variable_declaration.name.clone(), (Symbol::new(TypeDefinition::Int), IdentifierAttributes::StaticAttr { init: initial_value, global: false }));
+        } else {
+            self.symbol_table.insert(
+                variable_declaration.name.clone(),
+                (Symbol::new(TypeDefinition::Int), IdentifierAttributes::LocalAttr),
+            );
+            if let Some(initializer) = variable_declaration.value.as_ref() {
+                self.type_check_expression(initializer)?;
+            }
         }
         Ok(())
     }
@@ -209,7 +242,7 @@ impl TypeChecker {
             }
             ForInit::InitExpression(None) => {}
             ForInit::InitDeclaration(declaration) => {
-                self.type_check_variable_declaration(declaration)?;
+                self.type_check_local_variable_declaration(declaration)?;
             }
         }
         Ok(())
@@ -267,7 +300,7 @@ impl TypeChecker {
             }
             BlockItem::Declaration(declaration) => match declaration {
                 Declaration::Variable(variable_declaration) => {
-                    self.type_check_variable_declaration(variable_declaration)?;
+                    self.type_check_local_variable_declaration(variable_declaration)?;
                 }
                 Declaration::Function(function_declaration) => {
                     self.type_check_function_declaration(function_declaration)?;
