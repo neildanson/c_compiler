@@ -107,7 +107,7 @@ Copilot is pretty good at explaining why asm code segfaults. Use it.
 
 # TODOs
 
-100% Implemented up to chapter 9. 
+100% Implemented up to chapter 9 (excluding extras)
 
 Chapter 10 notes
 
