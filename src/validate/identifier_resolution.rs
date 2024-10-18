@@ -135,7 +135,16 @@ impl IdentifierResolution {
         }
     }
 
-    fn resolve_variable_declaration(
+    pub fn resolve_file_scope_variable_declaration(
+        &mut self, 
+        decl: VariableDeclaration
+    ) -> Result<VariableDeclaration, CompilerError> {
+        self.identifier_map.insert(decl.name.clone(), 
+            MapEntry::new(decl.name.clone(), true, true));
+        Ok(decl)
+    }
+
+    fn resolve_local_variable_declaration(
         &mut self,
         decl: VariableDeclaration,
     ) -> Result<VariableDeclaration, CompilerError> {
@@ -229,7 +238,7 @@ impl IdentifierResolution {
         for item in blocks {
             match item {
                 BlockItem::Declaration(Declaration::Variable(decl)) => {
-                    let decl = self.resolve_variable_declaration(decl.clone())?;
+                    let decl = self.resolve_local_variable_declaration(decl.clone())?;
                     new_block.push(BlockItem::Declaration(Declaration::Variable(decl)));
                 }
                 BlockItem::Declaration(Declaration::Function(decl)) => {
@@ -252,7 +261,7 @@ impl IdentifierResolution {
     fn resolve_for_init(&mut self, init: &ForInit) -> Result<ForInit, CompilerError> {
         match init {
             ForInit::InitDeclaration(decl) => {
-                let decl = self.resolve_variable_declaration(decl.clone())?;
+                let decl = self.resolve_local_variable_declaration(decl.clone())?;
                 Ok(ForInit::InitDeclaration(decl))
             }
             ForInit::InitExpression(Some(expr)) => {

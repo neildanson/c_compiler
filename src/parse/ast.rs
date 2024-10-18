@@ -31,6 +31,17 @@ pub enum Declaration {
     Function(FunctionDeclaration),
 }
 
+impl Declaration {
+    pub fn get_name(&self) -> Identifier {
+        match self {
+            Declaration::Variable(decl) => decl.name.clone(),
+            Declaration::Function(decl) => decl.name.clone(),
+        }
+    }
+}
+
+
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct VariableDeclaration {
     pub name: Identifier,
