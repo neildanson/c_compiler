@@ -89,7 +89,7 @@ impl TypeChecker {
             }
         } else {
             return Err(CompilerError::SemanticAnalysis(
-                SemanticAnalysisError::InvalidLValue, //TODO
+                SemanticAnalysisError::InvalidInitializerForFileScopeVariable, 
             ));
         };
 
@@ -148,7 +148,7 @@ impl TypeChecker {
         if variable_declaration.storage_class == Some(StorageClass::Extern) {
             if variable_declaration.value.is_some() {
                 return Err(CompilerError::SemanticAnalysis(
-                    SemanticAnalysisError::InvalidLValue, //Wrong wrror
+                    SemanticAnalysisError::ExternVariableCannotHaveInitializer, //Wrong wrror
                 ));
             }
             if let Some(old_decl) = self.symbol_table.get(&variable_declaration.name) {
@@ -178,7 +178,7 @@ impl TypeChecker {
                 InitialValue::Initial(0)
             } else {
                 return Err(CompilerError::SemanticAnalysis(
-                    SemanticAnalysisError::InvalidLValue, //TODO
+                    SemanticAnalysisError::NonConstantInitializerForLocalStaticVariable, 
                 ));
             };
             self.symbol_table.insert(
@@ -266,7 +266,7 @@ impl TypeChecker {
             ForInit::InitDeclaration(declaration) => {
                 if declaration.storage_class.is_some() {
                     return Err(CompilerError::SemanticAnalysis(
-                        SemanticAnalysisError::InvalidLValue, //TODO
+                        SemanticAnalysisError::StaticValueNotValidInForLoopInitializer, 
                     ));
                 }
                 self.type_check_local_variable_declaration(declaration)?;

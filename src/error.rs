@@ -34,6 +34,10 @@ pub enum SemanticAnalysisError {
     ConflictingVariableLinkage(String),
     ConflictingFileScopeVariableDefinitions(String),
     NonStaticFunctionDeclarationInBlock(String),
+    InvalidInitializerForFileScopeVariable,
+    ExternVariableCannotHaveInitializer,
+    NonConstantInitializerForLocalStaticVariable,
+    StaticValueNotValidInForLoopInitializer
 }
 
 impl Display for SemanticAnalysisError {
@@ -77,6 +81,18 @@ impl Display for SemanticAnalysisError {
             }
             SemanticAnalysisError::NonStaticFunctionDeclarationInBlock(s) => {
                 write!(f, "Non-static function declaration {} in block", s)
+            }
+            SemanticAnalysisError::InvalidInitializerForFileScopeVariable => {
+                write!(f, "Invalid initializer for file scope variable")
+            }
+            SemanticAnalysisError::ExternVariableCannotHaveInitializer => {
+                write!(f, "Extern variable cannot have initializer")
+            }
+            SemanticAnalysisError::NonConstantInitializerForLocalStaticVariable => {
+                write!(f, "Non-constant initializer for local static variable")
+            }
+            SemanticAnalysisError::StaticValueNotValidInForLoopInitializer => {
+                write!(f, "Static value not valid in for loop initializer")
             }
         }
     }
