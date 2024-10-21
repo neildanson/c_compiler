@@ -15,33 +15,27 @@ struct Symbol {
 }
 
 impl Symbol {
-    fn new(type_definition: TypeDefinition, attributes : IdentifierAttributes) -> Self {
+    fn new(type_definition: TypeDefinition, attributes: IdentifierAttributes) -> Self {
         Symbol {
             type_definition,
-            attributes
+            attributes,
         }
     }
 }
 
 #[derive(PartialEq, Clone, Debug)]
-enum InitialValue { 
-    Tentative, 
+enum InitialValue {
+    Tentative,
     Initial(i32),
-    NoInitializer
+    NoInitializer,
 }
 
-impl InitialValue { 
+impl InitialValue {
     fn is_constant(&self) -> bool {
-        match self {
-            InitialValue::Initial(_) => true,
-            _ => false,
-        }
+        matches!(self, InitialValue::Initial(_))
     }
     fn is_tentative(&self) -> bool {
-        match self {
-            InitialValue::Tentative => true,
-            _ => false,
-        }
+        matches!(self, InitialValue::Tentative)
     }
 }
 
@@ -52,24 +46,24 @@ struct FunAttr {
 }
 
 #[derive(PartialEq, Clone, Debug)]
-enum IdentifierAttributes{
-    FunAttr(FunAttr), 
-    StaticAttr { init : InitialValue, global : bool },
-    LocalAttr,
+enum IdentifierAttributes {
+    Fun(FunAttr),
+    Static { init: InitialValue, global: bool },
+    Local,
 }
 
 impl IdentifierAttributes {
     fn is_global(&self) -> bool {
         match self {
-            IdentifierAttributes::FunAttr(fun_attr) => fun_attr.global,
-            IdentifierAttributes::StaticAttr { global, .. } => *global,
-            IdentifierAttributes::LocalAttr => false,
+            IdentifierAttributes::Fun(fun_attr) => fun_attr.global,
+            IdentifierAttributes::Static { global, .. } => *global,
+            IdentifierAttributes::Local => false,
         }
     }
 
     fn init(&self) -> InitialValue {
         match self {
-            IdentifierAttributes::StaticAttr { init, .. } => init.clone(),
+            IdentifierAttributes::Static { init, .. } => init.clone(),
             _ => InitialValue::NoInitializer,
         }
     }
@@ -88,7 +82,7 @@ impl TypeChecker {
         let mut initial_value = if let Some(Expression::Constant(i)) = variable_declaration.value {
             InitialValue::Initial(i)
         } else if variable_declaration.value.is_none() {
-           if variable_declaration.storage_class == Some(StorageClass::Extern) {
+            if variable_declaration.storage_class == Some(StorageClass::Extern) {
                 InitialValue::NoInitializer
             } else {
                 InitialValue::Tentative
@@ -97,10 +91,10 @@ impl TypeChecker {
             return Err(CompilerError::SemanticAnalysis(
                 SemanticAnalysisError::InvalidLValue, //TODO
             ));
-    };
+        };
 
         let mut global = variable_declaration.storage_class != Some(StorageClass::Static);
-        
+
         if let Some(old_decl) = self.symbol_table.get(&variable_declaration.name) {
             if old_decl.type_definition != TypeDefinition::Int {
                 return Err(CompilerError::SemanticAnalysis(
@@ -119,7 +113,7 @@ impl TypeChecker {
                 ));
             }
 
-            if let InitialValue::Initial(_) = old_decl.attributes.init()   {
+            if let InitialValue::Initial(_) = old_decl.attributes.init() {
                 if let InitialValue::Initial(_) = initial_value {
                     return Err(CompilerError::SemanticAnalysis(
                         SemanticAnalysisError::ConflictingFileScopeVariableDefinitions(
@@ -129,23 +123,23 @@ impl TypeChecker {
                 } else {
                     initial_value = old_decl.attributes.init();
                 }
-            } else {
-                if !initial_value.is_constant() && old_decl.attributes.init().is_tentative()  {
-                    initial_value = InitialValue::Tentative;
-                }
+            } else if !initial_value.is_constant() && old_decl.attributes.init().is_tentative() {
+                initial_value = InitialValue::Tentative;
             }
         }
 
-        let attrs = IdentifierAttributes::StaticAttr {
+        let attrs = IdentifierAttributes::Static {
             init: initial_value,
             global,
         };
 
-        self.symbol_table.insert(variable_declaration.name.clone(), Symbol::new(TypeDefinition::Int, attrs));
+        self.symbol_table.insert(
+            variable_declaration.name.clone(),
+            Symbol::new(TypeDefinition::Int, attrs),
+        );
 
         Ok(())
     }
-
 
     fn type_check_local_variable_declaration(
         &mut self,
@@ -168,7 +162,13 @@ impl TypeChecker {
             } else {
                 self.symbol_table.insert(
                     variable_declaration.name.clone(),
-                    Symbol::new(TypeDefinition::Int, IdentifierAttributes::StaticAttr { init: InitialValue::NoInitializer, global: true }),
+                    Symbol::new(
+                        TypeDefinition::Int,
+                        IdentifierAttributes::Static {
+                            init: InitialValue::NoInitializer,
+                            global: true,
+                        },
+                    ),
                 );
             }
         } else if variable_declaration.storage_class == Some(StorageClass::Static) {
@@ -181,11 +181,20 @@ impl TypeChecker {
                     SemanticAnalysisError::InvalidLValue, //TODO
                 ));
             };
-            self.symbol_table.insert(variable_declaration.name.clone(), Symbol::new(TypeDefinition::Int, IdentifierAttributes::StaticAttr { init: initial_value, global: false }));
+            self.symbol_table.insert(
+                variable_declaration.name.clone(),
+                Symbol::new(
+                    TypeDefinition::Int,
+                    IdentifierAttributes::Static {
+                        init: initial_value,
+                        global: false,
+                    },
+                ),
+            );
         } else {
             self.symbol_table.insert(
                 variable_declaration.name.clone(),
-                Symbol::new(TypeDefinition::Int, IdentifierAttributes::LocalAttr),
+                Symbol::new(TypeDefinition::Int, IdentifierAttributes::Local),
             );
             if let Some(initializer) = variable_declaration.value.as_ref() {
                 self.type_check_expression(initializer)?;
@@ -321,7 +330,7 @@ impl TypeChecker {
                     self.type_check_local_variable_declaration(variable_declaration)?;
                 }
                 Declaration::Function(function_declaration) => {
-                    self.type_check_function_declaration(function_declaration)?;
+                    self.type_check_function_declaration(function_declaration, false)?;
                 }
             },
         }
@@ -331,13 +340,14 @@ impl TypeChecker {
     pub fn type_check_function_declaration(
         &mut self,
         function_declaration: &FunctionDeclaration,
+        top_level: bool,
     ) -> Result<(), CompilerError> {
         let fun_type = TypeDefinition::FunType(function_declaration.parameters.len());
         let has_body = function_declaration.body.is_some();
         let mut already_defined = false;
         let mut global = function_declaration.storage_class != Some(StorageClass::Static);
         if let Some(old_decl) = self.symbol_table.get(&function_declaration.name) {
-            if let IdentifierAttributes::FunAttr(fun_attr) = old_decl.attributes.clone() {
+            if let IdentifierAttributes::Fun(fun_attr) = old_decl.attributes.clone() {
                 if old_decl.type_definition != fun_type {
                     return Err(CompilerError::SemanticAnalysis(
                         SemanticAnalysisError::IncompatibleFunctionDeclarations,
@@ -346,7 +356,6 @@ impl TypeChecker {
 
                 already_defined = fun_attr.defined;
                 if already_defined && has_body {
-                    println!("Function {} already defined", function_declaration.name);
                     return Err(CompilerError::SemanticAnalysis(
                         SemanticAnalysisError::FunctionAlreadyDeclared(
                             function_declaration.name.clone(),
@@ -354,7 +363,9 @@ impl TypeChecker {
                     ));
                 }
 
-                if fun_attr.global && function_declaration.storage_class == Some(StorageClass::Static) {
+                if fun_attr.global
+                    && function_declaration.storage_class == Some(StorageClass::Static)
+                {
                     return Err(CompilerError::SemanticAnalysis(
                         SemanticAnalysisError::StaticFunctionDeclarationFollowsNonStatic(
                             function_declaration.name.clone(),
@@ -367,14 +378,17 @@ impl TypeChecker {
                     SemanticAnalysisError::IncompatibleFunctionDeclarations,
                 ));
             }
-
-            //if old_decl.0.type_definition != fun_type {
-            //    return Err(CompilerError::SemanticAnalysis(
-            //        SemanticAnalysisError::IncompatibleFunctionDeclarations,
-            //    ));
-            // }
         }
-        let attrs = IdentifierAttributes::FunAttr(FunAttr {
+
+        if !top_level && function_declaration.storage_class == Some(StorageClass::Static) {
+            return Err(CompilerError::SemanticAnalysis(
+                SemanticAnalysisError::NonStaticFunctionDeclarationInBlock(
+                    function_declaration.name.clone(),
+                ),
+            ));
+        }
+
+        let attrs = IdentifierAttributes::Fun(FunAttr {
             defined: has_body || already_defined,
             global,
         });
@@ -384,8 +398,10 @@ impl TypeChecker {
             });
         if let Some(body) = function_declaration.body.as_ref() {
             for param in &function_declaration.parameters {
-                self.symbol_table
-                    .insert(param.clone(), Symbol::new(TypeDefinition::Int, IdentifierAttributes::LocalAttr));
+                self.symbol_table.insert(
+                    param.clone(),
+                    Symbol::new(TypeDefinition::Int, IdentifierAttributes::Local),
+                );
             }
             for block_item in body {
                 self.type_check_block_item(block_item)?;

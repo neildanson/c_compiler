@@ -16,7 +16,7 @@ impl SemanticAnalysis {
         let function = identifier_resolution.resolve_function_declaration(function, false)?;
         let function = loop_labelling.label_function(function)?;
         let function = loop_labelling.verify_function_labels(function)?;
-        type_checker.type_check_function_declaration(&function)?;
+        type_checker.type_check_function_declaration(&function, true)?;
         Ok(function)
     }
 
@@ -31,7 +31,8 @@ impl SemanticAnalysis {
                 Declaration::Variable(variable) => {
                     //let variable = identifier_resolution.resolve_variable_declaration(variable)?;
                     //type_checker.type_check_variable_declaration(&variable)?;
-                    let variable = identifier_resolution.resolve_file_scope_variable_declaration(variable)?;
+                    let variable =
+                        identifier_resolution.resolve_file_scope_variable_declaration(variable)?;
                     type_checker.type_check_file_scope_variable_declaration(&variable)?;
                     declarations.push(Declaration::Variable(variable));
                 }

@@ -33,6 +33,7 @@ pub enum SemanticAnalysisError {
     FunctionRedclaredAsVariable(String),
     ConflictingVariableLinkage(String),
     ConflictingFileScopeVariableDefinitions(String),
+    NonStaticFunctionDeclarationInBlock(String),
 }
 
 impl Display for SemanticAnalysisError {
@@ -70,9 +71,12 @@ impl Display for SemanticAnalysisError {
             }
             SemanticAnalysisError::ConflictingVariableLinkage(s) => {
                 write!(f, "Conflicting variable linkage for {}", s)
-            },
+            }
             SemanticAnalysisError::ConflictingFileScopeVariableDefinitions(s) => {
                 write!(f, "Conflicting file scope variable definitions for {}", s)
+            }
+            SemanticAnalysisError::NonStaticFunctionDeclarationInBlock(s) => {
+                write!(f, "Non-static function declaration {} in block", s)
             }
         }
     }

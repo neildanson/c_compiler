@@ -40,8 +40,6 @@ impl Declaration {
     }
 }
 
-
-
 #[derive(Clone, Debug, PartialEq)]
 pub struct VariableDeclaration {
     pub name: Identifier,

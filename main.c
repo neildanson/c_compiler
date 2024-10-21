@@ -2,7 +2,7 @@ int main(void) {
     /* Can't have static storage class
      * on block-scope function declarations
      */
-    static int foo(void);
+    int foo(void);
     return foo();
 }
 

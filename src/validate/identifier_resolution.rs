@@ -136,11 +136,13 @@ impl IdentifierResolution {
     }
 
     pub fn resolve_file_scope_variable_declaration(
-        &mut self, 
-        decl: VariableDeclaration
+        &mut self,
+        decl: VariableDeclaration,
     ) -> Result<VariableDeclaration, CompilerError> {
-        self.identifier_map.insert(decl.name.clone(), 
-            MapEntry::new(decl.name.clone(), true, true));
+        self.identifier_map.insert(
+            decl.name.clone(),
+            MapEntry::new(decl.name.clone(), true, true),
+        );
         Ok(decl)
     }
 
@@ -148,19 +150,23 @@ impl IdentifierResolution {
         &mut self,
         decl: VariableDeclaration,
     ) -> Result<VariableDeclaration, CompilerError> {
-        if let Some(entry) =  self.identifier_map.get(&decl.name) {
-            if entry.from_current_scope && !(entry.has_external_linkage && decl.storage_class == Some(StorageClass::Extern)) {
+        if let Some(entry) = self.identifier_map.get(&decl.name) {
+            if entry.from_current_scope
+                && !(entry.has_external_linkage && decl.storage_class == Some(StorageClass::Extern))
+            {
                 return Err(CompilerError::SemanticAnalysis(
                     SemanticAnalysisError::VariableAlreadyDeclared(decl.name), //TODO
                 ));
-            }   
+            }
         }
 
         if decl.storage_class == Some(StorageClass::Extern) {
-            self.identifier_map.insert(decl.name.clone(), MapEntry::new(decl.name.clone(), true, true));
+            self.identifier_map.insert(
+                decl.name.clone(),
+                MapEntry::new(decl.name.clone(), true, true),
+            );
             return Ok(decl);
         }
-
 
         let unique_name = self.make_unique_name(decl.name);
 
