@@ -1,11 +1,8 @@
-int main(void) {
-    /* Can't have static storage class
-     * on block-scope function declarations
-     */
-    int foo(void);
-    return foo();
+static int foo(int i) {
+    return 0 + i;
 }
 
-static int foo(void) {
-    return 0;
+int main(void) {
+    return foo(3);
 }
+
