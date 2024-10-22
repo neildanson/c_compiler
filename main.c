@@ -1,8 +1,11 @@
-static int foo(int i) {
-    return 0 + i;
+int static foo(void) {
+    return 3;
 }
+
+int static bar = 4;
 
 int main(void) {
-    return foo(3);
+    int extern foo(void);
+    int extern bar;
+    return foo() + bar;
 }
-
