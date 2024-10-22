@@ -22,7 +22,9 @@ impl SemanticAnalysis {
         Ok(function)
     }
 
-    pub fn semantic_validation(program: Program) -> Result<(Program, HashMap<String, Symbol>), CompilerError> {
+    pub fn semantic_validation(
+        program: Program,
+    ) -> Result<(Program, HashMap<String, Symbol>), CompilerError> {
         let mut identifier_resolution = IdentifierResolution::default();
         let mut loop_labelling = LoopLabelling::default();
         let mut type_checker = type_checker::TypeChecker::default();

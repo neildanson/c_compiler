@@ -10,7 +10,10 @@ use crate::lex::*;
 use crate::parse::parse_program;
 use crate::tacky::Tacky;
 use anyhow::Result;
-use std::{collections::HashMap, io::{Read, Write}};
+use std::{
+    collections::HashMap,
+    io::{Read, Write},
+};
 use validate::SemanticAnalysis;
 
 pub fn read_file(filename: &str) -> Result<String> {

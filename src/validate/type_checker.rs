@@ -67,6 +67,10 @@ impl IdentifierAttributes {
             _ => InitialValue::NoInitializer,
         }
     }
+
+    pub fn is_static(&self) -> bool {
+        matches!(self, IdentifierAttributes::Static { .. })
+    }
 }
 
 #[derive(Default)]
@@ -89,7 +93,7 @@ impl TypeChecker {
             }
         } else {
             return Err(CompilerError::SemanticAnalysis(
-                SemanticAnalysisError::InvalidInitializerForFileScopeVariable, 
+                SemanticAnalysisError::InvalidInitializerForFileScopeVariable,
             ));
         };
 
@@ -178,7 +182,7 @@ impl TypeChecker {
                 InitialValue::Initial(0)
             } else {
                 return Err(CompilerError::SemanticAnalysis(
-                    SemanticAnalysisError::NonConstantInitializerForLocalStaticVariable, 
+                    SemanticAnalysisError::NonConstantInitializerForLocalStaticVariable,
                 ));
             };
             self.symbol_table.insert(
@@ -266,7 +270,7 @@ impl TypeChecker {
             ForInit::InitDeclaration(declaration) => {
                 if declaration.storage_class.is_some() {
                     return Err(CompilerError::SemanticAnalysis(
-                        SemanticAnalysisError::StaticValueNotValidInForLoopInitializer, 
+                        SemanticAnalysisError::StaticValueNotValidInForLoopInitializer,
                     ));
                 }
                 self.type_check_local_variable_declaration(declaration)?;

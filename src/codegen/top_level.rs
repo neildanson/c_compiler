@@ -1,4 +1,7 @@
-use std::{collections::HashMap, fmt::{Display, Formatter}};
+use std::{
+    collections::HashMap,
+    fmt::{Display, Formatter},
+};
 
 use crate::{error::CompilerError, tacky, validate::Symbol};
 
@@ -7,7 +10,7 @@ use super::*;
 #[derive(Debug, PartialEq)]
 pub struct Function {
     name: String,
-    global : bool,
+    global: bool,
     body: Option<Vec<Instruction>>,
 }
 
@@ -29,7 +32,10 @@ impl Display for Function {
 }
 
 impl Function {
-    pub fn try_from(ast: tacky::Function, symbols : &HashMap<String, Symbol>) -> Result<Function, CompilerError> {
+    pub fn try_from(
+        ast: tacky::Function,
+        symbols: &HashMap<String, Symbol>,
+    ) -> Result<Function, CompilerError> {
         if let Some(body_ast) = ast.body {
             let mut body = Vec::new();
 

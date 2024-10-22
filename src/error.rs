@@ -37,7 +37,7 @@ pub enum SemanticAnalysisError {
     InvalidInitializerForFileScopeVariable,
     ExternVariableCannotHaveInitializer,
     NonConstantInitializerForLocalStaticVariable,
-    StaticValueNotValidInForLoopInitializer
+    StaticValueNotValidInForLoopInitializer,
 }
 
 impl Display for SemanticAnalysisError {

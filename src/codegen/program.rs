@@ -36,7 +36,6 @@ impl TryFrom<tacky::Program> for Program {
             }
         }
 
-
         Ok(Program { top_level })
     }
 }

@@ -12,7 +12,7 @@ pub struct Function {
 pub struct StaticVariable {
     pub identifier: String,
     pub global: bool,
-    pub init : i32
+    pub init: i32,
 }
 
 #[derive(Clone, Debug)]
