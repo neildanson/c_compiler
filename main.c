@@ -5,7 +5,6 @@ int static foo(void) {
 int static bar = 4;
 
 int main(void) {
-    int extern foo(void);
-    int extern bar;
+    //movl bar(%rip), %r10d
     return foo() + bar;
 }
