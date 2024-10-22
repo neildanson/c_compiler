@@ -2,13 +2,13 @@ use std::collections::HashMap;
 
 use crate::{error::*, parse::*};
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 enum TypeDefinition {
     Int,
     FunType(usize),
 }
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub struct Symbol {
     type_definition: TypeDefinition,
     pub attributes: IdentifierAttributes,

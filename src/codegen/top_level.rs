@@ -1,6 +1,6 @@
-use std::fmt::{Display, Formatter};
+use std::{collections::HashMap, fmt::{Display, Formatter}};
 
-use crate::{error::CompilerError, tacky};
+use crate::{error::CompilerError, tacky, validate::Symbol};
 
 use super::*;
 
@@ -28,9 +28,8 @@ impl Display for Function {
     }
 }
 
-impl TryFrom<tacky::Function> for Function {
-    type Error = CompilerError;
-    fn try_from(ast: tacky::Function) -> Result<Self, Self::Error> {
+impl Function {
+    pub fn try_from(ast: tacky::Function, symbols : &HashMap<String, Symbol>) -> Result<Function, CompilerError> {
         if let Some(body_ast) = ast.body {
             let mut body = Vec::new();
 
@@ -49,7 +48,7 @@ impl TryFrom<tacky::Function> for Function {
                 body.append(&mut instructions);
             }
 
-            let (mut body, stack_size) = rewrite_pseudo_with_stack(body);
+            let (mut body, stack_size) = rewrite_pseudo_with_stack(body, symbols);
             let size = ((stack_size * 4) + 15) & !15;
             body.insert(0, Instruction::AllocateStack(size)); //* 4 as ints are 4 bytes */
             let body = fixup_stack_operations(body);

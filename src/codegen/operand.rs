@@ -9,15 +9,16 @@ pub enum Operand {
     Immediate { imm: i32 },
     Pseudo(String),
     Stack(i32),
+    Data(String),
 }
 
-//https://doc.rust-lang.org/std/fmt/struct.Formatter.html
 impl Display for Operand {
     fn fmt(&self, f: &mut Formatter) -> Result {
         match self {
             Operand::Register(reg) => write!(f, "{:.4}", reg),
             Operand::Immediate { imm } => write!(f, "${}", imm),
             Operand::Stack(offset) => write!(f, "{}(%rbp)", offset),
+            Operand::Data(data) => write!(f, "{}(%rip)", data),
             op => unimplemented!("Operand Display not implemented for {:?}", op),
         }
     }

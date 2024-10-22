@@ -571,23 +571,23 @@ impl Tacky {
         }
     }
 
-    fn convert_symbols_to_tacky(symbols: HashMap<String, Symbol>) -> Vec<TopLevel> {
+    fn convert_symbols_to_tacky(symbols: &HashMap<String, Symbol>) -> Vec<TopLevel> {
         let mut new_symbols = Vec::new();
         for (name, symbol) in symbols {
-            match symbol.attributes {
+            match &symbol.attributes {
                 crate::validate::IdentifierAttributes::Static { init, global }=> {
                     match init {
                         InitialValue::Initial(i) => {
                             new_symbols.push(TopLevel::StaticVariable(StaticVariable {
-                                identifier: name,
-                                global: global,
-                                init: i,
+                                identifier: name.clone(),
+                                global: *global,
+                                init: *i,
                             }));
                         }
                         InitialValue::Tentative => {
                             new_symbols.push(TopLevel::StaticVariable(StaticVariable {
-                                identifier: name,
-                                global: global,
+                                identifier: name.clone(),
+                                global: *global,
                                 init: 0,
                             }));
                         }
@@ -602,7 +602,7 @@ impl Tacky {
     }
 
     pub fn emit_tacky(&mut self, p: parse::Program, symbols : HashMap<String, Symbol>) -> Result<Program, CompilerError> {
-        let mut top_level = Tacky::convert_symbols_to_tacky(symbols);
+        let mut top_level = Tacky::convert_symbols_to_tacky(&symbols);
         
         for decl in p.declarations {
             match decl {
@@ -615,7 +615,7 @@ impl Tacky {
                 }
             }
         }
-        Ok(Program { top_level })
+        Ok(Program { top_level, symbols })
     }
 
     pub fn fixup_missing_return(instructions: &mut Vec<Instruction>) {

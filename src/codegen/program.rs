@@ -28,7 +28,7 @@ impl TryFrom<tacky::Program> for Program {
         for tl in ast.top_level {
             match tl {
                 tacky::TopLevel::Function(f) => {
-                    top_level.push(TopLevel::Function(Function::try_from(f)?));
+                    top_level.push(TopLevel::Function(Function::try_from(f, &ast.symbols)?));
                 }
                 tacky::TopLevel::StaticVariable(s) => {
                     top_level.push(TopLevel::StaticVariable(StaticVariable::try_from(s)?));
