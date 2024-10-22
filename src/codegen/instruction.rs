@@ -1,5 +1,5 @@
-use crate::{error::CompilerError, tacky};
-use std::fmt::{Display, Formatter};
+use crate::{error::CompilerError, tacky, validate::Symbol};
+use std::{collections::HashMap, fmt::{Display, Formatter}, hash::Hash};
 
 use super::*;
 
@@ -129,6 +129,8 @@ fn convert_function_call(
     name: String,
     args: Vec<tacky::Value>,
     dst: tacky::Value,
+    symbols : &HashMap<String, Symbol>
+
 ) -> Result<Vec<Instruction>, CompilerError> {
     let register_args: Vec<_> = args.iter().take(6).collect();
     let stack_args: Vec<_> = args.iter().skip(6).collect();
@@ -147,7 +149,7 @@ fn convert_function_call(
     }
 
     for (i, arg) in register_args.iter().enumerate() {
-        let assembly_arg = (*arg).clone().into();
+        let assembly_arg = Operand::from((*arg).clone(), symbols);
         instructions.push(Instruction::Mov {
             src: assembly_arg,
             dst: Operand::arg(i),
@@ -155,7 +157,7 @@ fn convert_function_call(
     }
 
     for arg in stack_args.iter().rev() {
-        let assembly_arg = (*arg).clone().into();
+        let assembly_arg = Operand::from((*arg).clone(), symbols);
         match assembly_arg {
             Operand::Register(_) | Operand::Immediate { imm: _ } => {
                 instructions.push(Instruction::Push(assembly_arg));
@@ -178,7 +180,7 @@ fn convert_function_call(
     }
     instructions.push(Instruction::Mov {
         src: Operand::Register(Reg::AX),
-        dst: dst.into(),
+        dst: Operand::from(dst, symbols),
     });
 
     Ok(instructions)
@@ -189,7 +191,7 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
     fn try_from(instruction: tacky::Instruction) -> Result<Self, Self::Error> {
         match instruction {
             tacky::Instruction::Return(value) => {
-                let src = value.into();
+                let src = Operand::from(value, symbols);
                 let dst = Operand::Register(Reg::AX);
                 Ok(vec![Instruction::Mov { src, dst }, Instruction::Ret])
             }

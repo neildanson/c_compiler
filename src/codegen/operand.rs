@@ -1,5 +1,5 @@
-use crate::tacky;
-use std::fmt::{Display, Formatter, Result};
+use crate::{tacky, validate::{IdentifierAttributes, Symbol}};
+use std::{collections::HashMap, fmt::{Display, Formatter, Result}};
 
 use super::Reg;
 
@@ -9,9 +9,9 @@ pub enum Operand {
     Immediate { imm: i32 },
     Pseudo(String),
     Stack(i32),
+    Data(String)
 }
 
-//https://doc.rust-lang.org/std/fmt/struct.Formatter.html
 impl Display for Operand {
     fn fmt(&self, f: &mut Formatter) -> Result {
         match self {
@@ -23,11 +23,21 @@ impl Display for Operand {
     }
 }
 
-impl From<tacky::Value> for Operand {
-    fn from(value: tacky::Value) -> Self {
+impl Operand {
+    pub fn from(value: tacky::Value, symbols : &HashMap<String, Symbol>) -> Self {
         match value {
             tacky::Value::Constant(imm) => Operand::Immediate { imm },
-            tacky::Value::Var(name) => Operand::Pseudo(name),
+            tacky::Value::Var(name) => 
+                if let Some(symbol) = symbols.get(&name) {
+                    if let IdentifierAttributes::Static { init : _init, global : _global } = &symbol.attributes {
+                         Operand::Data(name)
+                    }
+                    else {
+                        Operand::Pseudo(name)
+                    }
+                } else {
+                    Operand::Pseudo(name)
+                },
         }
     }
 }
