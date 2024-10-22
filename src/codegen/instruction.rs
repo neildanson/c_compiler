@@ -200,8 +200,8 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
                 src,
                 dst,
             } => {
-                let src = src.into();
-                let dst: Operand = dst.into();
+                let src = Operand::from(src, symbols);
+                let dst: Operand = Operand::from(dst, symbols);
                 Ok(vec![
                     Instruction::Cmp(Operand::Immediate { imm: 0 }, src),
                     Instruction::Mov {
@@ -212,8 +212,8 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
                 ])
             }
             tacky::Instruction::Unary { op, src, dst } => {
-                let src = src.into();
-                let dst: Operand = dst.into();
+                let src = Operand::from(src, symbols);
+                let dst: Operand = Operand::from(dst, symbols);
                 Ok(vec![
                     Instruction::Mov {
                         src,
@@ -228,9 +228,9 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
                 src2,
                 dst,
             } => {
-                let src1 = src1.into();
-                let src2 = src2.into();
-                let dst = dst.into();
+                let src1 = Operand::from(src1, symbols);
+                let src2 = Operand::from(src2, symbols);
+                let dst = Operand::from(dst, symbols);
                 Ok(vec![
                     Instruction::Mov {
                         src: src1,
@@ -250,9 +250,9 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
                 src2,
                 dst,
             } => {
-                let src1 = src1.into();
-                let src2 = src2.into();
-                let dst = dst.into();
+                let src1 = Operand::from(src1, symbols);
+                let src2 = Operand::from(src2, symbols);
+                let dst = Operand::from(dst, symbols);
                 Ok(vec![
                     Instruction::Mov {
                         src: src1,
@@ -272,9 +272,9 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
                 src2,
                 dst,
             } if let Ok(cc) = op.clone().try_into() => {
-                let src1 = src1.into();
-                let src2 = src2.into();
-                let dst: Operand = dst.into();
+                let src1 = Operand::from(src1, symbols);
+                let src2 = Operand::from(src2, symbols);
+                let dst = Operand::from(dst, symbols);
                 Ok(vec![
                     Instruction::Cmp(src2, src1),
                     Instruction::Mov {
@@ -291,9 +291,9 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
                 src2,
                 dst,
             } => {
-                let src1 = src1.into();
-                let src2 = src2.into();
-                let dst: Operand = dst.into();
+                let src1 = Operand::from(src1, symbols);
+                let src2 = Operand::from(src2, symbols);
+                let dst = Operand::from(dst, symbols);
                 let op = op.try_into()?;
                 Ok(vec![
                     Instruction::Mov {
@@ -304,21 +304,21 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
                 ])
             }
             tacky::Instruction::JumpIfZero { condition, target } => Ok(vec![
-                Instruction::Cmp(Operand::Immediate { imm: 0 }, condition.into()),
+                Instruction::Cmp(Operand::Immediate { imm: 0 }, Operand::from(condition, symbols)),
                 Instruction::JmpCC(ConditionCode::E, target),
             ]),
             tacky::Instruction::JumpIfNotZero { condition, target } => Ok(vec![
-                Instruction::Cmp(Operand::Immediate { imm: 0 }, condition.into()),
+                Instruction::Cmp(Operand::Immediate { imm: 0 }, Operand::from(condition, symbols)),
                 Instruction::JmpCC(ConditionCode::NE, target),
             ]),
             tacky::Instruction::Copy { src, dst } => Ok(vec![Instruction::Mov {
-                src: src.into(),
-                dst: dst.into(),
+                src: Operand::from(src, symbols),
+                dst: Operand::from(dst, symbols),
             }]),
             tacky::Instruction::Label { name } => Ok(vec![Instruction::Label(name)]),
             tacky::Instruction::Jump { target } => Ok(vec![Instruction::Jmp(target)]),
             tacky::Instruction::FunCall { name, args, dst } => {
-                convert_function_call(name, args, dst)
+                convert_function_call(name, args, dst, symbols)
             }
         }
     }
