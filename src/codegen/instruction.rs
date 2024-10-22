@@ -186,9 +186,8 @@ fn convert_function_call(
     Ok(instructions)
 }
 
-impl TryFrom<tacky::Instruction> for Vec<Instruction> {
-    type Error = CompilerError;
-    fn try_from(instruction: tacky::Instruction) -> Result<Self, Self::Error> {
+impl Instruction {
+    fn try_from(instruction: tacky::Instruction, symbols : &HashMap<String, Symbol>) -> Result<Vec<Instruction>, CompilerError> {
         match instruction {
             tacky::Instruction::Return(value) => {
                 let src = Operand::from(value, symbols);
