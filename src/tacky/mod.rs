@@ -1,5 +1,5 @@
 pub mod binary_op;
-pub mod function;
+pub mod top_level;
 pub mod instruction;
 pub mod program;
 pub mod unary_op;
@@ -7,15 +7,14 @@ pub mod value;
 
 use anyhow::Result;
 pub use binary_op::*;
-pub use function::*;
+pub use top_level::*;
 pub use instruction::*;
 pub use program::*;
 pub use unary_op::*;
 pub use value::*;
 
 use crate::{
-    error::CompilerError,
-    parse::{self, Expression},
+    error::CompilerError, parse::{self, Expression}, validate::{InitialValue, Symbol},
 };
 use std::collections::HashMap;
 
@@ -558,32 +557,66 @@ impl Tacky {
 
             Ok(Function {
                 name: f.name,
+                global: false, //TODO
                 params: f.parameters,
                 body: Some(body),
             })
         } else {
             Ok(Function {
                 name: f.name,
+                global: false, //TODO
                 params: f.parameters,
                 body: None,
             })
         }
     }
 
-    pub fn emit_tacky(&mut self, p: parse::Program) -> Result<Program, CompilerError> {
-        let mut functions = Vec::new();
+    fn convert_symbols_to_tacky(symbols: HashMap<String, Symbol>) -> Vec<TopLevel> {
+        let mut new_symbols = Vec::new();
+        for (name, symbol) in symbols {
+            match symbol.attributes {
+                crate::validate::IdentifierAttributes::Static { init, global }=> {
+                    match init {
+                        InitialValue::Initial(i) => {
+                            new_symbols.push(TopLevel::StaticVariable(StaticVariable {
+                                identifier: name,
+                                global: global,
+                                init: i,
+                            }));
+                        }
+                        InitialValue::Tentative => {
+                            new_symbols.push(TopLevel::StaticVariable(StaticVariable {
+                                identifier: name,
+                                global: global,
+                                init: 0,
+                            }));
+                        }
+                        _ => {}
+                    }
+                    
+                }
+                _ => {}
+            }
+        }
+        new_symbols
+    }
+
+    pub fn emit_tacky(&mut self, p: parse::Program, symbols : HashMap<String, Symbol>) -> Result<Program, CompilerError> {
+        let mut top_level = Tacky::convert_symbols_to_tacky(symbols);
+        
         for decl in p.declarations {
             match decl {
                 parse::Declaration::Function(f) => {
-                    functions.push(self.emit_tacky_function(f)?);
+                    let function = self.emit_tacky_function(f)?;
+                    top_level.push(TopLevel::Function(function));
                 }
                 _ => {
-                    todo!("Tacky only supports function declarations")
+                    //Handled by convert_symbols_to_tacky
+                    //todo!("Tacky only supports function declarations")
                 }
             }
         }
-
-        Ok(Program { functions })
+        Ok(Program { top_level })
     }
 
     pub fn fixup_missing_return(instructions: &mut Vec<Instruction>) {

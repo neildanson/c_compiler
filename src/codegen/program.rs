@@ -25,8 +25,14 @@ impl TryFrom<tacky::Program> for Program {
     type Error = CompilerError;
     fn try_from(ast: tacky::Program) -> Result<Self, Self::Error> {
         let functions = ast
-            .functions
+            .top_level
             .into_iter()
+            //TODO Remove
+            .filter_map(|top_level| match top_level {
+                tacky::TopLevel::Function(f) => Some(f),
+                _ => None,
+            })
+            //TODO Remove
             .map(Function::try_from)
             .collect::<Result<Vec<_>, _>>()?;
         Ok(Program { functions })

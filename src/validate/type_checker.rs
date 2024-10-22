@@ -9,9 +9,9 @@ enum TypeDefinition {
 }
 
 #[derive(PartialEq, Debug)]
-struct Symbol {
+pub struct Symbol {
     type_definition: TypeDefinition,
-    attributes: IdentifierAttributes,
+    pub attributes: IdentifierAttributes,
 }
 
 impl Symbol {
@@ -24,7 +24,7 @@ impl Symbol {
 }
 
 #[derive(PartialEq, Clone, Debug)]
-enum InitialValue {
+pub enum InitialValue {
     Tentative,
     Initial(i32),
     NoInitializer,
@@ -40,20 +40,20 @@ impl InitialValue {
 }
 
 #[derive(PartialEq, Clone, Debug)]
-struct FunAttr {
+pub struct FunAttr {
     defined: bool,
     global: bool,
 }
 
 #[derive(PartialEq, Clone, Debug)]
-enum IdentifierAttributes {
+pub enum IdentifierAttributes {
     Fun(FunAttr),
     Static { init: InitialValue, global: bool },
     Local,
 }
 
 impl IdentifierAttributes {
-    fn is_global(&self) -> bool {
+    pub fn is_global(&self) -> bool {
         match self {
             IdentifierAttributes::Fun(fun_attr) => fun_attr.global,
             IdentifierAttributes::Static { global, .. } => *global,
@@ -61,7 +61,7 @@ impl IdentifierAttributes {
         }
     }
 
-    fn init(&self) -> InitialValue {
+    pub fn init(&self) -> InitialValue {
         match self {
             IdentifierAttributes::Static { init, .. } => init.clone(),
             _ => InitialValue::NoInitializer,
@@ -71,7 +71,7 @@ impl IdentifierAttributes {
 
 #[derive(Default)]
 pub(crate) struct TypeChecker {
-    symbol_table: HashMap<String, Symbol>,
+    pub symbol_table: HashMap<String, Symbol>,
 }
 
 impl TypeChecker {

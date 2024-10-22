@@ -1,6 +1,6 @@
-use super::Function;
+use super::TopLevel;
 
 #[derive(Clone, Debug)]
 pub struct Program {
-    pub functions: Vec<Function>,
+    pub top_level: Vec<TopLevel>,
 }
