@@ -7,6 +7,7 @@ use super::*;
 #[derive(Debug, PartialEq)]
 pub struct Function {
     name: String,
+    global : bool,
     body: Option<Vec<Instruction>>,
 }
 
@@ -54,13 +55,60 @@ impl TryFrom<tacky::Function> for Function {
             let body = fixup_stack_operations(body);
             Ok(Function {
                 name: ast.name,
+                global: ast.global,
                 body: Some(body),
             })
         } else {
             Ok(Function {
                 name: ast.name,
+                global: ast.global,
                 body: None,
             })
+        }
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub struct StaticVariable {
+    identfiier: String,
+    global: bool,
+    value: i32,
+}
+
+//TODO properly: Implement TryFrom for StaticVariable
+impl Display for StaticVariable {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+        if self.global {
+            writeln!(f, "\t.globl {}", self.identfiier)?;
+        }
+        writeln!(f, "{}:", self.identfiier)?;
+        writeln!(f, "\t.long {}", self.value)
+    }
+}
+
+//From?
+impl TryFrom<tacky::StaticVariable> for StaticVariable {
+    type Error = CompilerError;
+    fn try_from(ast: tacky::StaticVariable) -> Result<Self, Self::Error> {
+        Ok(StaticVariable {
+            identfiier: ast.identifier,
+            global: ast.global,
+            value: ast.init,
+        })
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub enum TopLevel {
+    Function(Function),
+    StaticVariable(StaticVariable),
+}
+
+impl Display for TopLevel {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+        match self {
+            TopLevel::Function(function) => write!(f, "{}", function),
+            TopLevel::StaticVariable(static_variable) => write!(f, "{}", static_variable),
         }
     }
 }

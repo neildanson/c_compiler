@@ -612,7 +612,6 @@ impl Tacky {
                 }
                 _ => {
                     //Handled by convert_symbols_to_tacky
-                    //todo!("Tacky only supports function declarations")
                 }
             }
         }

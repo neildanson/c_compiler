@@ -1,16 +1,16 @@
-use super::Function;
+use super::{Function, StaticVariable, TopLevel};
 use crate::{error::CompilerError, tacky};
 use std::fmt::Display;
 
 #[derive(Debug, PartialEq)]
 pub struct Program {
-    functions: Vec<Function>,
+    top_level: Vec<TopLevel>,
 }
 
 impl Display for Program {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        for function in &self.functions {
-            write!(f, "{}", function)?;
+        for top_level in &self.top_level {
+            write!(f, "{}", top_level)?;
             writeln!(f)?;
         }
         if cfg!(target_os = "linux") {
@@ -24,17 +24,19 @@ impl Display for Program {
 impl TryFrom<tacky::Program> for Program {
     type Error = CompilerError;
     fn try_from(ast: tacky::Program) -> Result<Self, Self::Error> {
-        let functions = ast
-            .top_level
-            .into_iter()
-            //TODO Remove
-            .filter_map(|top_level| match top_level {
-                tacky::TopLevel::Function(f) => Some(f),
-                _ => None,
-            })
-            //TODO Remove
-            .map(Function::try_from)
-            .collect::<Result<Vec<_>, _>>()?;
-        Ok(Program { functions })
+        let mut top_level = Vec::new();
+        for tl in ast.top_level {
+            match tl {
+                tacky::TopLevel::Function(f) => {
+                    top_level.push(TopLevel::Function(Function::try_from(f)?));
+                }
+                tacky::TopLevel::StaticVariable(s) => {
+                    top_level.push(TopLevel::StaticVariable(StaticVariable::try_from(s)?));
+                }
+            }
+        }
+
+
+        Ok(Program { top_level })
     }
 }
