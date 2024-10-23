@@ -11,7 +11,6 @@ fn fixup_pseudo(
     parameter: bool,
 ) -> Operand {
     if let Some(symbol) = symbols.get(&name) {
-        println!("Symbol: {:?}", symbol);
         if symbol.attributes.is_static() {
             return Operand::Data(name);
         }
@@ -112,8 +111,8 @@ pub(crate) fn fixup_stack_operations(body: Vec<Instruction>) -> Vec<Instruction>
     for instruction in body {
         match instruction.clone() {
             Instruction::Mov { src, dst } => {
-                if let Operand::Stack(_) = src {
-                    if let Operand::Stack(_) = dst {
+                if let Operand::Stack(_) | Operand::Data(_) = src {
+                    if let Operand::Stack(_) | Operand::Data(_) = dst {
                         new_body.push(Instruction::Mov {
                             src,
                             dst: Operand::Register(Reg::R10),
@@ -128,8 +127,8 @@ pub(crate) fn fixup_stack_operations(body: Vec<Instruction>) -> Vec<Instruction>
                 new_body.push(instruction.clone());
             }
             Instruction::Cmp(lhs, rhs) => {
-                if let Operand::Stack(_) = lhs {
-                    if let Operand::Stack(_) = rhs {
+                if let Operand::Stack(_) | Operand::Data(_) = lhs {
+                    if let Operand::Stack(_) | Operand::Data(_) = rhs {
                         new_body.push(Instruction::Mov {
                             src: lhs,
                             dst: Operand::Register(Reg::R10),
@@ -169,8 +168,8 @@ pub(crate) fn fixup_stack_operations(body: Vec<Instruction>) -> Vec<Instruction>
             }
 
             Instruction::Binary { op, src2, dst } => {
-                if let Operand::Stack(_) = dst {
-                    if let Operand::Stack(_) = src2 {
+                if let Operand::Stack(_) | Operand::Data(_) = dst {
+                    if let Operand::Stack(_) | Operand::Data(_) = src2 {
                         match op {
                             BinaryOp::Add | BinaryOp::Sub => {
                                 new_body.push(Instruction::Mov {
