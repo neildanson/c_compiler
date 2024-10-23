@@ -311,11 +311,15 @@ impl Tacky {
             .as_ref()
             .map(|e| self.emit_tacky_expr(e, instructions))
             .transpose()?;
-        let value = value.unwrap_or(Value::Constant(0));
-        instructions.push(Instruction::Copy {
-            src: value,
-            dst: Value::Var(name),
-        });
+        
+        //TODO Check if this is right?
+        if d.storage_class != Some(parse::StorageClass::Extern) {
+            let value = value.unwrap_or(Value::Constant(0));
+            instructions.push(Instruction::Copy {
+                src: value,
+                dst: Value::Var(name),
+            });
+        }
         Ok(())
     }
 

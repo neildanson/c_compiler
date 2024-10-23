@@ -66,6 +66,7 @@ impl IdentifierResolution {
     fn make_unique_name(&mut self, name: String) -> String {
         self.count += 1;
         let unique_name = format!("{}__{}", name, self.count);
+        
         self.identifier_map.insert(name, unique_name.clone().into());
 
         unique_name
