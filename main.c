@@ -1,3 +1,12 @@
+/* You can declare an identifier with the type specifier
+ * before the storage class specifier.
+ */
+#ifdef SUPPRESS_WARNINGS
+#ifndef __clang__
+#pragma GCC diagnostic ignored "-Wold-style-declaration"
+#endif
+#endif
+
 int static foo(void) {
     return 3;
 }
@@ -5,6 +14,7 @@ int static foo(void) {
 int static bar = 4;
 
 int main(void) {
-    //movl bar(%rip), %r10d
+    int extern foo(void);
+    int extern bar; //This is bollocks - initializing a new local bar to 0
     return foo() + bar;
 }

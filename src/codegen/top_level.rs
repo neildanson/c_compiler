@@ -17,7 +17,10 @@ pub struct Function {
 impl Display for Function {
     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
         if let Some(body) = &self.body {
-            writeln!(f, "\t.globl {}", format_fn_call(&self.name))?;
+            if self.global || self.name == "main" {
+                writeln!(f, "\t.globl {}", format_fn_call(&self.name))?;
+            }
+            writeln!(f, "\t.text")?;
             writeln!(f, "{}:", format_fn_call(&self.name))?;
             writeln!(f, "\t# Function Preamble")?;
             writeln!(f, "\tpushq %rbp")?;
@@ -86,8 +89,17 @@ impl Display for StaticVariable {
         if self.global {
             writeln!(f, "\t.globl {}", self.identfiier)?;
         }
-        writeln!(f, "{}:", self.identfiier)?;
-        writeln!(f, "\t.long {}", self.value)
+        if self.value == 0 {
+            writeln!(f, "\t.bss")?;
+            writeln!(f, "\t.align 4")?;
+            writeln!(f, "{}:", self.identfiier)?;
+            writeln!(f, "\t.zero 4")
+        } else {
+            writeln!(f, "\t.data")?;
+            writeln!(f, "\t.align 4")?;
+            writeln!(f, "{}:", self.identfiier)?;
+            writeln!(f, "\t.long {}", self.value)
+        }
     }
 }
 

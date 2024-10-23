@@ -10,15 +10,16 @@ fn fixup_pseudo(
     symbols: &HashMap<String, Symbol>,
     parameter: bool,
 ) -> Operand {
-    if let Some(symbol) = symbols.get(&name) {
-        if symbol.attributes.is_static() {
-            return Operand::Data(name);
-        }
-    }
+    
     if let Some(offset) = stack.get(&name) {
         Operand::Stack(*offset)
     } else {
-        //Do parameters need to be 8?
+        if let Some(symbol) = symbols.get(&name) {
+            if symbol.attributes.is_static() {
+                return Operand::Data(name);
+            }
+        }  
+        
         if parameter {
             let offset = (stack.len() + 1) as i32 * 8;
             stack.insert(name, -offset);
@@ -28,7 +29,9 @@ fn fixup_pseudo(
             stack.insert(name, -offset);
             Operand::local(offset)
         }
+    
     }
+
 }
 
 pub(crate) fn rewrite_pseudo_with_stack(
