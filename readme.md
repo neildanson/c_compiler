@@ -114,6 +114,12 @@ Chapter 10 notes
 * Lexer complete
 * Parser complete
   - Implement code p226  (parse_type_and_storage_specifier) and figure out where to integrate. 
-* Semantic analysis not started. 
-* Tacky generation not started
-* Codegen not started
+* Codegen is done
+* Tacky from parse is wonky
+  * I dont like passing back a seperate symbol table - feels like I can just extract from the parse ast during tacky generation
+  * Plan!
+    * Generate a Tasky AST
+    * Visit the tree, populating statics and rewriting the tree. 
+    * All the information about global and linkage is part of parse ast? Might need to consider.
+    * Dont have a tryfrom tacky:Function -> cogegen:Function. It's too constrictive. 
+    * I dont have a plan for resolving symbols that are static in `rewrite_pseudo_with_stack`. 
