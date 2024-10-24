@@ -370,7 +370,7 @@ fn parse_variable_declaration(tokens: &[Token]) -> Result<(VariableDeclaration, 
             (
                 VariableDeclaration {
                     name: name.clone(),
-                    value: Some(expression),
+                    init: Some(expression),
                     storage_class: None,
                 },
                 rest,
@@ -382,7 +382,7 @@ fn parse_variable_declaration(tokens: &[Token]) -> Result<(VariableDeclaration, 
             (
                 VariableDeclaration {
                     name: name.clone(),
-                    value: Some(expression),
+                    init: Some(expression),
                     storage_class: Some(StorageClass::Static),
                 },
                 rest,
@@ -394,7 +394,7 @@ fn parse_variable_declaration(tokens: &[Token]) -> Result<(VariableDeclaration, 
             (
                 VariableDeclaration {
                     name: name.clone(),
-                    value: Some(expression),
+                    init: Some(expression),
                     storage_class: Some(StorageClass::Extern),
                 },
                 rest,
@@ -403,7 +403,7 @@ fn parse_variable_declaration(tokens: &[Token]) -> Result<(VariableDeclaration, 
         [Token::Int, Token::Identifier(name), rest @ ..] => (
             VariableDeclaration {
                 name: name.clone(),
-                value: None,
+                init: None,
                 storage_class: None,
             },
             rest,
@@ -412,7 +412,7 @@ fn parse_variable_declaration(tokens: &[Token]) -> Result<(VariableDeclaration, 
         | [Token::Int, Token::Static, Token::Identifier(name), rest @ ..] => (
             VariableDeclaration {
                 name: name.clone(),
-                value: None,
+                init: None,
                 storage_class: Some(StorageClass::Static),
             },
             rest,
@@ -421,7 +421,7 @@ fn parse_variable_declaration(tokens: &[Token]) -> Result<(VariableDeclaration, 
         | [Token::Int, Token::Extern, Token::Identifier(name), rest @ ..] => (
             VariableDeclaration {
                 name: name.clone(),
-                value: None,
+                init: None,
                 storage_class: Some(StorageClass::Extern),
             },
             rest,

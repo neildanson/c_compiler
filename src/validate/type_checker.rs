@@ -46,9 +46,15 @@ pub struct FunAttr {
 }
 
 #[derive(PartialEq, Clone, Debug)]
+pub struct StaticAttr {
+    pub init: InitialValue,
+    pub global: bool,
+}
+
+#[derive(PartialEq, Clone, Debug)]
 pub enum IdentifierAttributes {
     Fun(FunAttr),
-    Static { init: InitialValue, global: bool },
+    Static(StaticAttr),
     Local,
 }
 
@@ -56,14 +62,14 @@ impl IdentifierAttributes {
     pub fn is_global(&self) -> bool {
         match self {
             IdentifierAttributes::Fun(fun_attr) => fun_attr.global,
-            IdentifierAttributes::Static { global, .. } => *global,
+            IdentifierAttributes::Static (static_attr) => static_attr.global,
             IdentifierAttributes::Local => false,
         }
     }
 
     pub fn init(&self) -> InitialValue {
         match self {
-            IdentifierAttributes::Static { init, .. } => init.clone(),
+            IdentifierAttributes::Static (static_attr) => static_attr.init.clone(),
             _ => InitialValue::NoInitializer,
         }
     }
@@ -83,9 +89,9 @@ impl TypeChecker {
         &mut self,
         variable_declaration: &VariableDeclaration,
     ) -> Result<(), CompilerError> {
-        let mut initial_value = if let Some(Expression::Constant(i)) = variable_declaration.value {
+        let mut initial_value = if let Some(Expression::Constant(i)) = variable_declaration.init {
             InitialValue::Initial(i)
-        } else if variable_declaration.value.is_none() {
+        } else if variable_declaration.init.is_none() {
             if variable_declaration.storage_class == Some(StorageClass::Extern) {
                 InitialValue::NoInitializer
             } else {
@@ -132,10 +138,7 @@ impl TypeChecker {
             }
         }
 
-        let attrs = IdentifierAttributes::Static {
-            init: initial_value,
-            global,
-        };
+        let attrs = IdentifierAttributes::Static(StaticAttr { init: initial_value, global });
 
         self.symbol_table.insert(
             variable_declaration.name.clone(),
@@ -150,7 +153,7 @@ impl TypeChecker {
         variable_declaration: &VariableDeclaration,
     ) -> Result<(), CompilerError> {
         if variable_declaration.storage_class == Some(StorageClass::Extern) {
-            if variable_declaration.value.is_some() {
+            if variable_declaration.init.is_some() {
                 return Err(CompilerError::SemanticAnalysis(
                     SemanticAnalysisError::ExternVariableCannotHaveInitializer, //Wrong wrror
                 ));
@@ -168,17 +171,16 @@ impl TypeChecker {
                     variable_declaration.name.clone(),
                     Symbol::new(
                         TypeDefinition::Int,
-                        IdentifierAttributes::Static {
+                        IdentifierAttributes::Static (StaticAttr {
                             init: InitialValue::NoInitializer,
                             global: true,
-                        },
-                    ),
-                );
+                        })),
+                    );
             }
         } else if variable_declaration.storage_class == Some(StorageClass::Static) {
-            let initial_value = if let Some(Expression::Constant(i)) = variable_declaration.value {
+            let initial_value = if let Some(Expression::Constant(i)) = variable_declaration.init {
                 InitialValue::Initial(i)
-            } else if variable_declaration.value.is_none() {
+            } else if variable_declaration.init.is_none() {
                 InitialValue::Initial(0)
             } else {
                 return Err(CompilerError::SemanticAnalysis(
@@ -189,10 +191,10 @@ impl TypeChecker {
                 variable_declaration.name.clone(),
                 Symbol::new(
                     TypeDefinition::Int,
-                    IdentifierAttributes::Static {
+                    IdentifierAttributes::Static (StaticAttr {
                         init: initial_value,
                         global: false,
-                    },
+                    })
                 ),
             );
         } else {
@@ -200,7 +202,7 @@ impl TypeChecker {
                 variable_declaration.name.clone(),
                 Symbol::new(TypeDefinition::Int, IdentifierAttributes::Local),
             );
-            if let Some(initializer) = variable_declaration.value.as_ref() {
+            if let Some(initializer) = variable_declaration.init.as_ref() {
                 self.type_check_expression(initializer)?;
             }
         }
@@ -412,5 +414,18 @@ impl TypeChecker {
             }
         }
         Ok(())
+    }
+
+    pub fn statics(&self) -> Vec<StaticAttr> {
+        self.symbol_table
+            .iter()
+            .filter_map(|(name, symbol)| {
+                if let IdentifierAttributes::Static(static_attr) = &symbol.attributes {
+                    Some(static_attr.clone())
+                } else {
+                    None
+                }
+            })
+            .collect()
     }
 }

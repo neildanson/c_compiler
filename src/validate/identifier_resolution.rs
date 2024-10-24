@@ -174,7 +174,7 @@ impl IdentifierResolution {
 
         let unique_name = self.make_unique_name(decl.name);
 
-        let init = match decl.value {
+        let init = match decl.init {
             Some(expr) => {
                 let expression = self.resolve_expression(&expr)?;
                 Some(expression)
@@ -183,7 +183,7 @@ impl IdentifierResolution {
         };
         Ok(VariableDeclaration {
             name: unique_name,
-            value: init,
+            init,
             storage_class: decl.storage_class,
         })
     }

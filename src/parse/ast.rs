@@ -43,7 +43,7 @@ impl Declaration {
 #[derive(Clone, Debug, PartialEq)]
 pub struct VariableDeclaration {
     pub name: Identifier,
-    pub value: Option<Expression>,
+    pub init: Option<Expression>,
     pub storage_class: Option<StorageClass>,
 }
 

@@ -307,15 +307,15 @@ impl Tacky {
     ) -> Result<(), CompilerError> {
         let name = d.name.clone();
         let value = d
-            .value
+            .init
             .as_ref()
             .map(|e| self.emit_tacky_expr(e, instructions))
             .transpose()?;
 
         //TODO Check if this is right? We have already moved to symbols. Fuck it.
-        //if d.storage_class == Some(parse::StorageClass::Static) && value.is_some() {
-        //    return Ok(());
-        //}
+        if d.storage_class == Some(parse::StorageClass::Static) && value.is_some() {
+            return Ok(());
+        }
         if d.storage_class != Some(parse::StorageClass::Extern) {
             let value = value.unwrap_or(Value::Constant(0));
             instructions.push(Instruction::Copy {
@@ -579,18 +579,18 @@ impl Tacky {
         let mut new_symbols = Vec::new();
         for (name, symbol) in symbols {
             match &symbol.attributes {
-                crate::validate::IdentifierAttributes::Static { init, global } => match init {
+                crate::validate::IdentifierAttributes::Static(static_attr) => match static_attr.init {
                     InitialValue::Initial(i) => {
                         new_symbols.push(TopLevel::StaticVariable(StaticVariable {
                             identifier: name.clone(),
-                            global: *global,
-                            init: *i,
+                            global: static_attr.global,
+                            init: i,
                         }));
                     }
                     InitialValue::Tentative => {
                         new_symbols.push(TopLevel::StaticVariable(StaticVariable {
                             identifier: name.clone(),
-                            global: *global,
+                            global: static_attr.global,
                             init: 0,
                         }));
                     }
