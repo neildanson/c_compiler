@@ -1,5 +1,6 @@
 use crate::error::*;
 use crate::parse::ast::*;
+use global_counter::primitive::CounterI32;
 use std::collections::HashMap;
 
 #[derive(Debug)]
@@ -43,9 +44,10 @@ impl From<String> for MapEntry {
     }
 }
 
+static COUNTER: CounterI32 = CounterI32::new(0);
+
 #[derive(Default)]
 pub(crate) struct IdentifierResolution {
-    count: usize,
     identifier_map: HashMap<Identifier, MapEntry>,
 }
 
@@ -56,7 +58,6 @@ impl Clone for IdentifierResolution {
             new_map.insert(key.clone(), value.clone());
         }
         IdentifierResolution {
-            count: self.count,
             identifier_map: new_map,
         }
     }
@@ -64,9 +65,9 @@ impl Clone for IdentifierResolution {
 
 impl IdentifierResolution {
     fn make_unique_name(&mut self, name: String) -> String {
-        self.count += 1;
-        let unique_name = format!("{}__{}", name, self.count);
-        
+        let count = COUNTER.inc();
+        let unique_name = format!("{}__{}", name, count);
+
         self.identifier_map.insert(name, unique_name.clone().into());
 
         unique_name
@@ -160,6 +161,8 @@ impl IdentifierResolution {
                 ));
             }
         }
+
+        println!("Decl: {:?}", decl);
 
         if decl.storage_class == Some(StorageClass::Extern) {
             self.identifier_map.insert(

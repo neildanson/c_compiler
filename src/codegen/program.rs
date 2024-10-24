@@ -25,10 +25,11 @@ impl TryFrom<tacky::Program> for Program {
     type Error = CompilerError;
     fn try_from(ast: tacky::Program) -> Result<Self, Self::Error> {
         let mut top_level = Vec::new();
+
         for tl in ast.top_level {
             match tl {
                 tacky::TopLevel::Function(f) => {
-                    top_level.push(TopLevel::Function(Function::try_from(f, &ast.symbols)?));
+                    top_level.push(TopLevel::Function(Function::try_from(f)?));
                 }
                 tacky::TopLevel::StaticVariable(s) => {
                     top_level.push(TopLevel::StaticVariable(StaticVariable::try_from(s)?));

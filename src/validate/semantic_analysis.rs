@@ -1,6 +1,4 @@
-use std::collections::HashMap;
-
-use super::type_checker::{self, Symbol};
+use super::type_checker::{self};
 use super::{identifier_resolution::*, loop_labelling::LoopLabelling};
 use crate::error::*;
 use crate::parse::ast::*;
@@ -24,7 +22,7 @@ impl SemanticAnalysis {
 
     pub fn semantic_validation(
         program: Program,
-    ) -> Result<(Program, HashMap<String, Symbol>), CompilerError> {
+    ) -> Result<Program, CompilerError> {
         let mut identifier_resolution = IdentifierResolution::default();
         let mut loop_labelling = LoopLabelling::default();
         let mut type_checker = type_checker::TypeChecker::default();
@@ -33,8 +31,6 @@ impl SemanticAnalysis {
         for declaration in program.declarations {
             match declaration {
                 Declaration::Variable(variable) => {
-                    //let variable = identifier_resolution.resolve_variable_declaration(variable)?;
-                    //type_checker.type_check_variable_declaration(&variable)?;
                     let variable =
                         identifier_resolution.resolve_file_scope_variable_declaration(variable)?;
                     type_checker.type_check_file_scope_variable_declaration(&variable)?;
@@ -52,6 +48,6 @@ impl SemanticAnalysis {
             }
         }
 
-        Ok((Program { declarations }, type_checker.symbol_table))
+        Ok(Program { declarations })
     }
 }

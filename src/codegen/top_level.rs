@@ -1,9 +1,6 @@
-use std::{
-    collections::HashMap,
-    fmt::{Display, Formatter},
-};
+use std::fmt::{Display, Formatter};
 
-use crate::{error::CompilerError, tacky, validate::Symbol};
+use crate::{error::CompilerError, tacky};
 
 use super::*;
 
@@ -34,11 +31,11 @@ impl Display for Function {
     }
 }
 
-impl Function {
-    pub fn try_from(
+impl TryFrom<tacky::Function> for Function {
+    type Error = CompilerError;
+    fn try_from(
         ast: tacky::Function,
-        symbols: &HashMap<String, Symbol>,
-    ) -> Result<Function, CompilerError> {
+    ) -> Result<Self, Self::Error> {
         if let Some(body_ast) = ast.body {
             let mut body = Vec::new();
 
@@ -57,7 +54,8 @@ impl Function {
                 body.append(&mut instructions);
             }
 
-            let (mut body, stack_size) = rewrite_pseudo_with_stack(body, symbols);
+            //TODO how to handle statics without a symbol_table?
+            let (mut body, stack_size) = rewrite_pseudo_with_stack(body);
             let size = ((stack_size * 4) + 15) & !15;
             body.insert(0, Instruction::AllocateStack(size)); //* 4 as ints are 4 bytes */
             let body = fixup_stack_operations(body);

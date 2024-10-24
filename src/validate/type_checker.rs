@@ -75,7 +75,7 @@ impl IdentifierAttributes {
 
 #[derive(Default)]
 pub(crate) struct TypeChecker {
-    pub symbol_table: HashMap<String, Symbol>,
+    symbol_table: HashMap<String, Symbol>,
 }
 
 impl TypeChecker {

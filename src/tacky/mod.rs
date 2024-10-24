@@ -311,8 +311,11 @@ impl Tacky {
             .as_ref()
             .map(|e| self.emit_tacky_expr(e, instructions))
             .transpose()?;
-        
-        //TODO Check if this is right?
+
+        //TODO Check if this is right? We have already moved to symbols. Fuck it.
+        //if d.storage_class == Some(parse::StorageClass::Static) && value.is_some() {
+        //    return Ok(());
+        //}
         if d.storage_class != Some(parse::StorageClass::Extern) {
             let value = value.unwrap_or(Value::Constant(0));
             instructions.push(Instruction::Copy {
@@ -552,7 +555,7 @@ impl Tacky {
     fn emit_tacky_function(
         &mut self,
         f: parse::FunctionDeclaration,
-    ) -> Result<Function, CompilerError> {
+    ) -> Result<Option<Function>, CompilerError> {
         let mut body = Vec::new();
         if let Some(body_stmt) = f.body {
             for block_item in body_stmt {
@@ -561,19 +564,14 @@ impl Tacky {
 
             Tacky::fixup_missing_return(&mut body);
 
-            Ok(Function {
+            Ok(Some(Function {
                 name: f.name,
                 global: false, //TODO
                 params: f.parameters,
                 body: Some(body),
-            })
+            }))
         } else {
-            Ok(Function {
-                name: f.name,
-                global: false, //TODO
-                params: f.parameters,
-                body: None,
-            })
+            Ok(None)
         }
     }
 
@@ -607,23 +605,53 @@ impl Tacky {
     pub fn emit_tacky(
         &mut self,
         p: parse::Program,
-        symbols: HashMap<String, Symbol>,
     ) -> Result<Program, CompilerError> {
-        let mut top_level = Tacky::convert_symbols_to_tacky(&symbols);
-
+        let mut top_level = Vec::new();
         for decl in p.declarations {
             match decl {
                 parse::Declaration::Function(f) => {
                     let function = self.emit_tacky_function(f)?;
-                    top_level.push(TopLevel::Function(function));
+                    if let Some(function) = function {
+                        top_level.push(TopLevel::Function(function));
+                    }
                 }
                 _ => {
                     //Handled by convert_symbols_to_tacky
                 }
             }
         }
-        Ok(Program { top_level, symbols })
+        
+        //Walk the tree and emit the static variables
+
+
+        //top_level.extend(Tacky::convert_symbols_to_tacky(&symbols));
+        Ok(Program { top_level })
     }
+
+    /*fn extract_symbols(p: &parse::Program, symbols : &mut Vec<Symbol>) {
+        let mut symbols = HashMap::new();
+        for decl in &p.declarations {
+            match decl {
+                parse::Declaration::Function(f) => {
+                    for body in f.body.unwrap() {
+                        match body {
+                            parse::BlockItem::Declaration(d) => {
+                                match d {
+                                    parse::VariableDeclaration { name, value, .. } => {
+                                        symbols.push(name.clone(), Symbol::new(name.clone()));
+                                    }
+                                }
+                            }
+                            _ => {}
+                        }
+                    }
+                    symbols.insert(v.name.clone(), Symbol::new(v.clone()));
+                }
+                _ => {}
+            }
+        }
+        symbols
+    }*/
 
     pub fn fixup_missing_return(instructions: &mut Vec<Instruction>) {
         let last = instructions.last();

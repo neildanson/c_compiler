@@ -10,10 +10,7 @@ use crate::lex::*;
 use crate::parse::parse_program;
 use crate::tacky::Tacky;
 use anyhow::Result;
-use std::{
-    collections::HashMap,
-    io::{Read, Write},
-};
+use std::io::{Read, Write};
 use validate::SemanticAnalysis;
 
 pub fn read_file(filename: &str) -> Result<String> {
@@ -45,16 +42,16 @@ pub fn parse(filename: &str) -> Result<parse::Program> {
     Ok(ast)
 }
 
-pub fn validate(filename: &str) -> Result<(parse::Program, HashMap<String, validate::Symbol>)> {
+pub fn validate(filename: &str) -> Result<parse::Program> {
     let program = parse(filename)?;
-    let (program, symbol) = SemanticAnalysis::semantic_validation(program)?;
-    Ok((program, symbol))
+    let program = SemanticAnalysis::semantic_validation(program)?;
+    Ok(program)
 }
 
 pub fn tacky(filename: &str) -> Result<tacky::Program> {
-    let (ast, symbols) = validate(filename)?;
+    let ast = validate(filename)?;
     let mut tacky = Tacky::default();
-    let tacky = tacky.emit_tacky(ast, symbols)?;
+    let tacky = tacky.emit_tacky(ast)?;
     Ok(tacky)
 }
 

@@ -1,25 +1,21 @@
 use std::collections::HashMap;
 
-use crate::validate::Symbol;
-
 use super::*;
 
 fn fixup_pseudo(
     name: String,
     stack: &mut HashMap<String, i32>,
-    symbols: &HashMap<String, Symbol>,
     parameter: bool,
 ) -> Operand {
-    
     if let Some(offset) = stack.get(&name) {
         Operand::Stack(*offset)
     } else {
-        if let Some(symbol) = symbols.get(&name) {
-            if symbol.attributes.is_static() {
-                return Operand::Data(name);
-            }
-        }  
-        
+        //if let Some(symbol) = symbols.get(&name) {
+        //    if symbol.attributes.is_static() {
+        //        return Operand::Data(name);
+        //    }
+        //}
+
         if parameter {
             let offset = (stack.len() + 1) as i32 * 8;
             stack.insert(name, -offset);
@@ -29,14 +25,11 @@ fn fixup_pseudo(
             stack.insert(name, -offset);
             Operand::local(offset)
         }
-    
     }
-
 }
 
 pub(crate) fn rewrite_pseudo_with_stack(
     body: Vec<Instruction>,
-    symbols: &HashMap<String, Symbol>,
 ) -> (Vec<Instruction>, usize) {
     let mut stack = HashMap::new();
     let mut new_body = Vec::new();
@@ -44,61 +37,61 @@ pub(crate) fn rewrite_pseudo_with_stack(
         match instruction {
             Instruction::Mov { src, dst } => {
                 let src = match src {
-                    Operand::Pseudo(name) => fixup_pseudo(name, &mut stack, symbols, false),
+                    Operand::Pseudo(name) => fixup_pseudo(name, &mut stack, false),
                     _ => src,
                 };
                 let dst = match dst {
-                    Operand::Pseudo(name) => fixup_pseudo(name, &mut stack, symbols, false),
+                    Operand::Pseudo(name) => fixup_pseudo(name, &mut stack, false),
                     _ => dst,
                 };
                 new_body.push(Instruction::Mov { src, dst });
             }
             Instruction::Unary { op, dst } => {
                 let dst = match dst {
-                    Operand::Pseudo(name) => fixup_pseudo(name, &mut stack, symbols, false),
+                    Operand::Pseudo(name) => fixup_pseudo(name, &mut stack, false),
                     _ => dst,
                 };
                 new_body.push(Instruction::Unary { op, dst });
             }
             Instruction::Binary { op, src2, dst } => {
                 let src2 = match src2 {
-                    Operand::Pseudo(name) => fixup_pseudo(name, &mut stack, symbols, false),
+                    Operand::Pseudo(name) => fixup_pseudo(name, &mut stack, false),
                     _ => src2,
                 };
                 let dst = match dst {
-                    Operand::Pseudo(name) => fixup_pseudo(name, &mut stack, symbols, false),
+                    Operand::Pseudo(name) => fixup_pseudo(name, &mut stack, false),
                     _ => dst,
                 };
                 new_body.push(Instruction::Binary { op, src2, dst });
             }
             Instruction::Cmp(lhs, rhs) => {
                 let lhs = match lhs {
-                    Operand::Pseudo(name) => fixup_pseudo(name, &mut stack, symbols, false),
+                    Operand::Pseudo(name) => fixup_pseudo(name, &mut stack, false),
                     _ => lhs,
                 };
                 let rhs = match rhs {
-                    Operand::Pseudo(name) => fixup_pseudo(name, &mut stack, symbols, false),
+                    Operand::Pseudo(name) => fixup_pseudo(name, &mut stack, false),
                     _ => rhs,
                 };
                 new_body.push(Instruction::Cmp(lhs, rhs));
             }
             Instruction::SetCC(cond, operand) => {
                 let operand = match operand {
-                    Operand::Pseudo(name) => fixup_pseudo(name, &mut stack, symbols, false),
+                    Operand::Pseudo(name) => fixup_pseudo(name, &mut stack, false),
                     _ => operand,
                 };
                 new_body.push(Instruction::SetCC(cond, operand));
             }
             Instruction::Push(operand) => {
                 let operand = match operand {
-                    Operand::Pseudo(name) => fixup_pseudo(name, &mut stack, symbols, true),
+                    Operand::Pseudo(name) => fixup_pseudo(name, &mut stack, true),
                     _ => operand,
                 };
                 new_body.push(Instruction::Push(operand));
             }
             Instruction::Idiv { src } => new_body.push(Instruction::Idiv {
                 src: match src {
-                    Operand::Pseudo(name) => fixup_pseudo(name, &mut stack, symbols, false),
+                    Operand::Pseudo(name) => fixup_pseudo(name, &mut stack, false),
                     _ => src,
                 },
             }),
