@@ -1,6 +1,6 @@
 use super::{Function, StaticVariable, TopLevel};
-use crate::{error::CompilerError, tacky};
-use std::fmt::Display;
+use crate::{error::CompilerError, tacky, validate::StaticAttr};
+use std::{collections::HashMap, fmt::Display};
 
 #[derive(Debug, PartialEq)]
 pub struct Program {
@@ -38,5 +38,16 @@ impl TryFrom<tacky::Program> for Program {
         }
 
         Ok(Program { top_level })
+    }
+}
+
+impl Program { 
+    pub fn fixup(&mut self, static_variables: &HashMap<String, StaticAttr>) {
+        for top_level in &mut self.top_level {
+            match top_level {
+                TopLevel::Function(f) => f.fixup(static_variables),
+                TopLevel::StaticVariable(_) => {},
+            }
+        }
     }
 }

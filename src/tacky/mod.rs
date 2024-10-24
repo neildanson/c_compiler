@@ -16,7 +16,7 @@ pub use value::*;
 use crate::{
     error::CompilerError,
     parse::{self, Expression},
-    validate::{InitialValue, Symbol},
+    validate::{InitialValue, StaticAttr},
 };
 use std::collections::HashMap;
 
@@ -313,7 +313,7 @@ impl Tacky {
             .transpose()?;
 
         //TODO Check if this is right? We have already moved to symbols. Fuck it.
-        if d.storage_class == Some(parse::StorageClass::Static) && value.is_some() {
+        if d.storage_class == Some(parse::StorageClass::Static) {
             return Ok(());
         }
         if d.storage_class != Some(parse::StorageClass::Extern) {
@@ -575,16 +575,15 @@ impl Tacky {
         }
     }
 
-    fn convert_symbols_to_tacky(symbols: &HashMap<String, Symbol>) -> Vec<TopLevel> {
+    fn convert_static_variables_to_tacky(static_variables: &HashMap<String, StaticAttr>) -> Vec<TopLevel> {
         let mut new_symbols = Vec::new();
-        for (name, symbol) in symbols {
-            match &symbol.attributes {
-                crate::validate::IdentifierAttributes::Static(static_attr) => match static_attr.init {
+        for (name, static_attr) in static_variables {
+            match &static_attr.init {
                     InitialValue::Initial(i) => {
                         new_symbols.push(TopLevel::StaticVariable(StaticVariable {
                             identifier: name.clone(),
                             global: static_attr.global,
-                            init: i,
+                            init: *i,
                         }));
                     }
                     InitialValue::Tentative => {
@@ -595,9 +594,7 @@ impl Tacky {
                         }));
                     }
                     _ => {}
-                },
-                _ => {}
-            }
+                }
         }
         new_symbols
     }
@@ -605,6 +602,7 @@ impl Tacky {
     pub fn emit_tacky(
         &mut self,
         p: parse::Program,
+        static_variables: &HashMap<String, StaticAttr>,
     ) -> Result<Program, CompilerError> {
         let mut top_level = Vec::new();
         for decl in p.declarations {
@@ -624,7 +622,7 @@ impl Tacky {
         //Walk the tree and emit the static variables
 
 
-        //top_level.extend(Tacky::convert_symbols_to_tacky(&symbols));
+        top_level.extend(Tacky::convert_static_variables_to_tacky(&static_variables));
         Ok(Program { top_level })
     }
 

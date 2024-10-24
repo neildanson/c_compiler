@@ -10,8 +10,8 @@ use crate::lex::*;
 use crate::parse::parse_program;
 use crate::tacky::Tacky;
 use anyhow::Result;
-use std::io::{Read, Write};
-use validate::SemanticAnalysis;
+use std::{collections::HashMap, io::{Read, Write}};
+use validate::{SemanticAnalysis, StaticAttr};
 
 pub fn read_file(filename: &str) -> Result<String> {
     let file = std::fs::File::open(filename)?;
@@ -42,22 +42,23 @@ pub fn parse(filename: &str) -> Result<parse::Program> {
     Ok(ast)
 }
 
-pub fn validate(filename: &str) -> Result<parse::Program> {
+pub fn validate(filename: &str) -> Result<(parse::Program, HashMap<String, StaticAttr>)> {
     let program = parse(filename)?;
     let program = SemanticAnalysis::semantic_validation(program)?;
     Ok(program)
 }
 
-pub fn tacky(filename: &str) -> Result<tacky::Program> {
-    let ast = validate(filename)?;
+pub fn tacky(filename: &str) -> Result<(tacky::Program, HashMap<String, StaticAttr>)> {
+    let (ast, static_variables) = validate(filename)?;
     let mut tacky = Tacky::default();
-    let tacky = tacky.emit_tacky(ast)?;
-    Ok(tacky)
+    let tacky = tacky.emit_tacky(ast, &static_variables)?;
+    Ok((tacky, static_variables))
 }
 
 pub fn codegen(filename: &str) -> Result<codegen::Program> {
-    let ast = tacky(filename)?;
-    let asm = ast.try_into()?;
+    let (ast, static_variables) = tacky(filename)?;
+    let mut asm : codegen::Program = ast.try_into()?;
+    asm.fixup(&static_variables);
     Ok(asm)
 }
 

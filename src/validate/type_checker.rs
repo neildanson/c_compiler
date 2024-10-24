@@ -416,12 +416,12 @@ impl TypeChecker {
         Ok(())
     }
 
-    pub fn statics(&self) -> Vec<StaticAttr> {
+    pub fn statics(&self) -> HashMap<String, StaticAttr> {
         self.symbol_table
             .iter()
             .filter_map(|(name, symbol)| {
                 if let IdentifierAttributes::Static(static_attr) = &symbol.attributes {
-                    Some(static_attr.clone())
+                    Some((name.clone(), static_attr.clone()))
                 } else {
                     None
                 }

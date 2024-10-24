@@ -162,8 +162,6 @@ impl IdentifierResolution {
             }
         }
 
-        println!("Decl: {:?}", decl);
-
         if decl.storage_class == Some(StorageClass::Extern) {
             self.identifier_map.insert(
                 decl.name.clone(),

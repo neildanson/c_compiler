@@ -1,11 +1,15 @@
-/* you can redeclare a function multiple times,
- * but only define it once
- */
-extern int sum(int a, int b);
-
-int sum(int i, int j) {
-    static int k = 0;
-    return i + j;
+int foo(void) {
+    /* If a static variable has no explicit initializer,
+     * it's initialized to zero.
+     */
+    static int x;
+    x = x + 1;
+    return x;
 }
 
-int sum(int x, int y);
+int main(void) {
+    int ret;
+    for (int i = 0; i < 4; i = i + 1)
+        ret = foo();
+    return ret;
+}

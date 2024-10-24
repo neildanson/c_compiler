@@ -1,6 +1,6 @@
-use std::fmt::{Display, Formatter};
+use std::{collections::HashMap, fmt::{Display, Formatter}};
 
-use crate::{error::CompilerError, tacky};
+use crate::{error::CompilerError, tacky, validate::StaticAttr};
 
 use super::*;
 
@@ -14,9 +14,9 @@ pub struct Function {
 impl Display for Function {
     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
         if let Some(body) = &self.body {
-            if self.global || self.name == "main" {
+            //if self.global || self.name == "main" {
                 writeln!(f, "\t.globl {}", format_fn_call(&self.name))?;
-            }
+            //}
             writeln!(f, "\t.text")?;
             writeln!(f, "{}:", format_fn_call(&self.name))?;
             writeln!(f, "\t# Function Preamble")?;
@@ -55,10 +55,7 @@ impl TryFrom<tacky::Function> for Function {
             }
 
             //TODO how to handle statics without a symbol_table?
-            let (mut body, stack_size) = rewrite_pseudo_with_stack(body);
-            let size = ((stack_size * 4) + 15) & !15;
-            body.insert(0, Instruction::AllocateStack(size)); //* 4 as ints are 4 bytes */
-            let body = fixup_stack_operations(body);
+            
             Ok(Function {
                 name: ast.name,
                 global: ast.global,
@@ -70,6 +67,17 @@ impl TryFrom<tacky::Function> for Function {
                 global: ast.global,
                 body: None,
             })
+        }
+    }
+}
+
+impl Function { 
+    pub fn fixup(&mut self, static_variables: &HashMap<String, StaticAttr>) {
+        if let Some(body) = &self.body {
+            let (mut body, stack_size) = rewrite_pseudo_with_stack(body.clone(), static_variables);
+            let size = ((stack_size * 4) + 15) & !15;
+            body.insert(0, Instruction::AllocateStack(size)); //* 4 as ints are 4 bytes */
+            self.body = Some(fixup_stack_operations(body));
         }
     }
 }
