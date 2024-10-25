@@ -107,6 +107,9 @@ Copilot is pretty good at explaining why asm code segfaults. Use it.
 
 # TODOs
 
+- [ ]  .balign on mac - also double check everything else lines up.  
+
+
 100% Implemented up to chapter 10 (excluding some extras)
 
 Chapter 11 notes
