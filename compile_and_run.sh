@@ -3,7 +3,7 @@
 cargo build --release
 
 ../writing-a-c-compiler-tests/test_compiler ./target/release/c_compiler --chapter 10 
-#../writing-a-c-compiler-tests/test_compiler ./target/release/c_compiler --chapter 10 --stage codegen
+../writing-a-c-compiler-tests/test_compiler ./target/release/c_compiler --chapter 11 --stage lex
 
 rm -rf temp
 mkdir temp
