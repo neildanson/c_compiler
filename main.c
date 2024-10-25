@@ -18,8 +18,8 @@ int print_buzz(void) {
     return 0;
 }
 
-int print_number(int i) {
-
+long print_number(long i) {
+    return i + 48L;
 }
 
 int main(void) {

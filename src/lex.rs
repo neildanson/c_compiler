@@ -9,7 +9,9 @@ pub enum Token {
     PreProcessorDirective(String), //#[a-zA-Z_]\w*\b
     Identifier(String),            //[a-zA-Z_]\w*\b
     Constant(String),              //[0-9]+\b
+    LongConstant(String),          //[0-9]+[lL]\b
     Int,                           //int\b
+    Long,                          //long\b
     Void,                          //void\b
     Return,                        //return\b
     Static,                        //static\b
@@ -98,6 +100,7 @@ impl Tokenizer {
             TokenMapper::new(r"^static\b", Box::new(|_| Token::Static)),
             TokenMapper::new(r"^extern\b", Box::new(|_| Token::Extern)),
             TokenMapper::new(r"^int\b", Box::new(|_| Token::Int)),
+            TokenMapper::new(r"^long\b", Box::new(|_| Token::Long)),
             TokenMapper::new(r"^if\b", Box::new(|_| Token::If)),
             TokenMapper::new(r"^else\b", Box::new(|_| Token::Else)),
             TokenMapper::new(r"^do\b", Box::new(|_| Token::Do)),
@@ -112,6 +115,7 @@ impl Tokenizer {
             TokenMapper::new(r"^;", Box::new(|_| Token::SemiColon)),
             TokenMapper::new(r"^[a-zA-Z_]\w*\b", Box::new(Token::Identifier)),
             TokenMapper::new(r"^[0-9]+\b", Box::new(Token::Constant)),
+            TokenMapper::new(r"^[0-9]+[lL]\b", Box::new(Token::LongConstant)),
             TokenMapper::new(r"^~", Box::new(|_| Token::Tilde)),
             TokenMapper::new(r"^--", Box::new(|_| Token::DoubleMinus)),
             TokenMapper::new(r"^\+\+", Box::new(|_| Token::DoublePlus)),

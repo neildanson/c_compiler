@@ -111,5 +111,5 @@ Copilot is pretty good at explaining why asm code segfaults. Use it.
 
 Chapter 11 notes
 
-* Lexer incomplete
+* Lexer complete
 * Parser incomplete
