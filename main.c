@@ -1,29 +1,13 @@
-int putchar(int c);
+/* Verify that if variable is tentatively defined one or more times,
+ * but not explicitly initialized, we'll initialize it to 0.
+ */
 
-int print_fizz(void) {
-    putchar(70);
-    putchar(73);
-    putchar(90);
-    putchar(90);
-    putchar(10);
-    return 0;
-}
+/* This declares foo but does not define it */
+extern int foo;
 
-int print_buzz(void) {
-    putchar(66);
-    putchar(85);
-    putchar(90);
-    putchar(90);
-    putchar(10);
-    return 0;
-}
-
-long print_number(long i) {
-    return i + 48L;
-}
+/* A tentative definition of foo */
+int foo;
 
 int main(void) {
-    print_fizz();
-    print_buzz();
     return 0;
 }

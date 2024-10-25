@@ -363,8 +363,50 @@ fn parse_statement(tokens: &[Token]) -> Result<(Statement, &[Token])> {
     Ok((statement, tokens))
 }
 
+fn parse_storage_class(token: &Token) -> Option<StorageClass> {
+    match token {
+        Token::Static => Some(StorageClass::Static),
+        Token::Extern => Some(StorageClass::Extern),
+        _ => None
+    }
+}
+
+fn parse_type_and_storage(specifier_list: &[Token]) -> Result<(Type, Option<StorageClass>, &[Token])> {
+    let mut types = Vec::new();
+    let mut storage_classes = Vec::new();
+    //TODO, perhaps parse until fail?
+    for specifier in specifier_list {
+        if specifier == &Token::Int {
+            types.push(specifier);
+        } else {
+            match specifier {
+                Token::Static | Token::Extern => {
+                    storage_classes.push(specifier);
+                }
+                _ => break,
+            }
+        }
+    }
+
+    if types.len() != 1 {
+        return Err(CompilerError::Parse("Invalid type specifier".to_string()).into());
+    }
+    if storage_classes.len() > 1 {
+        return Err(CompilerError::Parse("Invalid storage class specifier".to_string()).into());
+    }
+
+    let storage_class = match storage_classes.first() {
+        Some(storage_class) => parse_storage_class(storage_class),
+        None => None,
+    };
+
+
+
+    Ok((Type::Int, storage_class, &specifier_list[types.len() + storage_classes.len()..]))
+}
+
 fn parse_variable_declaration(tokens: &[Token]) -> Result<(VariableDeclaration, &[Token])> {
-    let (declaration, rest) = match tokens {
+    /*let (declaration, rest) = match tokens {
         [Token::Int, Token::Identifier(name), Token::Assignment, rest @ ..] => {
             let (expression, rest) = parse_expression(rest, 0)?;
             (
@@ -432,7 +474,34 @@ fn parse_variable_declaration(tokens: &[Token]) -> Result<(VariableDeclaration, 
                 CompilerError::Parse(format!("Declaration Unexpected Tokens {:?}", toks)).into(),
             )
         }
+    };*/
+
+    let (_variable_type, storage_class, rest) = parse_type_and_storage(tokens)?;
+    let (declaration, rest) = match rest {
+        
+        [Token::Identifier(name), Token::Assignment, rest @ ..] => {
+            let (expression, rest) = parse_expression(rest, 0)?;
+            (
+                VariableDeclaration {
+                    name: name.clone(),
+                    init: Some(expression),
+                    storage_class: storage_class,
+                },
+                rest,
+            )
+        }
+        [Token::Identifier(name), rest @ ..] => (VariableDeclaration {
+            name: name.clone(),
+            init: None,
+            storage_class: storage_class,
+        }, rest),
+        toks => {
+            return Err(
+                CompilerError::Parse(format!("Declaration Unexpected Tokens {:?}", toks)).into(),
+            )
+        }
     };
+
     let rest = swallow_semicolon(rest)?;
     Ok((declaration, rest))
 }

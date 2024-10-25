@@ -118,3 +118,7 @@ pub enum BinaryOperator {
     LessThanOrEqual,
     GreaterThanOrEqual,
 }
+
+pub enum Type {
+    Int
+}
