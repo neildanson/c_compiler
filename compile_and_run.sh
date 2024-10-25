@@ -1,5 +1,5 @@
 #!/bin/bash
-#cargo test --release
+cargo test --release
 cargo build --release
 
 ../writing-a-c-compiler-tests/test_compiler ./target/release/c_compiler --chapter 10 
