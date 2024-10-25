@@ -81,7 +81,7 @@ impl IdentifierAttributes {
 
 #[derive(Default)]
 pub(crate) struct TypeChecker {
-    symbol_table: HashMap<String, Symbol>,
+    pub symbol_table: HashMap<String, Symbol>,
 }
 
 impl TypeChecker {
@@ -408,18 +408,5 @@ impl TypeChecker {
             }
         }
         Ok(())
-    }
-
-    pub fn statics(&self) -> HashMap<String, StaticAttr> {
-        self.symbol_table
-            .iter()
-            .filter_map(|(name, symbol)| {
-                if let IdentifierAttributes::Static(static_attr) = &symbol.attributes {
-                    Some((name.clone(), static_attr.clone()))
-                } else {
-                    None
-                }
-            })
-            .collect()
     }
 }

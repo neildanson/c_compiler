@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use super::type_checker::{self};
-use super::StaticAttr;
+use super::Symbol;
 use super::{identifier_resolution::*, loop_labelling::LoopLabelling};
 use crate::error::*;
 use crate::parse::ast::*;
@@ -25,7 +25,7 @@ impl SemanticAnalysis {
 
     pub fn semantic_validation(
         program: Program,
-    ) -> Result<(Program, HashMap<String, StaticAttr>), CompilerError> {
+    ) -> Result<(Program, HashMap<String, Symbol>), CompilerError> {
         let mut identifier_resolution = IdentifierResolution::default();
         let mut loop_labelling = LoopLabelling::default();
         let mut type_checker = type_checker::TypeChecker::default();
@@ -50,7 +50,6 @@ impl SemanticAnalysis {
                 }
             }
         }
-        type_checker.statics();
-        Ok((Program { declarations },  type_checker.statics()))
+        Ok((Program { declarations },  type_checker.symbol_table))
     }
 }

@@ -16,7 +16,7 @@ pub use value::*;
 use crate::{
     error::CompilerError,
     parse::{self, Expression},
-    validate::{InitialValue, StaticAttr},
+    validate::{IdentifierAttributes, InitialValue, StaticAttr, Symbol},
 };
 use std::collections::HashMap;
 
@@ -555,6 +555,7 @@ impl Tacky {
     fn emit_tacky_function(
         &mut self,
         f: parse::FunctionDeclaration,
+        symbol_table : &HashMap<String, Symbol>,
     ) -> Result<Option<Function>, CompilerError> {
         let mut body = Vec::new();
         if let Some(body_stmt) = f.body {
@@ -565,8 +566,8 @@ impl Tacky {
             Tacky::fixup_missing_return(&mut body);
 
             Ok(Some(Function {
-                name: f.name,
-                global: true, //TODO
+                name: f.name.clone(),
+                global: symbol_table.get(&f.name).unwrap().attributes.is_global(),
                 params: f.parameters,
                 body: Some(body),
             }))
@@ -602,13 +603,13 @@ impl Tacky {
     pub fn emit_tacky(
         &mut self,
         p: parse::Program,
-        static_variables: &HashMap<String, StaticAttr>,
-    ) -> Result<Program, CompilerError> {
+        symbol_table: &HashMap<String, Symbol>,
+    ) -> Result<(Program, HashMap<String, StaticAttr>), CompilerError> {
         let mut top_level = Vec::new();
         for decl in p.declarations {
             match decl {
                 parse::Declaration::Function(f) => {
-                    let function = self.emit_tacky_function(f)?;
+                    let function = self.emit_tacky_function(f, symbol_table)?;
                     if let Some(function) = function {
                         top_level.push(TopLevel::Function(function));
                     }
@@ -621,9 +622,9 @@ impl Tacky {
         
         //Walk the tree and emit the static variables
 
-
+        let static_variables = Self::statics(symbol_table);
         top_level.extend(Tacky::convert_static_variables_to_tacky(&static_variables));
-        Ok(Program { top_level })
+        Ok((Program { top_level }, static_variables))
     }
 
     /*fn extract_symbols(p: &parse::Program, symbols : &mut Vec<Symbol>) {
@@ -657,5 +658,18 @@ impl Tacky {
             return;
         }
         instructions.push(Instruction::Return(Value::Constant(0)));
+    }
+
+    fn statics(symbol_table: &HashMap<String, Symbol>) -> HashMap<String, StaticAttr> {
+        symbol_table
+            .iter()
+            .filter_map(|(name, symbol)| {
+                if let IdentifierAttributes::Static(static_attr) = &symbol.attributes {
+                    Some((name.clone(), static_attr.clone()))
+                } else {
+                    None
+                }
+            })
+            .collect()
     }
 }

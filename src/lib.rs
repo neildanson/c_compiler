@@ -11,7 +11,7 @@ use crate::parse::parse_program;
 use crate::tacky::Tacky;
 use anyhow::Result;
 use std::{collections::HashMap, io::{Read, Write}};
-use validate::{SemanticAnalysis, StaticAttr};
+use validate::{SemanticAnalysis, StaticAttr, Symbol};
 
 pub fn read_file(filename: &str) -> Result<String> {
     let file = std::fs::File::open(filename)?;
@@ -42,16 +42,16 @@ pub fn parse(filename: &str) -> Result<parse::Program> {
     Ok(ast)
 }
 
-pub fn validate(filename: &str) -> Result<(parse::Program, HashMap<String, StaticAttr>)> {
+pub fn validate(filename: &str) -> Result<(parse::Program, HashMap<String, Symbol>)> {
     let program = parse(filename)?;
     let program = SemanticAnalysis::semantic_validation(program)?;
     Ok(program)
 }
 
 pub fn tacky(filename: &str) -> Result<(tacky::Program, HashMap<String, StaticAttr>)> {
-    let (ast, static_variables) = validate(filename)?;
+    let (ast, symbols) = validate(filename)?;
     let mut tacky = Tacky::default();
-    let tacky = tacky.emit_tacky(ast, &static_variables)?;
+    let (tacky, static_variables) = tacky.emit_tacky(ast, &symbols)?;
     Ok((tacky, static_variables))
 }
 
