@@ -1,15 +1,24 @@
-int foo(void) {
-    /* If a static variable has no explicit initializer,
-     * it's initialized to zero.
-     */
-    static int x;
-    x = x + 1;
-    return x;
+/* A function with internal linkage can be declared multiple times */
+static int my_fun(void);
+
+int call_static_my_fun(void) {
+    return my_fun();
 }
 
-int main(void) {
-    int ret;
-    for (int i = 0; i < 4; i = i + 1)
-        ret = foo();
-    return ret;
+int call_static_my_fun_2(void) {
+    /* when you declare a function at block scope,
+     * it takes on the linkage of already-visible declaration
+     */
+    int my_fun(void);
+    return my_fun();
+}
+
+extern int my_fun(void);
+
+static int my_fun(void);
+
+int my_fun(void) {
+    static int i = 0;
+    i = i + 1;
+    return i;
 }

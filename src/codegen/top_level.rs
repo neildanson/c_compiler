@@ -14,9 +14,9 @@ pub struct Function {
 impl Display for Function {
     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
         if let Some(body) = &self.body {
-            //if self.global || self.name == "main" {
+            if self.global || self.name == "main" {
                 writeln!(f, "\t.globl {}", format_fn_call(&self.name))?;
-            //}
+            }
             writeln!(f, "\t.text")?;
             writeln!(f, "{}:", format_fn_call(&self.name))?;
             writeln!(f, "\t# Function Preamble")?;

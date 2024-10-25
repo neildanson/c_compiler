@@ -566,7 +566,7 @@ impl Tacky {
 
             Ok(Some(Function {
                 name: f.name,
-                global: false, //TODO
+                global: true, //TODO
                 params: f.parameters,
                 body: Some(body),
             }))

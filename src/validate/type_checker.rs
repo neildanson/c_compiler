@@ -353,14 +353,8 @@ impl TypeChecker {
         let mut already_defined = false;
         let mut global = function_declaration.storage_class != Some(StorageClass::Static);
         if let Some(old_decl) = self.symbol_table.get(&function_declaration.name) {
-            if let IdentifierAttributes::Fun(fun_attr) = old_decl.attributes.clone() {
-                if old_decl.type_definition != fun_type {
-                    return Err(CompilerError::SemanticAnalysis(
-                        SemanticAnalysisError::IncompatibleFunctionDeclarations,
-                    ));
-                }
-
-                already_defined = fun_attr.defined;
+            if let IdentifierAttributes::Fun(old_fun_attr) = old_decl.attributes.clone() {
+                already_defined = old_fun_attr.defined;
                 if already_defined && has_body {
                     return Err(CompilerError::SemanticAnalysis(
                         SemanticAnalysisError::FunctionAlreadyDeclared(
@@ -369,7 +363,7 @@ impl TypeChecker {
                     ));
                 }
 
-                if fun_attr.global
+                if old_fun_attr.global
                     && function_declaration.storage_class == Some(StorageClass::Static)
                 {
                     return Err(CompilerError::SemanticAnalysis(
@@ -378,7 +372,7 @@ impl TypeChecker {
                         ),
                     ));
                 }
-                global = old_decl.attributes.is_global();
+                global = old_fun_attr.global;
             } else {
                 return Err(CompilerError::SemanticAnalysis(
                     SemanticAnalysisError::IncompatibleFunctionDeclarations,
