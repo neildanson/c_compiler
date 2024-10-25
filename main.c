@@ -1,12 +1,29 @@
-int foo(int a);
+int putchar(int c);
 
-int main(void) {
-    return 5;
+int print_fizz(void) {
+    putchar(70);
+    putchar(73);
+    putchar(90);
+    putchar(90);
+    putchar(10);
+    return 0;
 }
 
-/* The forward declaration and definition of 'foo' conflict
- * (different numbers of parameters)
- */
-int foo(int a, int b) {
-    return 4;
+int print_buzz(void) {
+    putchar(66);
+    putchar(85);
+    putchar(90);
+    putchar(90);
+    putchar(10);
+    return 0;
+}
+
+int print_number(int i) {
+
+}
+
+int main(void) {
+    print_fizz();
+    print_buzz();
+    return 0;
 }

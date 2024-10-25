@@ -354,6 +354,11 @@ impl TypeChecker {
         let mut global = function_declaration.storage_class != Some(StorageClass::Static);
         if let Some(old_decl) = self.symbol_table.get(&function_declaration.name) {
             if let IdentifierAttributes::Fun(old_fun_attr) = old_decl.attributes.clone() {
+                if old_decl.type_definition != fun_type {
+                    return Err(CompilerError::SemanticAnalysis(
+                        SemanticAnalysisError::IncompatibleFunctionDeclarations,
+                    ));
+                }
                 already_defined = old_fun_attr.defined;
                 if already_defined && has_body {
                     return Err(CompilerError::SemanticAnalysis(
