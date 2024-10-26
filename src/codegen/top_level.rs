@@ -93,7 +93,11 @@ pub struct StaticVariable {
 impl Display for StaticVariable {
     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
         if self.global {
-            writeln!(f, "\t.globl {}", self.identfiier)?;
+            if cfg!(target_os = "macos") {
+                writeln!(f, "\t.globl _{}", self.identfiier)?;
+            } else {
+                writeln!(f, "\t.globl {}", self.identfiier)?;
+            }
         }
         if self.value == 0 {
             writeln!(f, "\t.bss")?;
