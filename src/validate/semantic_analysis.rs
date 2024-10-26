@@ -50,6 +50,6 @@ impl SemanticAnalysis {
                 }
             }
         }
-        Ok((Program { declarations },  type_checker.symbol_table))
+        Ok((Program { declarations }, type_checker.symbol_table))
     }
 }

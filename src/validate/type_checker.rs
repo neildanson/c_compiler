@@ -62,14 +62,14 @@ impl IdentifierAttributes {
     pub fn is_global(&self) -> bool {
         match self {
             IdentifierAttributes::Fun(fun_attr) => fun_attr.global,
-            IdentifierAttributes::Static (static_attr) => static_attr.global,
+            IdentifierAttributes::Static(static_attr) => static_attr.global,
             IdentifierAttributes::Local => false,
         }
     }
 
     pub fn init(&self) -> InitialValue {
         match self {
-            IdentifierAttributes::Static (static_attr) => static_attr.init.clone(),
+            IdentifierAttributes::Static(static_attr) => static_attr.init.clone(),
             _ => InitialValue::NoInitializer,
         }
     }
@@ -138,7 +138,10 @@ impl TypeChecker {
             }
         }
 
-        let attrs = IdentifierAttributes::Static(StaticAttr { init: initial_value, global });
+        let attrs = IdentifierAttributes::Static(StaticAttr {
+            init: initial_value,
+            global,
+        });
 
         self.symbol_table.insert(
             variable_declaration.name.clone(),
@@ -171,11 +174,12 @@ impl TypeChecker {
                     variable_declaration.name.clone(),
                     Symbol::new(
                         TypeDefinition::Int,
-                        IdentifierAttributes::Static (StaticAttr {
+                        IdentifierAttributes::Static(StaticAttr {
                             init: InitialValue::NoInitializer,
                             global: true,
-                        })),
-                    );
+                        }),
+                    ),
+                );
             }
         } else if variable_declaration.storage_class == Some(StorageClass::Static) {
             let initial_value = if let Some(Expression::Constant(i)) = variable_declaration.init {
@@ -191,10 +195,10 @@ impl TypeChecker {
                 variable_declaration.name.clone(),
                 Symbol::new(
                     TypeDefinition::Int,
-                    IdentifierAttributes::Static (StaticAttr {
+                    IdentifierAttributes::Static(StaticAttr {
                         init: initial_value,
                         global: false,
-                    })
+                    }),
                 ),
             );
         } else {

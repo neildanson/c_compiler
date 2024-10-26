@@ -10,7 +10,10 @@ use crate::lex::*;
 use crate::parse::parse_program;
 use crate::tacky::Tacky;
 use anyhow::Result;
-use std::{collections::HashMap, io::{Read, Write}};
+use std::{
+    collections::HashMap,
+    io::{Read, Write},
+};
 use validate::{SemanticAnalysis, StaticAttr, Symbol};
 
 pub fn read_file(filename: &str) -> Result<String> {
@@ -57,7 +60,7 @@ pub fn tacky(filename: &str) -> Result<(tacky::Program, HashMap<String, StaticAt
 
 pub fn codegen(filename: &str) -> Result<codegen::Program> {
     let (ast, static_variables) = tacky(filename)?;
-    let mut asm : codegen::Program = ast.try_into()?;
+    let mut asm: codegen::Program = ast.try_into()?;
     asm.fixup(&static_variables);
     Ok(asm)
 }

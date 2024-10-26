@@ -1,4 +1,7 @@
-use std::{collections::HashMap, fmt::{Display, Formatter}};
+use std::{
+    collections::HashMap,
+    fmt::{Display, Formatter},
+};
 
 use crate::{error::CompilerError, tacky, validate::StaticAttr};
 
@@ -33,9 +36,7 @@ impl Display for Function {
 
 impl TryFrom<tacky::Function> for Function {
     type Error = CompilerError;
-    fn try_from(
-        ast: tacky::Function,
-    ) -> Result<Self, Self::Error> {
+    fn try_from(ast: tacky::Function) -> Result<Self, Self::Error> {
         if let Some(body_ast) = ast.body {
             let mut body = Vec::new();
 
@@ -55,7 +56,7 @@ impl TryFrom<tacky::Function> for Function {
             }
 
             //TODO how to handle statics without a symbol_table?
-            
+
             Ok(Function {
                 name: ast.name,
                 global: ast.global,
@@ -71,7 +72,7 @@ impl TryFrom<tacky::Function> for Function {
     }
 }
 
-impl Function { 
+impl Function {
     pub fn fixup(&mut self, static_variables: &HashMap<String, StaticAttr>) {
         if let Some(body) = &self.body {
             let (mut body, stack_size) = rewrite_pseudo_with_stack(body.clone(), static_variables);

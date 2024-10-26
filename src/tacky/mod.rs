@@ -555,7 +555,7 @@ impl Tacky {
     fn emit_tacky_function(
         &mut self,
         f: parse::FunctionDeclaration,
-        symbol_table : &HashMap<String, Symbol>,
+        symbol_table: &HashMap<String, Symbol>,
     ) -> Result<Option<Function>, CompilerError> {
         let mut body = Vec::new();
         if let Some(body_stmt) = f.body {
@@ -576,26 +576,28 @@ impl Tacky {
         }
     }
 
-    fn convert_static_variables_to_tacky(static_variables: &HashMap<String, StaticAttr>) -> Vec<TopLevel> {
+    fn convert_static_variables_to_tacky(
+        static_variables: &HashMap<String, StaticAttr>,
+    ) -> Vec<TopLevel> {
         let mut new_symbols = Vec::new();
         for (name, static_attr) in static_variables {
             match &static_attr.init {
-                    InitialValue::Initial(i) => {
-                        new_symbols.push(TopLevel::StaticVariable(StaticVariable {
-                            identifier: name.clone(),
-                            global: static_attr.global,
-                            init: *i,
-                        }));
-                    }
-                    InitialValue::Tentative => {
-                        new_symbols.push(TopLevel::StaticVariable(StaticVariable {
-                            identifier: name.clone(),
-                            global: static_attr.global,
-                            init: 0,
-                        }));
-                    }
-                    _ => {}
+                InitialValue::Initial(i) => {
+                    new_symbols.push(TopLevel::StaticVariable(StaticVariable {
+                        identifier: name.clone(),
+                        global: static_attr.global,
+                        init: *i,
+                    }));
                 }
+                InitialValue::Tentative => {
+                    new_symbols.push(TopLevel::StaticVariable(StaticVariable {
+                        identifier: name.clone(),
+                        global: static_attr.global,
+                        init: 0,
+                    }));
+                }
+                _ => {}
+            }
         }
         new_symbols
     }
@@ -619,7 +621,7 @@ impl Tacky {
                 }
             }
         }
-        
+
         //Walk the tree and emit the static variables
 
         let static_variables = Self::statics(symbol_table);

@@ -367,11 +367,13 @@ fn parse_storage_class(token: &Token) -> Option<StorageClass> {
     match token {
         Token::Static => Some(StorageClass::Static),
         Token::Extern => Some(StorageClass::Extern),
-        _ => None
+        _ => None,
     }
 }
 
-fn parse_type_and_storage(specifier_list: &[Token]) -> Result<(Type, Option<StorageClass>, &[Token])> {
+fn parse_type_and_storage(
+    specifier_list: &[Token],
+) -> Result<(Type, Option<StorageClass>, &[Token])> {
     let mut types = Vec::new();
     let mut storage_classes = Vec::new();
     for specifier in specifier_list {
@@ -399,31 +401,35 @@ fn parse_type_and_storage(specifier_list: &[Token]) -> Result<(Type, Option<Stor
         None => None,
     };
 
-
-
-    Ok((Type::Int, storage_class, &specifier_list[types.len() + storage_classes.len()..]))
+    Ok((
+        Type::Int,
+        storage_class,
+        &specifier_list[types.len() + storage_classes.len()..],
+    ))
 }
 
 fn parse_variable_declaration(tokens: &[Token]) -> Result<(VariableDeclaration, &[Token])> {
     let (_variable_type, storage_class, rest) = parse_type_and_storage(tokens)?;
     let (declaration, rest) = match rest {
-        
         [Token::Identifier(name), Token::Assignment, rest @ ..] => {
             let (expression, rest) = parse_expression(rest, 0)?;
             (
                 VariableDeclaration {
                     name: name.clone(),
                     init: Some(expression),
-                    storage_class: storage_class,
+                    storage_class,
                 },
                 rest,
             )
         }
-        [Token::Identifier(name), rest @ ..] => (VariableDeclaration {
-            name: name.clone(),
-            init: None,
-            storage_class: storage_class,
-        }, rest),
+        [Token::Identifier(name), rest @ ..] => (
+            VariableDeclaration {
+                name: name.clone(),
+                init: None,
+                storage_class,
+            },
+            rest,
+        ),
         toks => {
             return Err(
                 CompilerError::Parse(format!("Declaration Unexpected Tokens {:?}", toks)).into(),
@@ -505,12 +511,12 @@ fn parse_function_declaration(tokens: &[Token]) -> Result<(FunctionDeclaration, 
                     name: name.clone(),
                     parameters: params,
                     body: statements,
-                    storage_class
+                    storage_class,
                 },
                 rest,
             )
         }
-        
+
         toks => {
             return Err(
                 CompilerError::Parse(format!("Function Unexpected Tokens {:?}", toks)).into(),

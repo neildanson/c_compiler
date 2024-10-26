@@ -120,5 +120,5 @@ pub enum BinaryOperator {
 }
 
 pub enum Type {
-    Int
+    Int,
 }

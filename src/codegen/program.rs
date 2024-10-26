@@ -41,12 +41,12 @@ impl TryFrom<tacky::Program> for Program {
     }
 }
 
-impl Program { 
+impl Program {
     pub fn fixup(&mut self, static_variables: &HashMap<String, StaticAttr>) {
         for top_level in &mut self.top_level {
             match top_level {
                 TopLevel::Function(f) => f.fixup(static_variables),
-                TopLevel::StaticVariable(_) => {},
+                TopLevel::StaticVariable(_) => {}
             }
         }
     }
