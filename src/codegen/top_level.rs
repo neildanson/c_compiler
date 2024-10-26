@@ -98,20 +98,22 @@ impl Display for StaticVariable {
         if self.value == 0 {
             writeln!(f, "\t.bss")?;
             if cfg!(target_os = "macos") {
-                writeln!(f, "\t.balign 8")?;
+                writeln!(f, "\t.balign 4")?;
+                writeln!(f, "_{}:", self.identfiier)?;
             } else {
                 writeln!(f, "\t.align 4")?;
+                writeln!(f, "{}:", self.identfiier)?;
             }
-            writeln!(f, "{}:", self.identfiier)?;
             writeln!(f, "\t.zero 4")
         } else {
             writeln!(f, "\t.data")?;
             if cfg!(target_os = "macos") {
-                writeln!(f, "\t.balign 8")?;
+                writeln!(f, "\t.balign 4")?;
+                writeln!(f, "_{}:", self.identfiier)?;
             } else {
                 writeln!(f, "\t.align 4")?;
+                writeln!(f, "{}:", self.identfiier)?;
             }
-            writeln!(f, "{}:", self.identfiier)?;
             writeln!(f, "\t.long {}", self.value)
         }
     }

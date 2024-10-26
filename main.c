@@ -1,24 +1,20 @@
-/* this function defines a variable with external linkage */
+// Test updating a static local variable over multiple function invocations;
+// also test passing a static variable as an argument
+int putchar (int ch);
 
-/* a tentative definition of x;
- * this will be treated like a declaration,
- * since x is defined later */
-int x;
-
-/* a variable with external linkage can be tentatively defined
- * and declared multiple times in a file
- */
-extern int x;
-int x;
-
-int update_x(int new_val) {
-    x = new_val;
-    return 0;
+int print_alphabet(void) {
+    /* the value of count increases by 1
+     * each time we call print_alphabet()
+     */
+    static int count = 0;
+    putchar(count + 65); // 65 is ASCII 'A'
+    count = count + 1;
+    if (count < 26) {
+        print_alphabet();
+    }
+    return count;
 }
 
-int read_x(void) {
-    return x;
+int main(void) {
+    print_alphabet();
 }
-
-/* the definition of x */
-int x = 3;

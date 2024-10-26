@@ -18,7 +18,13 @@ impl Display for Operand {
             Operand::Register(reg) => write!(f, "{:.4}", reg),
             Operand::Immediate { imm } => write!(f, "${}", imm),
             Operand::Stack(offset) => write!(f, "{}(%rbp)", offset),
-            Operand::Data(data) => write!(f, "{}(%rip)", data),
+            Operand::Data(data) => {
+                if cfg!(target_os = "macos") {
+                    write!(f, "_{}(%rip)", data)
+                } else {
+                    write!(f, "{}(%rip)", data)
+                }
+            }
             op => unimplemented!("Operand Display not implemented for {:?}", op),
         }
     }
