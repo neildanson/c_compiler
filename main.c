@@ -1,4 +1,6 @@
+/* A simple arithmetic test case */
+
 int main(void) {
-    // 2147483647 is the largest possible value of type int
-    return -2147483647;
+    long l = 9223372036854775807l;
+    return (l - 2l == 9223372036854775805l);
 }

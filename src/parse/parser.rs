@@ -116,6 +116,10 @@ fn parse_factor(tokens: &[Token]) -> Result<(Expression, &[Token])> {
             let constant = parse_constant(c)?; 
             (Expression::Constant(constant), rest)
         },
+        [Token::LongConstant(c), rest @ ..] => {
+            let constant = parse_constant(c)?; 
+            (Expression::Constant(constant), rest)
+        },
         [Token::Minus, rest @ ..] => {
             let (factor, rest) = parse_factor(rest)?;
             (
@@ -390,7 +394,7 @@ fn parse_type_and_storage(
     let mut types = Vec::new();
     let mut storage_classes = Vec::new();
     for specifier in specifier_list {
-        if specifier == &Token::Int {
+        if specifier == &Token::Int || specifier == &Token::Long {
             types.push(specifier);
         } else {
             match specifier {
@@ -401,6 +405,8 @@ fn parse_type_and_storage(
             }
         }
     }
+
+    //println!("types: {:?}, \n\nstorage_classes: {:?}", types, storage_classes);
 
     if types.len() < 1 {
         return Err(CompilerError::Parse("Invalid type specifier".to_string()).into());
@@ -485,11 +491,18 @@ fn parse_block_item(tokens: &[Token]) -> Result<(BlockItem, &[Token])> {
 }
 
 fn parse_constant(constant : &str) -> Result<Constant> {
-    let is_long = constant.ends_with("L");
+    let is_long = constant.ends_with("L") || constant.ends_with("l");
+    let constant = if is_long {
+        &constant[..constant.len() - 1]
+    } else {
+        constant
+    };
+    
     let v = constant.parse::<i64>()?;
-    if v > i64::MAX - 1 {
-        return Err(CompilerError::Parse("Constant out of range".to_string()).into());
-    }
+    //TODO - prevent overflow
+    //if v >= i64::MAX {
+    //    return Err(CompilerError::Parse("Constant out of range".to_string()).into());
+    //}
 
     if !is_long && v <= i32::MAX.into() {
         Ok(Constant::Int(v as i32))
