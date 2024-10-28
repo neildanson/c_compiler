@@ -89,8 +89,8 @@ impl TypeChecker {
         &mut self,
         variable_declaration: &VariableDeclaration,
     ) -> Result<(), CompilerError> {
-        let mut initial_value = if let Some(Expression::Constant(i)) = variable_declaration.init {
-            InitialValue::Initial(i)
+        let mut initial_value = if let Some(Expression::Constant(i)) = &variable_declaration.init {
+            InitialValue::Initial(i.clone().into())
         } else if variable_declaration.init.is_none() {
             if variable_declaration.storage_class == Some(StorageClass::Extern) {
                 InitialValue::NoInitializer
@@ -182,8 +182,8 @@ impl TypeChecker {
                 );
             }
         } else if variable_declaration.storage_class == Some(StorageClass::Static) {
-            let initial_value = if let Some(Expression::Constant(i)) = variable_declaration.init {
-                InitialValue::Initial(i)
+            let initial_value = if let Some(Expression::Constant(i)) = &variable_declaration.init {
+                InitialValue::Initial(i.clone().into())
             } else if variable_declaration.init.is_none() {
                 InitialValue::Initial(0)
             } else {
@@ -263,6 +263,7 @@ impl TypeChecker {
                 self.type_check_expression(else_expression)?;
             }
             Expression::Constant(_) => {}
+            Expression::Cast(_, _) => todo!("Type Checking Not done for Long/Cast"),
         }
         Ok(())
     }

@@ -22,6 +22,7 @@ pub struct FunctionDeclaration {
     pub name: Identifier,
     pub parameters: Vec<Identifier>,
     pub body: Option<Vec<BlockItem>>,
+    pub fun_type: Type,
     pub storage_class: Option<StorageClass>,
 }
 
@@ -45,6 +46,7 @@ pub struct VariableDeclaration {
     pub name: Identifier,
     pub init: Option<Expression>,
     pub storage_class: Option<StorageClass>,
+    pub var_type: Type,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -77,13 +79,14 @@ pub enum Statement {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Expression {
-    Constant(i32),
     Var(Identifier),
     Unary(UnaryOperator, Box<Expression>),
     BinOp(BinaryOperator, Box<Expression>, Box<Expression>),
     Assignment(Box<Expression>, Box<Expression>),
     Conditional(Box<Expression>, Box<Expression>, Box<Expression>),
     FunctionCall(Identifier, Vec<Expression>),
+    Cast(Type, Box<Expression>),
+    Constant(Constant),
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -119,6 +122,25 @@ pub enum BinaryOperator {
     GreaterThanOrEqual,
 }
 
+#[derive(Clone, Debug, PartialEq)]
 pub enum Type {
     Int,
+    Long, 
+    FunType(Vec<Type>, Box<Type>),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum Constant {
+    Int(i32),
+    Long(i64),
+}
+
+//TODO remove this?
+impl From<Constant> for i32 {
+    fn from(value: Constant) -> Self {
+        match value {
+            Constant::Int(val) => val,
+            _ => panic!("Expected int constant"),
+        }
+    }
 }

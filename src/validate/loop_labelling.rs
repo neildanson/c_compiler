@@ -100,6 +100,7 @@ impl LoopLabelling {
                     name: function.name,
                     parameters: function.parameters,
                     body: Some(new_body),
+                    fun_type: function.fun_type,
                     storage_class: function.storage_class,
                 })
             }
@@ -164,6 +165,7 @@ impl LoopLabelling {
                 name: function.name,
                 parameters: function.parameters,
                 body: Some(new_body),
+                fun_type: function.fun_type,
                 storage_class: function.storage_class,
             })
         } else {
@@ -171,6 +173,7 @@ impl LoopLabelling {
                 name: function.name,
                 parameters: function.parameters,
                 body: None,
+                fun_type: function.fun_type,
                 storage_class: function.storage_class,
             })
         }

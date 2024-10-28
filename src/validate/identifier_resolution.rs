@@ -134,6 +134,10 @@ impl IdentifierResolution {
                     )),
                 }
             }
+            Expression::Cast(lhs, expr) => {
+                let expr = self.resolve_expression(expr)?;
+                Ok(Expression::Cast(lhs.clone(), Box::new(expr)))
+            }
         }
     }
 
@@ -182,6 +186,7 @@ impl IdentifierResolution {
         Ok(VariableDeclaration {
             name: unique_name,
             init,
+            var_type: decl.var_type,
             storage_class: decl.storage_class,
         })
     }
@@ -243,6 +248,7 @@ impl IdentifierResolution {
             name: unique_name,
             parameters,
             body,
+            fun_type: decl.fun_type,
             storage_class: decl.storage_class,
         })
     }
