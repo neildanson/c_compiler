@@ -1,19 +1,65 @@
+/* Test out different, equivalent ways to declare the same identifier  */
+
 #ifdef SUPPRESS_WARNINGS
-#pragma GCC diagnostic ignored "-Wunused-parameter"
+#ifndef __clang__
+#pragma GCC diagnostic ignored "-Wold-style-declaration"
 #endif
-int test_sum(long a, long b, int c, int d, int e, int f, int g, int h, long i) {
-    /* Make sure the arguments passed in main weren't converted to ints */
-    if (a + b < 100l) {
-        return 1;
-    }
-    /* Check an argument that was passed on the stack too */
-    if (i < 100l)
-        return 2;
-    return 0;
+#endif
+
+/* These declarations all look slightly different,
+ * but they all declare 'a' as a static long, so they don't conflict.
+ */
+static int long a;
+int static long a;
+long static a;
+
+/* These declarations all look slightly different,
+ * but they all declare 'my_function' as a function
+ * with three long parameters and an int return value,
+ * so they don't conflict.
+ */
+int my_function(long a, long int b, int long c);
+int my_function(long int x, int long y, long z) {
+    return x + y + z;
 }
 
 int main(void) {
-    // passing a constant larger than INT_MAX as our last argument
-    // exercises the rewrite rule for pushq $large_constant
-    return test_sum(34359738368l, 34359738368l, 0, 0, 0, 0, 0, 0, 34359738368l);
+    /* Several different ways to declare local long variables */
+    long x = 1l;
+    long int y = 2l;
+    int long z = 3l;
+
+    /* This links to the file-scope declarations of 'a' above */
+    extern long a;
+    a = 4;
+
+    /* make sure we can use long type specifier in for loop initializer
+     * i is 2^40 so this loop should have 41 iterations
+    */
+   int sum = 0;
+    for (long i = 1099511627776l; i > 0; i = i / 2) {
+        sum = sum + 1;
+    }
+
+    /* Make sure everything has the expected value */
+    if (x != 1) {
+        return 1;
+    }
+
+    if (y != 2) {
+        return 2;
+    }
+
+    if (a != 4) {
+        return 3;
+    }
+
+    if (my_function(x,  y, z) != 6) {
+        return 4;
+    }
+
+    if (sum != 41) {
+        return 5;
+    }
+    return 0;
 }
