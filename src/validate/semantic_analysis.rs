@@ -1,7 +1,5 @@
-use std::collections::HashMap;
-
 use super::type_checker::{self};
-use super::Symbol;
+use super::ValidateResult;
 use super::{identifier_resolution::*, loop_labelling::LoopLabelling};
 use crate::error::*;
 use crate::parse::ast::*;
@@ -25,7 +23,7 @@ impl SemanticAnalysis {
 
     pub fn semantic_validation(
         program: Program,
-    ) -> Result<(Program, HashMap<String, Symbol>), CompilerError> {
+    ) -> Result<ValidateResult, CompilerError> {
         let mut identifier_resolution = IdentifierResolution::default();
         let mut loop_labelling = LoopLabelling::default();
         let mut type_checker = type_checker::TypeChecker::default();
@@ -50,6 +48,10 @@ impl SemanticAnalysis {
                 }
             }
         }
-        Ok((Program { declarations }, type_checker.symbol_table))
+        let result = ValidateResult {
+            program: Program { declarations },
+            symbols: type_checker.symbol_table,
+        };
+        Ok(result)
     }
 }
