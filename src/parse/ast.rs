@@ -125,7 +125,7 @@ pub enum BinaryOperator {
 #[derive(Clone, Debug, PartialEq)]
 pub enum Type {
     Int,
-    Long, 
+    Long,
     FunType(Vec<Type>, Box<Type>),
 }
 

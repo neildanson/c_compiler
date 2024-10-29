@@ -72,10 +72,11 @@ where
 fn parse_parameter_list(tokens: &[Token]) -> Result<(Vec<Identifier>, &[Token])> {
     let (parameters, rest) = match tokens {
         [Token::Void, rest @ ..] => (Vec::new(), rest),
-        [Token::Int, Token::Identifier(name), rest @ ..] => {
+        [ty, Token::Identifier(name), rest @ ..] => {
+            let _ty = parse_type(&vec![ty])?;
             let mut parameters = vec![name.clone()];
             let mut rest = rest;
-            while let [Token::Comma, Token::Int, Token::Identifier(name), new_rest @ ..] = rest {
+            while let [Token::Comma, _ty, Token::Identifier(name), new_rest @ ..] = rest {
                 parameters.push(name.clone());
                 rest = new_rest;
             }
@@ -113,13 +114,13 @@ fn parse_argument_list(tokens: &[Token]) -> Result<(Vec<Expression>, &[Token])> 
 fn parse_factor(tokens: &[Token]) -> Result<(Expression, &[Token])> {
     let (factor, tokens) = match tokens {
         [Token::Constant(c), rest @ ..] => {
-            let constant = parse_constant(c)?; 
+            let constant = parse_constant(c)?;
             (Expression::Constant(constant), rest)
-        },
+        }
         [Token::LongConstant(c), rest @ ..] => {
-            let constant = parse_constant(c)?; 
+            let constant = parse_constant(c)?;
             (Expression::Constant(constant), rest)
-        },
+        }
         [Token::Minus, rest @ ..] => {
             let (factor, rest) = parse_factor(rest)?;
             (
@@ -169,6 +170,16 @@ fn parse_factor(tokens: &[Token]) -> Result<(Expression, &[Token])> {
             ),
             rest,
         ),
+        [Token::LParen, Token::Int, Token::RParen, rest @ ..] => {
+            let (expression, rest) = parse_expression(&rest, 0)?;
+            let expression = Expression::Cast(Type::Int, Box::new(expression));
+            (expression, rest)
+        }
+        [Token::LParen, Token::Long, Token::RParen, rest @ ..] => {
+            let (expression, rest) = parse_expression(&rest, 0)?;
+            let expression = Expression::Cast(Type::Long, Box::new(expression));
+            (expression, rest)
+        }
         [Token::LParen, rest @ ..] => {
             let (expression, rest) = parse_expression(rest, 0)?;
             let rest = swallow_one(Token::RParen, rest)?;
@@ -318,7 +329,7 @@ fn parse_statement(tokens: &[Token]) -> Result<(Statement, &[Token])> {
             match (rest, error) {
                 (Ok(rest), _) => (Statement::Compound(statements), rest),
                 (_, Some(err)) => return Err(err),
-                _ => return Err(CompilerError::Parse("Unexpected tokens".to_string()).into()),
+                (Err(err), _) => return Err(err),
             }
         }
         [Token::Do, rest @ ..] => {
@@ -381,9 +392,7 @@ fn parse_storage_class(token: &Token) -> Option<StorageClass> {
 fn parse_type(token: &[&Token]) -> Result<Type> {
     match token {
         [Token::Int] => Ok(Type::Int),
-        [Token::Long]
-        | [Token::Long, Token::Int]
-        | [Token::Int, Token::Long] => Ok(Type::Long),
+        [Token::Long] | [Token::Long, Token::Int] | [Token::Int, Token::Long] => Ok(Type::Long),
         _ => Err(CompilerError::Parse("Invalid type specifier".to_string()).into()),
     }
 }
@@ -474,7 +483,20 @@ fn parse_declaration(tokens: &[Token]) -> Result<(Declaration, &[Token])> {
     if let Ok((function, rest)) = function {
         return Ok((Declaration::Function(function), rest));
     }
-    Err(CompilerError::Parse(format!("Unexpected tokens {:?}", tokens).to_string()).into())
+
+    match (declaration, function) {
+        (Err(e1), Err(e2)) => {
+            let e1 = e1.to_string();
+            let e2 = e2.to_string();
+            let err = format!("{}\n or\n {}", e1, e2);
+            return Err(CompilerError::Parse(err).into());
+        }
+        (Err(e1), _) => return Err(e1),
+        (_, Err(e2)) => return Err(e2),
+        _ => unreachable!(),
+    }
+
+    
 }
 
 fn parse_block_item(tokens: &[Token]) -> Result<(BlockItem, &[Token])> {
@@ -490,14 +512,14 @@ fn parse_block_item(tokens: &[Token]) -> Result<(BlockItem, &[Token])> {
     Err(CompilerError::Parse("Unexpected tokens".to_string()).into())
 }
 
-fn parse_constant(constant : &str) -> Result<Constant> {
+fn parse_constant(constant: &str) -> Result<Constant> {
     let is_long = constant.ends_with("L") || constant.ends_with("l");
     let constant = if is_long {
         &constant[..constant.len() - 1]
     } else {
         constant
     };
-    
+
     let v = constant.parse::<i64>()?;
     //TODO - prevent overflow
     //if v >= i64::MAX {
@@ -533,7 +555,7 @@ fn parse_function_body(tokens: &[Token]) -> Result<(Vec<BlockItem>, &[Token])> {
     match (rest, error) {
         (Ok(rest), _) => Ok((statements, rest)),
         (_, Some(err)) => Err(err),
-        _ => Err(CompilerError::Parse("Unexpected tokens".to_string()).into()),
+        (Err(err), _) => Err(err),
     }
 }
 
@@ -606,7 +628,10 @@ mod tests {
         let tokenizer = Tokenizer::new();
         let tokens = tokenizer.tokenize("return 42;").unwrap();
         let (statement, rest) = parse_statement(&tokens).unwrap();
-        assert_eq!(statement, Statement::Return(Expression::Constant(Constant::Int(42))));
+        assert_eq!(
+            statement,
+            Statement::Return(Expression::Constant(Constant::Int(42)))
+        );
         assert!(rest.is_empty());
     }
 
@@ -626,7 +651,10 @@ mod tests {
         let (expression, rest) = parse_expression(&tokens, 0).unwrap();
         assert_eq!(
             expression,
-            Expression::Unary(UnaryOperator::Negation, Box::new(Expression::Constant(Constant::Int(42))))
+            Expression::Unary(
+                UnaryOperator::Negation,
+                Box::new(Expression::Constant(Constant::Int(42)))
+            )
         );
         assert!(rest.is_empty());
     }
@@ -641,7 +669,7 @@ mod tests {
             FunctionDeclaration {
                 name: "main".to_string(),
                 parameters: vec![],
-                fun_type : Type::Int,
+                fun_type: Type::Int,
                 body: Some(vec![BlockItem::Statement(Statement::Return(
                     Expression::Constant(Constant::Int(42))
                 ))]),
@@ -669,7 +697,7 @@ int main(void) {
             FunctionDeclaration {
                 name: "main".to_string(),
                 parameters: vec![],
-                fun_type : Type::Int,
+                fun_type: Type::Int,
                 body: Some(vec![BlockItem::Statement(Statement::Return(
                     Expression::Constant(Constant::Int(100))
                 ))]),
@@ -691,7 +719,7 @@ int main(void) {
             FunctionDeclaration {
                 name: "main".to_string(),
                 parameters: vec![],
-                fun_type : Type::Int,
+                fun_type: Type::Int,
                 body: Some(vec![BlockItem::Statement(Statement::Return(
                     Expression::BinOp(
                         BinaryOperator::Add,
