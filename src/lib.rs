@@ -10,11 +10,9 @@ use crate::lex::*;
 use crate::parse::parse_program;
 use crate::tacky::Tacky;
 use anyhow::Result;
-use std::{
-    collections::HashMap,
-    io::{Read, Write},
-};
-use validate::{SemanticAnalysis, StaticAttr, ValidateResult};
+use tacky::TackyResult;
+use std::io::{Read, Write};
+use validate::{SemanticAnalysis, ValidateResult};
 
 pub fn read_file(filename: &str) -> Result<String> {
     let file = std::fs::File::open(filename)?;
@@ -51,17 +49,18 @@ pub fn validate(filename: &str) -> Result<ValidateResult> {
     Ok(program)
 }
 
-pub fn tacky(filename: &str) -> Result<(tacky::Program, HashMap<String, StaticAttr>)> {
+pub fn tacky(filename: &str) -> Result<TackyResult> {
     let validate_result = validate(filename)?;
     let mut tacky = Tacky::default();
-    let (tacky, static_variables) = tacky.emit_tacky(validate_result.program, &validate_result.symbols)?;
-    Ok((tacky, static_variables))
+    let tacky = tacky.emit_tacky(validate_result)?;
+    Ok(tacky)
 }
 
 pub fn codegen(filename: &str) -> Result<codegen::Program> {
-    let (ast, static_variables) = tacky(filename)?;
-    let mut asm: codegen::Program = ast.try_into()?;
-    asm.fixup(&static_variables);
+    let tacky = tacky(filename)?;
+    //TODO try_into from TaskyResult?
+    let mut asm: codegen::Program = tacky.program.try_into()?;
+    asm.fixup(&tacky.statics);
     Ok(asm)
 }
 

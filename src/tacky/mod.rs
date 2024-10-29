@@ -16,7 +16,7 @@ pub use value::*;
 use crate::{
     error::CompilerError,
     parse::{self, Expression},
-    validate::{IdentifierAttributes, InitialValue, StaticAttr, Symbol},
+    validate::{IdentifierAttributes, InitialValue, StaticAttr, Symbol, ValidateResult},
 };
 use std::collections::HashMap;
 
@@ -604,14 +604,13 @@ impl Tacky {
 
     pub fn emit_tacky(
         &mut self,
-        p: parse::Program,
-        symbol_table: &HashMap<String, Symbol>,
-    ) -> Result<(Program, HashMap<String, StaticAttr>), CompilerError> {
+        validate_result : ValidateResult
+    ) -> Result<TackyResult, CompilerError> {
         let mut top_level = Vec::new();
-        for decl in p.declarations {
+        for decl in validate_result.program.declarations {
             match decl {
                 parse::Declaration::Function(f) => {
-                    let function = self.emit_tacky_function(f, symbol_table)?;
+                    let function = self.emit_tacky_function(f, &validate_result.symbols)?;
                     if let Some(function) = function {
                         top_level.push(TopLevel::Function(function));
                     }
@@ -623,36 +622,14 @@ impl Tacky {
         }
 
         //Walk the tree and emit the static variables
-
-        let static_variables = Self::statics(symbol_table);
+        let static_variables = Self::statics(&validate_result.symbols);
         top_level.extend(Tacky::convert_static_variables_to_tacky(&static_variables));
-        Ok((Program { top_level }, static_variables))
+        let result = TackyResult {
+            program: Program { top_level },
+            statics: static_variables,
+        };
+        Ok(result)
     }
-
-    /*fn extract_symbols(p: &parse::Program, symbols : &mut Vec<Symbol>) {
-        let mut symbols = HashMap::new();
-        for decl in &p.declarations {
-            match decl {
-                parse::Declaration::Function(f) => {
-                    for body in f.body.unwrap() {
-                        match body {
-                            parse::BlockItem::Declaration(d) => {
-                                match d {
-                                    parse::VariableDeclaration { name, value, .. } => {
-                                        symbols.push(name.clone(), Symbol::new(name.clone()));
-                                    }
-                                }
-                            }
-                            _ => {}
-                        }
-                    }
-                    symbols.insert(v.name.clone(), Symbol::new(v.clone()));
-                }
-                _ => {}
-            }
-        }
-        symbols
-    }*/
 
     pub fn fixup_missing_return(instructions: &mut Vec<Instruction>) {
         let last = instructions.last();
@@ -674,4 +651,10 @@ impl Tacky {
             })
             .collect()
     }
+}
+
+#[derive(Debug)]
+pub struct TackyResult {
+    pub program: Program,
+    pub statics: HashMap<String, StaticAttr>,
 }
