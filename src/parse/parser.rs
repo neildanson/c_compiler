@@ -69,40 +69,40 @@ where
     }
 }
 
-fn parse_nth_parameter(tokens: &[Token]) -> Result<(Identifier, &[Token])> {
+fn parse_nth_parameter(tokens: &[Token]) -> Result<(Identifier, Type,  &[Token])> {
     match tokens {
         [Token::Comma, ty, Token::Identifier(name), rest @ ..] => {
-            let _ty = parse_type(&[ty])?;
-            Ok((name.clone(), rest))
+            let ty = parse_type(&[ty])?;
+            Ok((name.clone(), ty, rest))
         }
         [Token::Comma, ty1, ty2, Token::Identifier(name), rest @ ..] => {
-            let _ty = parse_type(&[ty1, ty2])?;
-            Ok((name.clone(), rest))
+            let ty = parse_type(&[ty1, ty2])?;
+            Ok((name.clone(), ty, rest))
         }
 
         toks => Err(CompilerError::Parse(format!("Parameter Unexpected Tokens {:?}", toks)).into()),
     }
 }
 
-fn parse_parameter_list(tokens: &[Token]) -> Result<(Vec<Identifier>, &[Token])> {
+fn parse_parameter_list(tokens: &[Token]) -> Result<(Vec<(Type, Identifier)>, &[Token])> {
     let (parameters, rest) = match tokens {
         [Token::Void, rest @ ..] => (Vec::new(), rest),
         [ty, Token::Identifier(name), rest @ ..] => {
-            let _ty = parse_type(&[ty])?;
-            let mut parameters = vec![name.clone()];
+            let ty = parse_type(&[ty])?;
+            let mut parameters = vec![(ty, name.clone())];
             let mut rest = rest;
-            while let Ok((name, new_rest)) = parse_nth_parameter(rest) {
-                parameters.push(name.clone());
+            while let Ok((name, ty, new_rest)) = parse_nth_parameter(rest) {
+                parameters.push((ty, name.clone())); //
                 rest = new_rest;
             }
             (parameters, rest)
         }
         [ty1, ty2, Token::Identifier(name), rest @ ..] => {
-            let _ty = parse_type(&[ty1, ty2])?;
-            let mut parameters = vec![name.clone()];
+            let ty = parse_type(&[ty1, ty2])?;
+            let mut parameters = vec![(ty, name.clone())];
             let mut rest = rest;
-            while let Ok((name, new_rest)) = parse_nth_parameter(rest) {
-                parameters.push(name.clone());
+            while let Ok((name, ty, new_rest)) = parse_nth_parameter(rest) {
+                parameters.push((ty, name.clone()));
                 rest = new_rest;
             }
             (parameters, rest)

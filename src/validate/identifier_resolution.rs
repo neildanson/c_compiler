@@ -199,7 +199,7 @@ impl IdentifierResolution {
 
     //This is very similar to resolve_variable_declaration
     //Consider refactoring
-    fn resolve_param(&mut self, param: Identifier) -> Result<Identifier, CompilerError> {
+    fn resolve_param(&mut self, ty: &Type,  param: Identifier) -> Result<(Type, Identifier), CompilerError> {
         if self.identifier_map.contains_key(&param)
             && self.identifier_map[&param].from_current_scope
         {
@@ -208,7 +208,7 @@ impl IdentifierResolution {
             ));
         }
         let unique_name = self.make_unique_name(param);
-        Ok(unique_name)
+        Ok((ty.clone(), unique_name))
     }
 
     pub fn resolve_function_declaration(
@@ -235,8 +235,8 @@ impl IdentifierResolution {
         let parameters = decl
             .parameters
             .iter()
-            .map(|param| inner_scope.resolve_param(param.clone()))
-            .collect::<Result<Vec<Identifier>, CompilerError>>()?;
+            .map(|(ty, param)| inner_scope.resolve_param(ty, param.clone()))
+            .collect::<Result<Vec<(Type, Identifier)>, CompilerError>>()?;
 
         let body = if let Some(body) = decl.body {
             if nested {

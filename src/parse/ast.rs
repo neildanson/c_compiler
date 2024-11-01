@@ -20,7 +20,7 @@ pub enum BlockItem {
 #[derive(Clone, Debug, PartialEq)]
 pub struct FunctionDeclaration {
     pub name: Identifier,
-    pub parameters: Vec<Identifier>,
+    pub parameters: Vec<(Type, Identifier)>,
     pub body: Option<Vec<BlockItem>>,
     pub fun_type: Type,
     pub storage_class: Option<StorageClass>,
@@ -100,16 +100,16 @@ pub enum Expression {
 }
 
 impl Expression {
-    pub fn get_type(&self) -> Type {
+    pub fn get_type(&self) -> Option<Type> {
         match self {
-            Expression::Var(_, t) => t.clone().unwrap(),
-            Expression::Unary(_, _, t) => t.clone().unwrap(),
-            Expression::BinOp(_, _, _, t) => t.clone().unwrap(),
-            Expression::Assignment(_, _, t) => t.clone().unwrap(),
-            Expression::Conditional(_, _, _, t) => t.clone().unwrap(),
-            Expression::FunctionCall(_, _, t) => t.clone().unwrap(),
-            Expression::Cast(t, _) => t.clone(),
-            Expression::Constant(c) => c.get_type(),
+            Expression::Var(_, t) => t.clone(),
+            Expression::Unary(_, _, t) => t.clone(),
+            Expression::BinOp(_, _, _, t) => t.clone(),
+            Expression::Assignment(_, _, t) => t.clone(),
+            Expression::Conditional(_, _, _, t) => t.clone(),
+            Expression::FunctionCall(_, _, t) => t.clone(),
+            Expression::Cast(t, _) => Some(t.clone()),
+            Expression::Constant(c) => Some(c.get_type()),
         }
     }
 }

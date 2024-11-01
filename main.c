@@ -1,7 +1,10 @@
-/* Test out different, equivalent ways to declare the same identifier  */
+
+long add(long a, long b) {
+    return a + b;
+}
+
 int main(void) {
-    /* Several different ways to declare local long variables */
     long x = 1l;
-    
+    long y = add(x, 2l);
     return 0;
 }

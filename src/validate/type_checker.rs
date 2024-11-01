@@ -4,8 +4,21 @@ use crate::{error::*, parse::*};
 
 #[derive(PartialEq, Debug, Clone)]
 enum TypeDefinition {
-    Int,
+    Type(Type),
     FunType(usize),
+}
+
+impl TypeDefinition {
+    fn get_type(&self) -> Option<Type> {
+        match self {
+            TypeDefinition::Type(ty) => Some(ty.clone()),
+            TypeDefinition::FunType(_) => None,
+        }
+    }
+
+    fn is_function(&self) -> bool {
+        matches!(self, TypeDefinition::FunType(_))
+    }
 }
 
 #[derive(PartialEq, Debug, Clone)]
@@ -106,7 +119,7 @@ impl TypeChecker {
         let mut global = variable_declaration.storage_class != Some(StorageClass::Static);
 
         if let Some(old_decl) = self.symbol_table.get(&variable_declaration.name) {
-            if old_decl.type_definition != TypeDefinition::Int {
+            if old_decl.type_definition.is_function()  {
                 return Err(CompilerError::SemanticAnalysis(
                     SemanticAnalysisError::FunctionRedclaredAsVariable(
                         variable_declaration.name.clone(),
@@ -145,7 +158,7 @@ impl TypeChecker {
 
         self.symbol_table.insert(
             variable_declaration.name.clone(),
-            Symbol::new(TypeDefinition::Int, attrs),
+            Symbol::new(TypeDefinition::Type(variable_declaration.var_type.clone()), attrs),
         );
 
         Ok(())
@@ -162,7 +175,7 @@ impl TypeChecker {
                 ));
             }
             if let Some(old_decl) = self.symbol_table.get(&variable_declaration.name) {
-                if old_decl.type_definition != TypeDefinition::Int {
+                if old_decl.type_definition.is_function() {
                     return Err(CompilerError::SemanticAnalysis(
                         SemanticAnalysisError::FunctionRedclaredAsVariable(
                             variable_declaration.name.clone(),
@@ -173,7 +186,7 @@ impl TypeChecker {
                 self.symbol_table.insert(
                     variable_declaration.name.clone(),
                     Symbol::new(
-                        TypeDefinition::Int,
+                        TypeDefinition::Type(variable_declaration.var_type.clone()),
                         IdentifierAttributes::Static(StaticAttr {
                             init: InitialValue::NoInitializer,
                             global: true,
@@ -194,7 +207,7 @@ impl TypeChecker {
             self.symbol_table.insert(
                 variable_declaration.name.clone(),
                 Symbol::new(
-                    TypeDefinition::Int,
+                    TypeDefinition::Type(variable_declaration.var_type.clone()),
                     IdentifierAttributes::Static(StaticAttr {
                         init: initial_value,
                         global: false,
@@ -204,7 +217,7 @@ impl TypeChecker {
         } else {
             self.symbol_table.insert(
                 variable_declaration.name.clone(),
-                Symbol::new(TypeDefinition::Int, IdentifierAttributes::Local),
+                Symbol::new(TypeDefinition::Type(variable_declaration.var_type.clone()), IdentifierAttributes::Local),
             );
             if let Some(initializer) = variable_declaration.init.as_ref() {
                 self.type_check_expression(initializer)?;
@@ -240,24 +253,25 @@ impl TypeChecker {
             }
             Expression::Var(name, _ty) => {
                 if let Some(existing) = self.symbol_table.get(name) {
-                    if existing.type_definition != TypeDefinition::Int {
+                    if existing.type_definition.is_function() {
                         return Err(CompilerError::SemanticAnalysis(
                             SemanticAnalysisError::VariableUsedAsFunctionName,
                         ));
                     }
                 }
-                Ok(expression.clone()) //??
+                let ty = self.symbol_table.get(name).map_or(None, |t| t.type_definition.get_type());
+                Ok(Expression::Var(name.clone(), ty)) 
             }
             Expression::BinOp(op, left, right, _) => {
                 let left = self.type_check_expression(left)?;
                 let right = self.type_check_expression(right)?;
                 let ty = left.get_type();
-                Ok(Expression::BinOp(op.clone(), Box::new(left), Box::new(right), Some(ty)))
+                Ok(Expression::BinOp(op.clone(), Box::new(left), Box::new(right), ty))
             }
             Expression::Unary(op, expression, _) => {
                 let expression = self.type_check_expression(expression)?;
                 let ty = expression.get_type();
-                Ok(Expression::Unary(op.clone(), Box::new(expression), Some(ty)))
+                Ok(Expression::Unary(op.clone(), Box::new(expression), ty))
             }
             Expression::Assignment(left, right, _) => {
                 let left = self.type_check_expression(left)?;
@@ -268,7 +282,7 @@ impl TypeChecker {
                 //    ));
                 //}
                 let ty = left.get_type();
-                Ok(Expression::Assignment(Box::new(left), Box::new(right), Some(ty)))
+                Ok(Expression::Assignment(Box::new(left), Box::new(right), ty))
             }
             Expression::Conditional(condition, then_expression, else_expression, _) => {
                 let condition = self.type_check_expression(condition)?;
@@ -284,7 +298,7 @@ impl TypeChecker {
                     Box::new(condition),
                     Box::new(then_expression),
                     Box::new(else_expression),
-                    Some(ty),
+                    ty,
                 ))
             }
             Expression::Constant(_) => Ok(expression.clone()),
@@ -304,8 +318,8 @@ impl TypeChecker {
                         SemanticAnalysisError::StaticValueNotValidInForLoopInitializer,
                     ));
                 }
-                self.type_check_local_variable_declaration(declaration)?;
-                Ok(ForInit::InitDeclaration(declaration.clone())) //TODO?
+                let declaration = self.type_check_local_variable_declaration(declaration)?;
+                Ok(ForInit::InitDeclaration(declaration)) 
             }
         }
     }
@@ -446,17 +460,28 @@ impl TypeChecker {
             .insert(function_declaration.name.clone(), {
                 Symbol::new(fun_type, attrs)
             });
-        if let Some(body) = function_declaration.body.as_ref() {
-            for param in &function_declaration.parameters {
+
+        let new_body =     
+            if let Some(body) = function_declaration.body.as_ref() {
+            for (ty, param) in &function_declaration.parameters {
                 self.symbol_table.insert(
                     param.clone(),
-                    Symbol::new(TypeDefinition::Int, IdentifierAttributes::Local),
+                    Symbol::new(TypeDefinition::Type(ty.clone()), IdentifierAttributes::Local),
                 );
             }
+            let mut new_body = Vec::new();
             for block_item in body {
-                self.type_check_block_item(block_item)?;
+                new_body.push(self.type_check_block_item(block_item)?);
             }
-        }
-        Ok(function_declaration.clone()) //
+            Some(new_body)
+        } else {
+            None
+        };
+        let function_declaration = FunctionDeclaration {
+            body : new_body,
+            ..function_declaration.clone()
+        };
+
+        Ok(function_declaration) 
     }
 }
