@@ -154,7 +154,7 @@ impl TypeChecker {
     fn type_check_local_variable_declaration(
         &mut self,
         variable_declaration: &VariableDeclaration,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<VariableDeclaration, CompilerError> {
         if variable_declaration.storage_class == Some(StorageClass::Extern) {
             if variable_declaration.init.is_some() {
                 return Err(CompilerError::SemanticAnalysis(
@@ -210,10 +210,10 @@ impl TypeChecker {
                 self.type_check_expression(initializer)?;
             }
         }
-        Ok(())
+        Ok(variable_declaration.clone())
     }
 
-    fn type_check_expression(&mut self, expression: &Expression) -> Result<(), CompilerError> {
+    fn type_check_expression(&mut self, expression: &Expression) -> Result<Expression, CompilerError> {
         match expression {
             Expression::FunctionCall(name, arguments, _) => {
                 if let Some(symbol) = self.symbol_table.get(name) {
@@ -236,8 +236,9 @@ impl TypeChecker {
                 for argument in arguments {
                     self.type_check_expression(argument)?;
                 }
+                Ok(expression.clone()) //
             }
-            Expression::Var(name, _) => {
+            Expression::Var(name, _ty) => {
                 if let Some(existing) = self.symbol_table.get(name) {
                     if existing.type_definition != TypeDefinition::Int {
                         return Err(CompilerError::SemanticAnalysis(
@@ -245,35 +246,58 @@ impl TypeChecker {
                         ));
                     }
                 }
+                Ok(expression.clone()) //??
             }
-            Expression::BinOp(_, left, right, _) => {
-                self.type_check_expression(left)?;
-                self.type_check_expression(right)?;
+            Expression::BinOp(op, left, right, _) => {
+                let left = self.type_check_expression(left)?;
+                let right = self.type_check_expression(right)?;
+                let ty = left.get_type();
+                Ok(Expression::BinOp(op.clone(), Box::new(left), Box::new(right), Some(ty)))
             }
-            Expression::Unary(_, expression, _) => {
-                self.type_check_expression(expression)?;
+            Expression::Unary(op, expression, _) => {
+                let expression = self.type_check_expression(expression)?;
+                let ty = expression.get_type();
+                Ok(Expression::Unary(op.clone(), Box::new(expression), Some(ty)))
             }
             Expression::Assignment(left, right, _) => {
-                self.type_check_expression(left)?;
-                self.type_check_expression(right)?;
+                let left = self.type_check_expression(left)?;
+                let right = self.type_check_expression(right)?;
+                //if left.get_type() != right.get_type() {
+                //    return Err(CompilerError::SemanticAnalysis(
+                //        SemanticAnalysisError::IncompatibleTypesInAssignment,
+                //    ));
+                //}
+                let ty = left.get_type();
+                Ok(Expression::Assignment(Box::new(left), Box::new(right), Some(ty)))
             }
             Expression::Conditional(condition, then_expression, else_expression, _) => {
-                self.type_check_expression(condition)?;
-                self.type_check_expression(then_expression)?;
-                self.type_check_expression(else_expression)?;
+                let condition = self.type_check_expression(condition)?;
+                let then_expression = self.type_check_expression(then_expression)?;
+                let else_expression = self.type_check_expression(else_expression)?;
+                //if then_expression.get_type() != else_expression.get_type() {
+                //    return Err(CompilerError::SemanticAnalysis(
+                //        SemanticAnalysisError::IncompatibleTypesInConditional,
+                //    ));
+                //}
+                let ty = then_expression.get_type();
+                Ok(Expression::Conditional(
+                    Box::new(condition),
+                    Box::new(then_expression),
+                    Box::new(else_expression),
+                    Some(ty),
+                ))
             }
-            Expression::Constant(_) => {}
-            Expression::Cast(_, _) => todo!("Type Checking Not done for Long/Cast"),
+            Expression::Constant(_) => Ok(expression.clone()),
+            Expression::Cast(_, _) => Ok(expression.clone()),
         }
-        Ok(())
     }
 
-    fn type_check_for_init(&mut self, for_init: &ForInit) -> Result<(), CompilerError> {
+    fn type_check_for_init(&mut self, for_init: &ForInit) -> Result<ForInit, CompilerError> {
         match for_init {
             ForInit::InitExpression(Some(expression)) => {
-                self.type_check_expression(expression)?;
+                Ok(ForInit::InitExpression(Some(self.type_check_expression(expression)?)))
             }
-            ForInit::InitExpression(None) => {}
+            ForInit::InitExpression(None) => Ok(ForInit::InitExpression(None)),
             ForInit::InitDeclaration(declaration) => {
                 if declaration.storage_class.is_some() {
                     return Err(CompilerError::SemanticAnalysis(
@@ -281,78 +305,94 @@ impl TypeChecker {
                     ));
                 }
                 self.type_check_local_variable_declaration(declaration)?;
+                Ok(ForInit::InitDeclaration(declaration.clone())) //TODO?
             }
         }
-        Ok(())
     }
 
-    fn type_check_statement(&mut self, statement: &Statement) -> Result<(), CompilerError> {
+    fn type_check_statement(&mut self, statement: &Statement) -> Result<Statement, CompilerError> {
         match statement {
             Statement::Expression(expression) => {
-                self.type_check_expression(expression)?;
+                Ok(Statement::Expression(self.type_check_expression(expression)?))
             }
             Statement::Return(expression) => {
-                self.type_check_expression(expression)?;
+                Ok(Statement::Return(self.type_check_expression(expression)?))
             }
             Statement::If(condition, then_block, else_block) => {
-                self.type_check_expression(condition)?;
-                self.type_check_statement(then_block.as_ref())?;
-                if let Some(statement) = else_block {
-                    self.type_check_statement(statement)?;
-                }
+                let condition = self.type_check_expression(condition)?;
+                let then_block = self.type_check_statement(then_block.as_ref())?;
+                let else_block = if let Some(statement) = else_block {
+                    Some(Box::new(self.type_check_statement(statement)?))
+                } else {
+                    None
+                };
+                Ok(Statement::If(condition, Box::new(then_block), else_block))
             }
-            Statement::While(condition, block, _) => {
-                self.type_check_expression(condition)?;
-                self.type_check_statement(block)?;
+            Statement::While(condition, block, loop_label) => {
+                let condition = self.type_check_expression(condition)?;
+                let block = self.type_check_statement(block)?;
+                Ok(Statement::While(condition, Box::new(block), loop_label.clone()))
             }
-            Statement::DoWhile(body, condition, _) => {
-                self.type_check_statement(body)?;
-                self.type_check_expression(condition)?;
+            Statement::DoWhile(body, condition, loop_label) => {
+                let body = self.type_check_statement(body)?;
+                let condition = self.type_check_expression(condition)?;
+                Ok(Statement::DoWhile(Box::new(body), condition, loop_label.clone()))
             }
-            Statement::For(for_init, condition, post, block, _) => {
-                self.type_check_for_init(for_init)?;
-                if let Some(condition) = condition {
-                    self.type_check_expression(condition)?;
-                }
-                if let Some(post) = post {
-                    self.type_check_expression(post)?;
-                }
-                self.type_check_statement(block)?;
+            Statement::For(for_init, condition, post, block, loop_label) => {
+                let for_init = self.type_check_for_init(for_init)?;
+                let condition = if let Some(condition) = condition {
+                    Some(self.type_check_expression(condition)?)
+                } else {
+                    None
+                };
+                let post = if let Some(post) = post {
+                    Some(self.type_check_expression(post)?)
+                } else {
+                    None
+                };
+                let block = self.type_check_statement(block)?;
+                Ok(Statement::For(
+                    for_init,
+                    condition,
+                    post,
+                    Box::new(block),
+                    loop_label.clone(),
+                ))
             }
             Statement::Compound(block_items) => {
+                let mut new_block_items = Vec::new();
                 for block_item in block_items {
-                    self.type_check_block_item(block_item)?;
+                    new_block_items.push(self.type_check_block_item(block_item)?);
                 }
+                Ok(Statement::Compound(new_block_items))
             }
-            Statement::Null => {}
-            Statement::Continue(_) => {}
-            Statement::Break(_) => {}
+            Statement::Null => Ok(Statement::Null),
+            Statement::Continue(loop_label) => Ok(Statement::Continue(loop_label.clone())),
+            Statement::Break(loop_label) => Ok(Statement::Break(loop_label.clone())),
         }
-        Ok(())
     }
 
-    fn type_check_block_item(&mut self, block_item: &BlockItem) -> Result<(), CompilerError> {
+    fn type_check_block_item(&mut self, block_item: &BlockItem) -> Result<BlockItem, CompilerError> {
         match block_item {
             BlockItem::Statement(statement) => {
-                self.type_check_statement(statement)?;
+                Ok(BlockItem::Statement(self.type_check_statement(statement)?))
             }
             BlockItem::Declaration(declaration) => match declaration {
                 Declaration::Variable(variable_declaration) => {
-                    self.type_check_local_variable_declaration(variable_declaration)?;
+                    Ok(BlockItem::Declaration(Declaration::Variable(self.type_check_local_variable_declaration(variable_declaration)?)))
                 }
                 Declaration::Function(function_declaration) => {
-                    self.type_check_function_declaration(function_declaration, false)?;
+                    Ok(BlockItem::Declaration(Declaration::Function(self.type_check_function_declaration(function_declaration, false)?)))
                 }
             },
         }
-        Ok(())
     }
 
     pub fn type_check_function_declaration(
         &mut self,
         function_declaration: &FunctionDeclaration,
         top_level: bool,
-    ) -> Result<(), CompilerError> {
+    ) -> Result<FunctionDeclaration, CompilerError> {
         let fun_type = TypeDefinition::FunType(function_declaration.parameters.len());
         let has_body = function_declaration.body.is_some();
         let mut already_defined = false;
@@ -417,6 +457,6 @@ impl TypeChecker {
                 self.type_check_block_item(block_item)?;
             }
         }
-        Ok(())
+        Ok(function_declaration.clone()) //
     }
 }
