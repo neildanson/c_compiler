@@ -127,7 +127,7 @@ impl Tacky {
         instructions: &mut Vec<Instruction>,
     ) -> Result<Value, CompilerError> {
         match f {
-            parse::Expression::Constant(i, _) => Ok(Value::Constant(i.clone().into())),
+            parse::Expression::Constant(i) => Ok(Value::Constant(i.clone().into())),
             parse::Expression::Unary(op, inner, _) => {
                 self.emit_tacky_unaryop(op, inner, instructions)
             }

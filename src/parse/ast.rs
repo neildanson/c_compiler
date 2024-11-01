@@ -95,8 +95,23 @@ pub enum Expression {
         Option<Type>,
     ),
     FunctionCall(Identifier, Vec<Expression>, Option<Type>),
-    Cast(Type, Box<Expression>, Option<Type>),
-    Constant(Constant, Option<Type>),
+    Cast(Type, Box<Expression>),
+    Constant(Constant),
+}
+
+impl Expression {
+    pub fn get_type(&self) -> Type {
+        match self {
+            Expression::Var(_, t) => t.clone().unwrap(),
+            Expression::Unary(_, _, t) => t.clone().unwrap(),
+            Expression::BinOp(_, _, _, t) => t.clone().unwrap(),
+            Expression::Assignment(_, _, t) => t.clone().unwrap(),
+            Expression::Conditional(_, _, _, t) => t.clone().unwrap(),
+            Expression::FunctionCall(_, _, t) => t.clone().unwrap(),
+            Expression::Cast(t, _) => t.clone(),
+            Expression::Constant(c) => c.get_type(),
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -143,6 +158,15 @@ pub enum Type {
 pub enum Constant {
     Int(i32),
     Long(i64),
+}
+
+impl Constant {
+    pub fn get_type(&self) -> Type {
+        match self {
+            Constant::Int(_) => Type::Int,
+            Constant::Long(_) => Type::Long,
+        }
+    }
 }
 
 //TODO remove this?

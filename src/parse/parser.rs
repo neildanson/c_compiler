@@ -140,11 +140,11 @@ fn parse_factor(tokens: &[Token]) -> Result<(Expression, &[Token])> {
     let (factor, tokens) = match tokens {
         [Token::Constant(c), rest @ ..] => {
             let constant = parse_constant(c)?;
-            (Expression::Constant(constant, None), rest)
+            (Expression::Constant(constant), rest)
         }
         [Token::LongConstant(c), rest @ ..] => {
             let constant = parse_constant(c)?;
-            (Expression::Constant(constant, None), rest)
+            (Expression::Constant(constant), rest)
         }
         [Token::Minus, rest @ ..] => {
             let (factor, rest) = parse_factor(rest)?;
@@ -199,12 +199,12 @@ fn parse_factor(tokens: &[Token]) -> Result<(Expression, &[Token])> {
         ),
         [Token::LParen, Token::Int, Token::RParen, rest @ ..] => {
             let (expression, rest) = parse_expression(rest, 0)?;
-            let expression = Expression::Cast(Type::Int, Box::new(expression), None);
+            let expression = Expression::Cast(Type::Int, Box::new(expression));
             (expression, rest)
         }
         [Token::LParen, Token::Long, Token::RParen, rest @ ..] => {
             let (expression, rest) = parse_expression(rest, 0)?;
-            let expression = Expression::Cast(Type::Long, Box::new(expression), None);
+            let expression = Expression::Cast(Type::Long, Box::new(expression));
             (expression, rest)
         }
         [Token::LParen, rest @ ..] => {
@@ -659,7 +659,7 @@ mod tests {
         let (statement, rest) = parse_statement(&tokens).unwrap();
         assert_eq!(
             statement,
-            Statement::Return(Expression::Constant(Constant::Int(42), None))
+            Statement::Return(Expression::Constant(Constant::Int(42)))
         );
         assert!(rest.is_empty());
     }
@@ -669,7 +669,7 @@ mod tests {
         let tokenizer = Tokenizer::new();
         let tokens = tokenizer.tokenize("42").unwrap();
         let (expression, rest) = parse_expression(&tokens, 0).unwrap();
-        assert_eq!(expression, Expression::Constant(Constant::Int(42), None));
+        assert_eq!(expression, Expression::Constant(Constant::Int(42)));
         assert!(rest.is_empty());
     }
 
@@ -682,7 +682,7 @@ mod tests {
             expression,
             Expression::Unary(
                 UnaryOperator::Negation,
-                Box::new(Expression::Constant(Constant::Int(42), None)),
+                Box::new(Expression::Constant(Constant::Int(42))),
                 None
             )
         );
@@ -701,7 +701,7 @@ mod tests {
                 parameters: vec![],
                 fun_type: Type::Int,
                 body: Some(vec![BlockItem::Statement(Statement::Return(
-                    Expression::Constant(Constant::Int(42), None)
+                    Expression::Constant(Constant::Int(42))
                 ))]),
                 storage_class: None
             }
@@ -729,7 +729,7 @@ int main(void) {
                 parameters: vec![],
                 fun_type: Type::Int,
                 body: Some(vec![BlockItem::Statement(Statement::Return(
-                    Expression::Constant(Constant::Int(100), None)
+                    Expression::Constant(Constant::Int(100))
                 ))]),
                 storage_class: None
             }
@@ -753,8 +753,8 @@ int main(void) {
                 body: Some(vec![BlockItem::Statement(Statement::Return(
                     Expression::BinOp(
                         BinaryOperator::Add,
-                        Box::new(Expression::Constant(Constant::Int(42), None)),
-                        Box::new(Expression::Constant(Constant::Int(12), None)),
+                        Box::new(Expression::Constant(Constant::Int(42))),
+                        Box::new(Expression::Constant(Constant::Int(12))),
                         None
                     )
                 ))]),

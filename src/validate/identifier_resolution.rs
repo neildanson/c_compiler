@@ -112,7 +112,7 @@ impl IdentifierResolution {
                     SemanticAnalysisError::InvalidLValue,
                 )),
             },
-            Expression::Constant(_, _ty) => Ok(expr.clone()),
+            Expression::Constant(_) => Ok(expr.clone()),
             Expression::Conditional(cond, then, els, ty) => {
                 let cond = self.resolve_expression(cond)?;
                 let then = self.resolve_expression(then)?;
@@ -140,9 +140,9 @@ impl IdentifierResolution {
                     )),
                 }
             }
-            Expression::Cast(lhs, expr, ty) => {
+            Expression::Cast(ty, expr) => {
                 let expr = self.resolve_expression(expr)?;
-                Ok(Expression::Cast(lhs.clone(), Box::new(expr), ty.clone()))
+                Ok(Expression::Cast(ty.clone(), Box::new(expr)))
             }
         }
     }
