@@ -243,6 +243,23 @@ impl TypeChecker {
         Ok(variable_declaration.clone())
     }
 
+    fn get_common_type(ty1 : Type, ty2: Type) -> Type {
+        if ty1 == ty2 {
+            return ty1;
+        } else {
+            Type::Long
+        }
+    }
+
+    fn convert_to(&self, ty: Type, expression: &Expression) -> Expression {
+        let expression_ty = expression.get_type();
+        if expression_ty == Some(ty.clone()) {
+            return expression.clone();
+        }
+        let cast = Expression::Cast(ty.clone(), Box::new(expression.clone()));
+        cast
+    }
+
     fn type_check_expression(&mut self, expression: &Expression) -> Result<Expression, CompilerError> {
         match expression {
             Expression::FunctionCall(name, arguments, _) => {
