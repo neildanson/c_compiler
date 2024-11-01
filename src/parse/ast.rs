@@ -79,14 +79,14 @@ pub enum Statement {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Expression {
-    Var(Identifier),
-    Unary(UnaryOperator, Box<Expression>),
-    BinOp(BinaryOperator, Box<Expression>, Box<Expression>),
-    Assignment(Box<Expression>, Box<Expression>),
-    Conditional(Box<Expression>, Box<Expression>, Box<Expression>),
-    FunctionCall(Identifier, Vec<Expression>),
-    Cast(Type, Box<Expression>),
-    Constant(Constant),
+    Var(Identifier, Option<Type>),
+    Unary(UnaryOperator, Box<Expression>, Option<Type>),
+    BinOp(BinaryOperator, Box<Expression>, Box<Expression>, Option<Type>),
+    Assignment(Box<Expression>, Box<Expression>, Option<Type>),
+    Conditional(Box<Expression>, Box<Expression>, Box<Expression>, Option<Type>),
+    FunctionCall(Identifier, Vec<Expression>, Option<Type>),
+    Cast(Type, Box<Expression>, Option<Type>),
+    Constant(Constant, Option<Type>),
 }
 
 #[derive(Clone, Debug, PartialEq)]

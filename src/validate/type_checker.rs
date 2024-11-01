@@ -89,7 +89,7 @@ impl TypeChecker {
         &mut self,
         variable_declaration: &VariableDeclaration,
     ) -> Result<(), CompilerError> {
-        let mut initial_value = if let Some(Expression::Constant(i)) = &variable_declaration.init {
+        let mut initial_value = if let Some(Expression::Constant(i, _)) = &variable_declaration.init {
             InitialValue::Initial(i.clone().into())
         } else if variable_declaration.init.is_none() {
             if variable_declaration.storage_class == Some(StorageClass::Extern) {
@@ -182,7 +182,7 @@ impl TypeChecker {
                 );
             }
         } else if variable_declaration.storage_class == Some(StorageClass::Static) {
-            let initial_value = if let Some(Expression::Constant(i)) = &variable_declaration.init {
+            let initial_value = if let Some(Expression::Constant(i, _)) = &variable_declaration.init {
                 InitialValue::Initial(i.clone().into())
             } else if variable_declaration.init.is_none() {
                 InitialValue::Initial(0)
@@ -215,7 +215,7 @@ impl TypeChecker {
 
     fn type_check_expression(&mut self, expression: &Expression) -> Result<(), CompilerError> {
         match expression {
-            Expression::FunctionCall(name, arguments) => {
+            Expression::FunctionCall(name, arguments, _) => {
                 if let Some(symbol) = self.symbol_table.get(name) {
                     if let TypeDefinition::FunType(expected_args) = symbol.type_definition {
                         if expected_args != arguments.len() {
@@ -237,7 +237,7 @@ impl TypeChecker {
                     self.type_check_expression(argument)?;
                 }
             }
-            Expression::Var(name) => {
+            Expression::Var(name, _) => {
                 if let Some(existing) = self.symbol_table.get(name) {
                     if existing.type_definition != TypeDefinition::Int {
                         return Err(CompilerError::SemanticAnalysis(
@@ -246,24 +246,24 @@ impl TypeChecker {
                     }
                 }
             }
-            Expression::BinOp(_, left, right) => {
+            Expression::BinOp(_, left, right, _) => {
                 self.type_check_expression(left)?;
                 self.type_check_expression(right)?;
             }
-            Expression::Unary(_, expression) => {
+            Expression::Unary(_, expression, _) => {
                 self.type_check_expression(expression)?;
             }
-            Expression::Assignment(left, right) => {
+            Expression::Assignment(left, right, _) => {
                 self.type_check_expression(left)?;
                 self.type_check_expression(right)?;
             }
-            Expression::Conditional(condition, then_expression, else_expression) => {
+            Expression::Conditional(condition, then_expression, else_expression, _) => {
                 self.type_check_expression(condition)?;
                 self.type_check_expression(then_expression)?;
                 self.type_check_expression(else_expression)?;
             }
-            Expression::Constant(_) => {}
-            Expression::Cast(_, _) => todo!("Type Checking Not done for Long/Cast"),
+            Expression::Constant(_, _) => {}
+            Expression::Cast(_, _,_ ) => todo!("Type Checking Not done for Long/Cast"),
         }
         Ok(())
     }

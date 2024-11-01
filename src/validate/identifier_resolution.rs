@@ -75,50 +75,50 @@ impl IdentifierResolution {
 
     fn resolve_expression(&mut self, expr: &Expression) -> Result<Expression, CompilerError> {
         match expr {
-            Expression::Var(name) => {
+            Expression::Var(name, ty) => {
                 let map_entry =
                     self.identifier_map
                         .get(name)
                         .ok_or(CompilerError::SemanticAnalysis(
                             SemanticAnalysisError::VariableNotDeclared(name.clone()),
                         ))?;
-                Ok(Expression::Var(map_entry.unique_name.clone()))
+                Ok(Expression::Var(map_entry.unique_name.clone(), ty.clone()))
             }
-            Expression::Unary(op, expr) => {
+            Expression::Unary(op, expr, ty) => {
                 let expr = self.resolve_expression(expr)?;
-                Ok(Expression::Unary(op.clone(), Box::new(expr)))
+                Ok(Expression::Unary(op.clone(), Box::new(expr), ty.clone()))
             }
-            Expression::BinOp(op, expr1, expr2) => {
+            Expression::BinOp(op, expr1, expr2, ty) => {
                 let expr1 = self.resolve_expression(expr1)?;
                 let expr2 = self.resolve_expression(expr2)?;
                 Ok(Expression::BinOp(
                     op.clone(),
                     Box::new(expr1),
-                    Box::new(expr2),
+                    Box::new(expr2), ty.clone()
                 ))
             }
-            Expression::Assignment(expr1, expr2) => match expr1.as_ref() {
-                Expression::Var(_) => {
+            Expression::Assignment(expr1, expr2, _ty) => match expr1.as_ref() {
+                Expression::Var(_, ty) => {
                     let expr1 = self.resolve_expression(expr1)?;
                     let expr2 = self.resolve_expression(expr2)?;
-                    Ok(Expression::Assignment(Box::new(expr1), Box::new(expr2)))
+                    Ok(Expression::Assignment(Box::new(expr1), Box::new(expr2), ty.clone()))
                 }
                 _ => Err(CompilerError::SemanticAnalysis(
                     SemanticAnalysisError::InvalidLValue,
                 )),
             },
-            Expression::Constant(_) => Ok(expr.clone()),
-            Expression::Conditional(cond, then, els) => {
+            Expression::Constant(_, _ty) => Ok(expr.clone()),
+            Expression::Conditional(cond, then, els, ty) => {
                 let cond = self.resolve_expression(cond)?;
                 let then = self.resolve_expression(then)?;
                 let els = self.resolve_expression(els)?;
                 Ok(Expression::Conditional(
                     Box::new(cond),
                     Box::new(then),
-                    Box::new(els),
+                    Box::new(els), ty.clone()
                 ))
             }
-            Expression::FunctionCall(name, args) => {
+            Expression::FunctionCall(name, args, ty) => {
                 let ident = self.identifier_map.get(name);
                 match ident {
                     Some(ident) => {
@@ -127,16 +127,16 @@ impl IdentifierResolution {
                             .iter()
                             .map(|arg| self.resolve_expression(arg))
                             .collect::<Result<Vec<Expression>, CompilerError>>()?;
-                        Ok(Expression::FunctionCall(unique_name, args))
+                        Ok(Expression::FunctionCall(unique_name, args, ty.clone()))
                     }
                     None => Err(CompilerError::SemanticAnalysis(
                         SemanticAnalysisError::FunctionNotDeclared(name.clone()),
                     )),
                 }
             }
-            Expression::Cast(lhs, expr) => {
+            Expression::Cast(lhs, expr, ty) => {
                 let expr = self.resolve_expression(expr)?;
-                Ok(Expression::Cast(lhs.clone(), Box::new(expr)))
+                Ok(Expression::Cast(lhs.clone(), Box::new(expr), ty.clone()))
             }
         }
     }

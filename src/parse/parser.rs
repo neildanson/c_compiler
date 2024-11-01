@@ -140,69 +140,70 @@ fn parse_factor(tokens: &[Token]) -> Result<(Expression, &[Token])> {
     let (factor, tokens) = match tokens {
         [Token::Constant(c), rest @ ..] => {
             let constant = parse_constant(c)?;
-            (Expression::Constant(constant), rest)
+            (Expression::Constant(constant, None), rest)
         }
         [Token::LongConstant(c), rest @ ..] => {
             let constant = parse_constant(c)?;
-            (Expression::Constant(constant), rest)
+            (Expression::Constant(constant, None), rest)
         }
         [Token::Minus, rest @ ..] => {
             let (factor, rest) = parse_factor(rest)?;
             (
-                Expression::Unary(UnaryOperator::Negation, Box::new(factor)),
+                Expression::Unary(UnaryOperator::Negation, Box::new(factor), None),
                 rest,
             )
         }
         [Token::Not, rest @ ..] => {
             let (factor, rest) = parse_factor(rest)?;
             (
-                Expression::Unary(UnaryOperator::Not, Box::new(factor)),
+                Expression::Unary(UnaryOperator::Not, Box::new(factor), None),
                 rest,
             )
         }
         [Token::Tilde, rest @ ..] => {
             let (factor, rest) = parse_factor(rest)?;
             (
-                Expression::Unary(UnaryOperator::Tilde, Box::new(factor)),
+                Expression::Unary(UnaryOperator::Tilde, Box::new(factor), None),
                 rest,
             )
         }
         [Token::DoublePlus, rest @ ..] => {
             let (factor, rest) = parse_factor(rest)?;
             (
-                Expression::Unary(UnaryOperator::PreIncrement, Box::new(factor)),
+                Expression::Unary(UnaryOperator::PreIncrement, Box::new(factor), None),
                 rest,
             )
         }
         [Token::DoubleMinus, rest @ ..] => {
             let (factor, rest) = parse_factor(rest)?;
             (
-                Expression::Unary(UnaryOperator::PreDecrement, Box::new(factor)),
+                Expression::Unary(UnaryOperator::PreDecrement, Box::new(factor), None),
                 rest,
             )
         }
         [Token::Identifier(name), Token::DoublePlus, rest @ ..] => (
             Expression::Unary(
                 UnaryOperator::PostIncrement,
-                Box::new(Expression::Var(name.clone())),
+                Box::new(Expression::Var(name.clone(), None)), None
             ),
             rest,
         ),
         [Token::Identifier(name), Token::DoubleMinus, rest @ ..] => (
             Expression::Unary(
                 UnaryOperator::PostDecrement,
-                Box::new(Expression::Var(name.clone())),
+                Box::new(Expression::Var(name.clone(), None))
+                , None
             ),
             rest,
         ),
         [Token::LParen, Token::Int, Token::RParen, rest @ ..] => {
             let (expression, rest) = parse_expression(&rest, 0)?;
-            let expression = Expression::Cast(Type::Int, Box::new(expression));
+            let expression = Expression::Cast(Type::Int, Box::new(expression), None);
             (expression, rest)
         }
         [Token::LParen, Token::Long, Token::RParen, rest @ ..] => {
             let (expression, rest) = parse_expression(&rest, 0)?;
-            let expression = Expression::Cast(Type::Long, Box::new(expression));
+            let expression = Expression::Cast(Type::Long, Box::new(expression), None);
             (expression, rest)
         }
         [Token::LParen, rest @ ..] => {
@@ -212,9 +213,9 @@ fn parse_factor(tokens: &[Token]) -> Result<(Expression, &[Token])> {
         }
         [Token::Identifier(name), Token::LParen, rest @ ..] => {
             let (arguments, rest) = parse_argument_list(rest)?;
-            (Expression::FunctionCall(name.clone(), arguments), rest)
+            (Expression::FunctionCall(name.clone(), arguments, None), rest)
         }
-        [Token::Identifier(name), rest @ ..] => (Expression::Var(name.clone()), rest),
+        [Token::Identifier(name), rest @ ..] => (Expression::Var(name.clone(), None), rest),
         toks => {
             return Err(CompilerError::Parse(format!("Factor Unexpected Tokens {:?}", toks)).into())
         }
@@ -269,7 +270,7 @@ fn parse_expression(tokens: &[Token], min_precedence: u16) -> Result<(Expression
         if next_token == &Token::Assignment {
             let (right_expr, new_tokens) = parse_expression(&tokens[1..], precedence(next_token))?;
             tokens = new_tokens;
-            left_expr = Expression::Assignment(Box::new(left_expr), Box::new(right_expr));
+            left_expr = Expression::Assignment(Box::new(left_expr), Box::new(right_expr), None);
             continue;
         }
 
@@ -281,6 +282,7 @@ fn parse_expression(tokens: &[Token], min_precedence: u16) -> Result<(Expression
                 Box::new(left_expr),
                 Box::new(then_expr),
                 Box::new(else_expr),
+                None
             );
             continue;
         }
@@ -289,7 +291,7 @@ fn parse_expression(tokens: &[Token], min_precedence: u16) -> Result<(Expression
 
         let (right_expr, new_tokens) = parse_expression(rest, precedence(next_token) + 1)?;
         tokens = new_tokens;
-        left_expr = Expression::BinOp(binop, Box::new(left_expr), Box::new(right_expr));
+        left_expr = Expression::BinOp(binop, Box::new(left_expr), Box::new(right_expr), None);
     }
 
     let result = (left_expr, tokens);
@@ -655,7 +657,7 @@ mod tests {
         let (statement, rest) = parse_statement(&tokens).unwrap();
         assert_eq!(
             statement,
-            Statement::Return(Expression::Constant(Constant::Int(42)))
+            Statement::Return(Expression::Constant(Constant::Int(42), None))
         );
         assert!(rest.is_empty());
     }
@@ -665,7 +667,7 @@ mod tests {
         let tokenizer = Tokenizer::new();
         let tokens = tokenizer.tokenize("42").unwrap();
         let (expression, rest) = parse_expression(&tokens, 0).unwrap();
-        assert_eq!(expression, Expression::Constant(Constant::Int(42)));
+        assert_eq!(expression, Expression::Constant(Constant::Int(42), None));
         assert!(rest.is_empty());
     }
 
@@ -678,7 +680,8 @@ mod tests {
             expression,
             Expression::Unary(
                 UnaryOperator::Negation,
-                Box::new(Expression::Constant(Constant::Int(42)))
+                Box::new(Expression::Constant(Constant::Int(42), None))
+                , None
             )
         );
         assert!(rest.is_empty());
@@ -696,7 +699,7 @@ mod tests {
                 parameters: vec![],
                 fun_type: Type::Int,
                 body: Some(vec![BlockItem::Statement(Statement::Return(
-                    Expression::Constant(Constant::Int(42))
+                    Expression::Constant(Constant::Int(42), None)
                 ))]),
                 storage_class: None
             }
@@ -724,7 +727,7 @@ int main(void) {
                 parameters: vec![],
                 fun_type: Type::Int,
                 body: Some(vec![BlockItem::Statement(Statement::Return(
-                    Expression::Constant(Constant::Int(100))
+                    Expression::Constant(Constant::Int(100), None)
                 ))]),
                 storage_class: None
             }
@@ -748,8 +751,9 @@ int main(void) {
                 body: Some(vec![BlockItem::Statement(Statement::Return(
                     Expression::BinOp(
                         BinaryOperator::Add,
-                        Box::new(Expression::Constant(Constant::Int(42))),
-                        Box::new(Expression::Constant(Constant::Int(12)))
+                        Box::new(Expression::Constant(Constant::Int(42), None)),
+                        Box::new(Expression::Constant(Constant::Int(12), None))
+                        , None
                     )
                 ))]),
                 storage_class: None

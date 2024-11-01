@@ -49,9 +49,9 @@ impl Tacky {
         instructions: &mut Vec<Instruction>,
     ) -> Result<Value, CompilerError> {
         match e {
-            parse::Expression::BinOp(op, e1, e2) => self.emit_tacky_binop(op, e1, e2, instructions),
-            parse::Expression::Assignment(lhs, rhs) => match lhs.as_ref() {
-                parse::Expression::Var(v) => {
+            parse::Expression::BinOp(op, e1, e2, _) => self.emit_tacky_binop(op, e1, e2, instructions),
+            parse::Expression::Assignment(lhs, rhs, _) => match lhs.as_ref() {
+                parse::Expression::Var(v, _) => {
                     let src = self.emit_tacky_expr(rhs, instructions)?;
                     instructions.push(Instruction::Copy {
                         src,
@@ -62,7 +62,7 @@ impl Tacky {
 
                 e => self.emit_tacky_expr(e, instructions),
             },
-            parse::Expression::FunctionCall(ident, params) => {
+            parse::Expression::FunctionCall(ident, params, _) => {
                 let mut args = Vec::new();
                 for p in params {
                     let arg = self.emit_tacky_expr(p, instructions)?;
@@ -125,10 +125,10 @@ impl Tacky {
         instructions: &mut Vec<Instruction>,
     ) -> Result<Value, CompilerError> {
         match f {
-            parse::Expression::Constant(i) => Ok(Value::Constant(i.clone().into())),
-            parse::Expression::Unary(op, inner) => self.emit_tacky_unaryop(op, inner, instructions),
-            parse::Expression::Var(v) => Ok(Value::Var(v.clone())),
-            parse::Expression::Conditional(cond, then, els) => {
+            parse::Expression::Constant(i, _) => Ok(Value::Constant(i.clone().into())),
+            parse::Expression::Unary(op, inner, _) => self.emit_tacky_unaryop(op, inner, instructions),
+            parse::Expression::Var(v, _) => Ok(Value::Var(v.clone())),
+            parse::Expression::Conditional(cond, then, els, _) => {
                 self.emit_tacky_conditional(cond.as_ref(), then.as_ref(), els, instructions)
             }
             e => self.emit_tacky_expr(e, instructions),
