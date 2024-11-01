@@ -69,7 +69,7 @@ where
     }
 }
 
-fn parse_nth_parameter(tokens:&[Token]) -> Result<(Identifier, &[Token])> {
+fn parse_nth_parameter(tokens: &[Token]) -> Result<(Identifier, &[Token])> {
     match tokens {
         [Token::Comma, ty, Token::Identifier(name), rest @ ..] => {
             let _ty = parse_type(&vec![ty])?;
@@ -80,7 +80,7 @@ fn parse_nth_parameter(tokens:&[Token]) -> Result<(Identifier, &[Token])> {
             Ok((name.clone(), rest))
         }
 
-        toks => Err(CompilerError::Parse(format!("Parameter Unexpected Tokens {:?}", toks)).into())
+        toks => Err(CompilerError::Parse(format!("Parameter Unexpected Tokens {:?}", toks)).into()),
     }
 }
 
@@ -184,15 +184,16 @@ fn parse_factor(tokens: &[Token]) -> Result<(Expression, &[Token])> {
         [Token::Identifier(name), Token::DoublePlus, rest @ ..] => (
             Expression::Unary(
                 UnaryOperator::PostIncrement,
-                Box::new(Expression::Var(name.clone(), None)), None
+                Box::new(Expression::Var(name.clone(), None)),
+                None,
             ),
             rest,
         ),
         [Token::Identifier(name), Token::DoubleMinus, rest @ ..] => (
             Expression::Unary(
                 UnaryOperator::PostDecrement,
-                Box::new(Expression::Var(name.clone(), None))
-                , None
+                Box::new(Expression::Var(name.clone(), None)),
+                None,
             ),
             rest,
         ),
@@ -213,7 +214,10 @@ fn parse_factor(tokens: &[Token]) -> Result<(Expression, &[Token])> {
         }
         [Token::Identifier(name), Token::LParen, rest @ ..] => {
             let (arguments, rest) = parse_argument_list(rest)?;
-            (Expression::FunctionCall(name.clone(), arguments, None), rest)
+            (
+                Expression::FunctionCall(name.clone(), arguments, None),
+                rest,
+            )
         }
         [Token::Identifier(name), rest @ ..] => (Expression::Var(name.clone(), None), rest),
         toks => {
@@ -282,7 +286,7 @@ fn parse_expression(tokens: &[Token], min_precedence: u16) -> Result<(Expression
                 Box::new(left_expr),
                 Box::new(then_expr),
                 Box::new(else_expr),
-                None
+                None,
             );
             continue;
         }
@@ -522,8 +526,6 @@ fn parse_declaration(tokens: &[Token]) -> Result<(Declaration, &[Token])> {
         (_, Err(e2)) => return Err(e2),
         _ => unreachable!(),
     }
-
-    
 }
 
 fn parse_block_item(tokens: &[Token]) -> Result<(BlockItem, &[Token])> {
@@ -680,8 +682,8 @@ mod tests {
             expression,
             Expression::Unary(
                 UnaryOperator::Negation,
-                Box::new(Expression::Constant(Constant::Int(42), None))
-                , None
+                Box::new(Expression::Constant(Constant::Int(42), None)),
+                None
             )
         );
         assert!(rest.is_empty());
@@ -752,8 +754,8 @@ int main(void) {
                     Expression::BinOp(
                         BinaryOperator::Add,
                         Box::new(Expression::Constant(Constant::Int(42), None)),
-                        Box::new(Expression::Constant(Constant::Int(12), None))
-                        , None
+                        Box::new(Expression::Constant(Constant::Int(12), None)),
+                        None
                     )
                 ))]),
                 storage_class: None

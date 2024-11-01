@@ -81,9 +81,19 @@ pub enum Statement {
 pub enum Expression {
     Var(Identifier, Option<Type>),
     Unary(UnaryOperator, Box<Expression>, Option<Type>),
-    BinOp(BinaryOperator, Box<Expression>, Box<Expression>, Option<Type>),
+    BinOp(
+        BinaryOperator,
+        Box<Expression>,
+        Box<Expression>,
+        Option<Type>,
+    ),
     Assignment(Box<Expression>, Box<Expression>, Option<Type>),
-    Conditional(Box<Expression>, Box<Expression>, Box<Expression>, Option<Type>),
+    Conditional(
+        Box<Expression>,
+        Box<Expression>,
+        Box<Expression>,
+        Option<Type>,
+    ),
     FunctionCall(Identifier, Vec<Expression>, Option<Type>),
     Cast(Type, Box<Expression>, Option<Type>),
     Constant(Constant, Option<Type>),

@@ -10,8 +10,8 @@ use crate::lex::*;
 use crate::parse::parse_program;
 use crate::tacky::Tacky;
 use anyhow::Result;
-use tacky::TackyResult;
 use std::io::{Read, Write};
+use tacky::TackyResult;
 use validate::{SemanticAnalysis, ValidateResult};
 
 pub fn read_file(filename: &str) -> Result<String> {

@@ -94,14 +94,19 @@ impl IdentifierResolution {
                 Ok(Expression::BinOp(
                     op.clone(),
                     Box::new(expr1),
-                    Box::new(expr2), ty.clone()
+                    Box::new(expr2),
+                    ty.clone(),
                 ))
             }
             Expression::Assignment(expr1, expr2, _ty) => match expr1.as_ref() {
                 Expression::Var(_, ty) => {
                     let expr1 = self.resolve_expression(expr1)?;
                     let expr2 = self.resolve_expression(expr2)?;
-                    Ok(Expression::Assignment(Box::new(expr1), Box::new(expr2), ty.clone()))
+                    Ok(Expression::Assignment(
+                        Box::new(expr1),
+                        Box::new(expr2),
+                        ty.clone(),
+                    ))
                 }
                 _ => Err(CompilerError::SemanticAnalysis(
                     SemanticAnalysisError::InvalidLValue,
@@ -115,7 +120,8 @@ impl IdentifierResolution {
                 Ok(Expression::Conditional(
                     Box::new(cond),
                     Box::new(then),
-                    Box::new(els), ty.clone()
+                    Box::new(els),
+                    ty.clone(),
                 ))
             }
             Expression::FunctionCall(name, args, ty) => {
