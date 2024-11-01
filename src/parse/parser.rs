@@ -72,11 +72,11 @@ where
 fn parse_nth_parameter(tokens: &[Token]) -> Result<(Identifier, &[Token])> {
     match tokens {
         [Token::Comma, ty, Token::Identifier(name), rest @ ..] => {
-            let _ty = parse_type(&vec![ty])?;
+            let _ty = parse_type(&[ty])?;
             Ok((name.clone(), rest))
         }
         [Token::Comma, ty1, ty2, Token::Identifier(name), rest @ ..] => {
-            let _ty = parse_type(&vec![ty1, ty2])?;
+            let _ty = parse_type(&[ty1, ty2])?;
             Ok((name.clone(), rest))
         }
 
@@ -88,7 +88,7 @@ fn parse_parameter_list(tokens: &[Token]) -> Result<(Vec<Identifier>, &[Token])>
     let (parameters, rest) = match tokens {
         [Token::Void, rest @ ..] => (Vec::new(), rest),
         [ty, Token::Identifier(name), rest @ ..] => {
-            let _ty = parse_type(&vec![ty])?;
+            let _ty = parse_type(&[ty])?;
             let mut parameters = vec![name.clone()];
             let mut rest = rest;
             while let Ok((name, new_rest)) = parse_nth_parameter(rest) {
@@ -98,7 +98,7 @@ fn parse_parameter_list(tokens: &[Token]) -> Result<(Vec<Identifier>, &[Token])>
             (parameters, rest)
         }
         [ty1, ty2, Token::Identifier(name), rest @ ..] => {
-            let _ty = parse_type(&vec![ty1, ty2])?;
+            let _ty = parse_type(&[ty1, ty2])?;
             let mut parameters = vec![name.clone()];
             let mut rest = rest;
             while let Ok((name, new_rest)) = parse_nth_parameter(rest) {
@@ -198,12 +198,12 @@ fn parse_factor(tokens: &[Token]) -> Result<(Expression, &[Token])> {
             rest,
         ),
         [Token::LParen, Token::Int, Token::RParen, rest @ ..] => {
-            let (expression, rest) = parse_expression(&rest, 0)?;
+            let (expression, rest) = parse_expression(rest, 0)?;
             let expression = Expression::Cast(Type::Int, Box::new(expression), None);
             (expression, rest)
         }
         [Token::LParen, Token::Long, Token::RParen, rest @ ..] => {
-            let (expression, rest) = parse_expression(&rest, 0)?;
+            let (expression, rest) = parse_expression(rest, 0)?;
             let expression = Expression::Cast(Type::Long, Box::new(expression), None);
             (expression, rest)
         }
@@ -448,7 +448,7 @@ fn parse_type_and_storage(
 
     //println!("types: {:?}, \n\nstorage_classes: {:?}", types, storage_classes);
 
-    if types.len() < 1 {
+    if types.is_empty() {
         return Err(CompilerError::Parse("Invalid type specifier".to_string()).into());
     }
     if storage_classes.len() > 1 {
@@ -520,10 +520,10 @@ fn parse_declaration(tokens: &[Token]) -> Result<(Declaration, &[Token])> {
             let e1 = e1.to_string();
             let e2 = e2.to_string();
             let err = format!("{}\n or\n {}", e1, e2);
-            return Err(CompilerError::Parse(err).into());
+            Err(CompilerError::Parse(err).into())
         }
-        (Err(e1), _) => return Err(e1),
-        (_, Err(e2)) => return Err(e2),
+        (Err(e1), _) => Err(e1),
+        (_, Err(e2)) => Err(e2),
         _ => unreachable!(),
     }
 }
