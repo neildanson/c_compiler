@@ -127,7 +127,7 @@ impl Tacky {
         instructions: &mut Vec<Instruction>,
     ) -> Result<Value, CompilerError> {
         match f {
-            parse::Expression::Constant(i) => Ok(Value::Constant(i.clone().into())),
+            parse::Expression::Constant(i) => Ok(Value::Constant(i.i32())),
             parse::Expression::Unary(op, inner, _) => {
                 self.emit_tacky_unaryop(op, inner, instructions)
             }
@@ -593,7 +593,7 @@ impl Tacky {
                     new_symbols.push(TopLevel::StaticVariable(StaticVariable {
                         identifier: name.clone(),
                         global: static_attr.global,
-                        init: *i,
+                        init: i.i32(), //TODO
                     }));
                 }
                 InitialValue::Tentative => {

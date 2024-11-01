@@ -1,3 +1,5 @@
+use crate::validate::StaticInit;
+
 pub type Identifier = String;
 
 #[derive(Debug, PartialEq)]
@@ -167,14 +169,21 @@ impl Constant {
             Constant::Long(_) => Type::Long,
         }
     }
+
+    //TODO remove this function
+    pub fn i32(&self) -> i32 {
+        match self {
+            Constant::Int(val) => *val,
+            _ => panic!("Invalid conversion")
+        }
+    }
 }
 
-//TODO remove this?
-impl From<Constant> for i32 {
+impl From<Constant> for StaticInit {
     fn from(value: Constant) -> Self {
         match value {
-            Constant::Int(val) => val,
-            _ => panic!("Expected int constant"),
+            Constant::Int(val) => StaticInit::IntInit(val),
+            Constant::Long(val) => StaticInit::LongInit(val),
         }
     }
 }

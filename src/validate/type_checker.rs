@@ -37,9 +37,26 @@ impl Symbol {
 }
 
 #[derive(PartialEq, Clone, Debug)]
+pub enum StaticInit {
+    IntInit(i32),
+    LongInit(i64)
+}
+
+impl StaticInit {
+    //TODO: Remove this functionn
+    pub fn i32(&self) -> i32 {
+        match self {
+            StaticInit::IntInit(val) => *val,
+            _ => panic!("Invalid conversion")
+        }
+    }
+}
+
+
+#[derive(PartialEq, Clone, Debug)]
 pub enum InitialValue {
     Tentative,
-    Initial(i32),
+    Initial(StaticInit),
     NoInitializer,
 }
 
@@ -198,7 +215,7 @@ impl TypeChecker {
             let initial_value = if let Some(Expression::Constant(i)) = &variable_declaration.init {
                 InitialValue::Initial(i.clone().into())
             } else if variable_declaration.init.is_none() {
-                InitialValue::Initial(0)
+                InitialValue::Tentative
             } else {
                 return Err(CompilerError::SemanticAnalysis(
                     SemanticAnalysisError::NonConstantInitializerForLocalStaticVariable,
