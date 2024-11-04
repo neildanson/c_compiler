@@ -306,7 +306,7 @@ fn parse_optional_expression(tokens: &[Token]) -> Result<(Option<Expression>, &[
     optional(|tokens| parse_expression(tokens, 0), tokens)
 }
 
-fn parse_for_init(tokens: &[Token]) -> Result<(ForInit, &[Token])> {
+fn parse_for_init(tokens: &[Token]) -> Result<(ForInit<Expression>, &[Token])> {
     let decl = parse_variable_declaration(tokens);
 
     match decl {
@@ -504,7 +504,7 @@ fn parse_variable_declaration(tokens: &[Token]) -> Result<(VariableDeclaration, 
     Ok((declaration, rest))
 }
 
-fn parse_declaration(tokens: &[Token]) -> Result<(Declaration<Expression>, &[Token])> {
+fn parse_declaration(tokens: &[Token]) -> Result<(Declaration<Statement<Expression>,Expression>, &[Token])> {
     let declaration = parse_variable_declaration(tokens);
     if let Ok((declaration, rest)) = declaration {
         return Ok((Declaration::Variable(declaration), rest));
@@ -528,7 +528,7 @@ fn parse_declaration(tokens: &[Token]) -> Result<(Declaration<Expression>, &[Tok
     }
 }
 
-fn parse_block_item(tokens: &[Token]) -> Result<(BlockItem<Expression>, &[Token])> {
+fn parse_block_item(tokens: &[Token]) -> Result<(BlockItem<Statement<Expression>, Expression>, &[Token])> {
     let declaration = parse_declaration(tokens);
     if let Ok((declaration, rest)) = declaration {
         return Ok((BlockItem::Declaration(declaration), rest));
@@ -562,7 +562,7 @@ fn parse_constant(constant: &str) -> Result<Constant> {
     }
 }
 
-fn parse_function_body(tokens: &[Token]) -> Result<(Vec<BlockItem<Expression>>, &[Token])> {
+fn parse_function_body(tokens: &[Token]) -> Result<(Vec<BlockItem<Statement<Expression>,Expression>>, &[Token])> {
     let mut statements = Vec::new();
     let rest = tokens;
     let mut error = None;
@@ -588,7 +588,7 @@ fn parse_function_body(tokens: &[Token]) -> Result<(Vec<BlockItem<Expression>>, 
     }
 }
 
-fn parse_function_declaration(tokens: &[Token]) -> Result<(FunctionDeclaration<Expression>, &[Token])> {
+fn parse_function_declaration(tokens: &[Token]) -> Result<(FunctionDeclaration<Statement<Expression>,Expression>, &[Token])> {
     let (fun_type, storage_class, rest) = parse_type_and_storage(tokens)?;
     let (function, rest) = match rest {
         [Token::Identifier(name), Token::LParen, rest @ ..] => {
@@ -602,13 +602,7 @@ fn parse_function_declaration(tokens: &[Token]) -> Result<(FunctionDeclaration<E
             };
 
             (
-                FunctionDeclaration {
-                    name: name.clone(),
-                    parameters: params,
-                    body: statements,
-                    fun_type,
-                    storage_class,
-                },
+                FunctionDeclaration::new(name.clone(), params, statements, fun_type, storage_class),
                 rest,
             )
         }
@@ -622,7 +616,7 @@ fn parse_function_declaration(tokens: &[Token]) -> Result<(FunctionDeclaration<E
     Ok((function, rest))
 }
 
-pub fn parse_program(tokens: &[Token]) -> Result<Program<Expression>> {
+pub fn parse_program(tokens: &[Token]) -> Result<Program<Statement<Expression>, Expression>> {
     let mut tokens = tokens;
     let mut declarations = Vec::new();
     let mut error = None;
@@ -650,7 +644,7 @@ pub fn parse_program(tokens: &[Token]) -> Result<Program<Expression>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::lex::Tokenizer;
+    use crate::{codegen::Function, lex::Tokenizer};
 
     #[test]
     fn test_parse_statement() {
@@ -696,15 +690,15 @@ mod tests {
         let (function, rest) = parse_function_declaration(&tokens).unwrap();
         assert_eq!(
             function,
-            FunctionDeclaration {
-                name: "main".to_string(),
-                parameters: vec![],
-                fun_type: Type::Int,
-                body: Some(vec![BlockItem::Statement(Statement::Return(
+            FunctionDeclaration::new(
+                "main".to_string(),
+                vec![],
+                Some(vec![BlockItem::Statement(Statement::Return(
                     Expression::Constant(Constant::Int(42))
                 ))]),
-                storage_class: None
-            }
+                Type::Int,
+                None
+            )
         );
         assert!(rest.is_empty());
     }
@@ -724,15 +718,15 @@ int main(void) {
         let (function, rest) = parse_function_declaration(&tokens).unwrap();
         assert_eq!(
             function,
-            FunctionDeclaration {
-                name: "main".to_string(),
-                parameters: vec![],
-                fun_type: Type::Int,
-                body: Some(vec![BlockItem::Statement(Statement::Return(
+            FunctionDeclaration::new(
+                "main".to_string(),
+                vec![],
+                Some(vec![BlockItem::Statement(Statement::Return(
                     Expression::Constant(Constant::Int(100))
                 ))]),
-                storage_class: None
-            }
+                Type::Int,
+                None
+            )
         );
         assert!(rest.is_empty());
     }
@@ -746,11 +740,10 @@ int main(void) {
         let (function, rest) = parse_function_declaration(&tokens).unwrap();
         assert_eq!(
             function,
-            FunctionDeclaration {
-                name: "main".to_string(),
-                parameters: vec![],
-                fun_type: Type::Int,
-                body: Some(vec![BlockItem::Statement(Statement::Return(
+            FunctionDeclaration::new(
+                "main".to_string(),
+                vec![],
+                Some(vec![BlockItem::Statement(Statement::Return(
                     Expression::BinOp(
                         BinaryOperator::Add,
                         Box::new(Expression::Constant(Constant::Int(42))),
@@ -758,9 +751,9 @@ int main(void) {
                         None
                     )
                 ))]),
-                storage_class: None
-            }
-        );
+                Type::Int,
+                None));
+        
         assert!(rest.is_empty());
     }
 }

@@ -3,8 +3,8 @@ use crate::validate::StaticInit;
 pub type Identifier = String;
 
 #[derive(Debug, PartialEq)]
-pub struct Program<E> {
-    pub declarations: Vec<Declaration<E>>,
+pub struct Program<S : Clone, E : Clone> {
+    pub declarations: Vec<Declaration<S, E>>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -14,27 +14,48 @@ pub enum StorageClass {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum BlockItem<E> {
-    Declaration(Declaration<E>),
-    Statement(Statement<E>),
+pub enum BlockItem<S: Clone, E: Clone> {
+    Declaration(Declaration<S, E>),
+    Statement(S),
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct FunctionDeclaration<E> {
+pub struct FunctionDeclaration<S: Clone, E: Clone> {
     pub name: Identifier,
     pub parameters: Vec<(Type, Identifier)>,
-    pub body: Option<Vec<BlockItem<E>>>,
+    pub body: Option<Vec<BlockItem<S, E>>>,
     pub fun_type: Type,
     pub storage_class: Option<StorageClass>,
+    _marker: std::marker::PhantomData<E>,
+}
+
+impl<S : Clone, E : Clone> FunctionDeclaration<S, E> {
+    pub fn new(name: Identifier, parameters: Vec<(Type, Identifier)>, body: Option<Vec<BlockItem<S, E>>>, fun_type: Type, storage_class: Option<StorageClass>) -> Self {
+        Self {
+            name,
+            parameters,
+            body,
+            fun_type,
+            storage_class,
+            _marker: std::marker::PhantomData,
+        }
+    }
+
+    pub fn with_body(&self, body: Option<Vec<BlockItem<S, E>>>) -> Self {
+        Self {
+            body: body,
+            ..self.clone()
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum Declaration<E> {
+pub enum Declaration<S : Clone, E: Clone> {
     Variable(VariableDeclaration),
-    Function(FunctionDeclaration<E>),
+    Function(FunctionDeclaration<S, E>),
 }
 
-impl<E> Declaration<E> {
+impl<S: Clone, E: Clone> Declaration<S, E> {
     pub fn get_name(&self) -> Identifier {
         match self {
             Declaration::Variable(decl) => decl.name.clone(),
@@ -52,28 +73,28 @@ pub struct VariableDeclaration {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum ForInit {
+pub enum ForInit<E> {
     InitDeclaration(VariableDeclaration),
-    InitExpression(Option<Expression>),
+    InitExpression(Option<E>),
 }
 
 type LoopIdentifier = Option<Identifier>;
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum Statement<E> {
+pub enum Statement<E:Clone> {
     Return(E),
-    Expression(Expression),
-    If(Expression, Box<Statement<E>>, Option<Box<Statement<E>>>),
-    Compound(Vec<BlockItem<E>>),
+    Expression(E),
+    If(E, Box<Statement<E>>, Option<Box<Statement<E>>>),
+    Compound(Vec<BlockItem<Statement<E>, E>>),
     Null,
     Break(LoopIdentifier),
     Continue(LoopIdentifier),
-    While(Expression, Box<Statement<E>>, LoopIdentifier),
-    DoWhile(Box<Statement<E>>, Expression, LoopIdentifier),
+    While(E, Box<Statement<E>>, LoopIdentifier),
+    DoWhile(Box<Statement<E>>, E, LoopIdentifier),
     For(
-        ForInit,
-        Option<Expression>,
-        Option<Expression>,
+        ForInit<E>,
+        Option<E>,
+        Option<E>,
         Box<Statement<E>>,
         LoopIdentifier,
     ),

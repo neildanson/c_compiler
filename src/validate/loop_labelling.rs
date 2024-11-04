@@ -15,9 +15,9 @@ impl LoopLabelling {
 
     fn label_block(
         &mut self,
-        blocks: &[BlockItem<Expression>],
+        blocks: &[BlockItem<Statement<Expression>, Expression>],
         current_label: Option<String>,
-    ) -> Result<Vec<BlockItem<Expression>>, CompilerError> {
+    ) -> Result<Vec<BlockItem<Statement<Expression>, Expression>>, CompilerError> {
         let mut new_block = Vec::new();
         for item in blocks {
             match item {
@@ -91,18 +91,12 @@ impl LoopLabelling {
 
     pub fn label_function(
         &mut self,
-        function: FunctionDeclaration<Expression>,
-    ) -> Result<FunctionDeclaration<Expression>, CompilerError> {
+        function: FunctionDeclaration<Statement<Expression>, Expression>,
+    ) -> Result<FunctionDeclaration<Statement<Expression>, Expression>, CompilerError> {
         match function.body {
             Some(body) => {
                 let new_body = self.label_block(&body, None)?;
-                Ok(FunctionDeclaration {
-                    name: function.name,
-                    parameters: function.parameters,
-                    body: Some(new_body),
-                    fun_type: function.fun_type,
-                    storage_class: function.storage_class,
-                })
+                Ok(FunctionDeclaration::new(function.name, function.parameters, Some(new_body), function.fun_type, function.storage_class))
             }
             None => Ok(function.clone()),
         }
@@ -145,8 +139,8 @@ impl LoopLabelling {
 
     pub fn verify_function_labels(
         &self,
-        function: FunctionDeclaration<Expression>,
-    ) -> Result<FunctionDeclaration<Expression>, CompilerError> {
+        function: FunctionDeclaration<Statement<Expression>, Expression>,
+    ) -> Result<FunctionDeclaration<Statement<Expression>, Expression>, CompilerError> {
         let mut new_body = Vec::new();
 
         if let Some(body) = function.body {
@@ -161,21 +155,9 @@ impl LoopLabelling {
                     }
                 }
             }
-            Ok(FunctionDeclaration {
-                name: function.name,
-                parameters: function.parameters,
-                body: Some(new_body),
-                fun_type: function.fun_type,
-                storage_class: function.storage_class,
-            })
+            Ok(FunctionDeclaration::new(function.name,function.parameters, Some(new_body),function.fun_type, function.storage_class))
         } else {
-            Ok(FunctionDeclaration {
-                name: function.name,
-                parameters: function.parameters,
-                body: None,
-                fun_type: function.fun_type,
-                storage_class: function.storage_class,
-            })
+            Ok(FunctionDeclaration::new(function.name,function.parameters, None, function.fun_type, function.storage_class))
         }
     }
 }

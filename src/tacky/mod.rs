@@ -15,7 +15,7 @@ pub use value::*;
 
 use crate::{
     error::CompilerError,
-    parse::{self, Expression},
+    parse::{self, Expression, Statement},
     validate::{IdentifierAttributes, InitialValue, StaticAttr, Symbol, ValidateResult},
 };
 use std::collections::HashMap;
@@ -332,7 +332,7 @@ impl Tacky {
 
     fn emit_tacky_decl(
         &mut self,
-        d: &parse::Declaration<Expression>,
+        d: &parse::Declaration<Statement<Expression>, Expression>,
         instructions: &mut Vec<Instruction>,
     ) -> Result<(), CompilerError> {
         match d {
@@ -346,7 +346,7 @@ impl Tacky {
 
     fn emit_tacky_block_item(
         &mut self,
-        item: &parse::BlockItem<Expression>,
+        item: &parse::BlockItem<Statement<Expression>, Expression>,
         instructions: &mut Vec<Instruction>,
     ) -> Result<(), CompilerError> {
         match item {
@@ -423,7 +423,7 @@ impl Tacky {
 
     fn emit_tacky_for_loop(
         &mut self,
-        for_init: &parse::ForInit,
+        for_init: &parse::ForInit<Expression>,
         cond: &Option<Expression>,
         post: &Option<Expression>,
         body: &parse::Statement<Expression>,
@@ -558,7 +558,7 @@ impl Tacky {
 
     fn emit_tacky_function(
         &mut self,
-        f: parse::FunctionDeclaration<Expression>,
+        f: parse::FunctionDeclaration<Statement<Expression>, Expression>,
         symbol_table: &HashMap<String, Symbol>,
     ) -> Result<Option<Function>, CompilerError> {
         let mut body = Vec::new();

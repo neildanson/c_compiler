@@ -10,7 +10,7 @@ use crate::lex::*;
 use crate::parse::parse_program;
 use crate::tacky::Tacky;
 use anyhow::Result;
-use parse::Expression;
+use parse::{Expression, Statement};
 use std::io::{Read, Write};
 use tacky::TackyResult;
 use validate::{SemanticAnalysis, ValidateResult};
@@ -38,7 +38,7 @@ pub fn lex(filename: &str) -> Result<Vec<Token>> {
     Ok(tokens)
 }
 
-pub fn parse(filename: &str) -> Result<parse::Program<Expression>> {
+pub fn parse(filename: &str) -> Result<parse::Program<Statement<Expression>, Expression>> {
     let tokens = lex(filename)?;
     let ast = parse_program(&tokens)?;
     Ok(ast)

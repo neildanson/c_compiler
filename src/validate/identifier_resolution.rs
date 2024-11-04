@@ -3,6 +3,8 @@ use crate::parse::ast::*;
 use global_counter::primitive::CounterI32;
 use std::collections::HashMap;
 
+type ParseStatement = Statement<Expression>;
+
 #[derive(Debug)]
 pub(crate) struct MapEntry {
     unique_name: Identifier,
@@ -217,9 +219,9 @@ impl IdentifierResolution {
 
     pub fn resolve_function_declaration(
         &mut self,
-        decl: FunctionDeclaration<Expression>,
+        decl: FunctionDeclaration<ParseStatement, Expression>,
         nested: bool,
-    ) -> Result<FunctionDeclaration<Expression>, CompilerError> {
+    ) -> Result<FunctionDeclaration<ParseStatement, Expression>, CompilerError> {
         if let Some(entry) = self.identifier_map.get(&decl.name) {
             if entry.from_current_scope && !entry.has_external_linkage {
                 {
@@ -254,16 +256,10 @@ impl IdentifierResolution {
             None
         };
 
-        Ok(FunctionDeclaration {
-            name: unique_name,
-            parameters,
-            body,
-            fun_type: decl.fun_type,
-            storage_class: decl.storage_class,
-        })
+        Ok(FunctionDeclaration::new(unique_name, parameters, body, decl.fun_type, decl.storage_class))
     }
 
-    fn resolve_block(&mut self, blocks: &[BlockItem<Expression>]) -> Result<Vec<BlockItem<Expression>>, CompilerError> {
+    fn resolve_block(&mut self, blocks: &[BlockItem<ParseStatement, Expression>]) -> Result<Vec<BlockItem<ParseStatement, Expression>>, CompilerError> {
         let mut new_block = Vec::new();
         for item in blocks {
             match item {
@@ -288,7 +284,7 @@ impl IdentifierResolution {
         Ok(new_block)
     }
 
-    fn resolve_for_init(&mut self, init: &ForInit) -> Result<ForInit, CompilerError> {
+    fn resolve_for_init(&mut self, init: &ForInit<Expression>) -> Result<ForInit<Expression>, CompilerError> {
         match init {
             ForInit::InitDeclaration(decl) => {
                 let decl = self.resolve_local_variable_declaration(decl.clone())?;

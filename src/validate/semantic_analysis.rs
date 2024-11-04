@@ -9,11 +9,11 @@ pub struct SemanticAnalysis;
 
 impl SemanticAnalysis {
     fn semantic_validation_function(
-        function: FunctionDeclaration<Expression>,
+        function: FunctionDeclaration<Statement<Expression>, Expression>,
         identifier_resolution: &mut IdentifierResolution,
         loop_labelling: &mut LoopLabelling,
         type_checker: &mut type_checker::TypeChecker,
-    ) -> Result<FunctionDeclaration<Expression>, CompilerError> {
+    ) -> Result<FunctionDeclaration<Statement<Expression>, Expression>, CompilerError> {
         let function = identifier_resolution.resolve_function_declaration(function, false)?;
         let function = loop_labelling.label_function(function)?;
         let function = loop_labelling.verify_function_labels(function)?;
@@ -21,7 +21,7 @@ impl SemanticAnalysis {
         Ok(function)
     }
 
-    pub fn semantic_validation(program: Program<Expression>) -> Result<ValidateResult, CompilerError> {
+    pub fn semantic_validation(program: Program<Statement<Expression>, Expression>) -> Result<ValidateResult, CompilerError> {
         let mut identifier_resolution = IdentifierResolution::default();
         let mut loop_labelling = LoopLabelling::default();
         let mut type_checker = type_checker::TypeChecker::default();

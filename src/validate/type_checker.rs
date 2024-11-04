@@ -388,7 +388,7 @@ impl TypeChecker {
         }
     }
 
-    fn type_check_for_init(&mut self, for_init: &ForInit) -> Result<ForInit, CompilerError> {
+    fn type_check_for_init(&mut self, for_init: &ForInit<Expression>) -> Result<ForInit<Expression>, CompilerError> {
         match for_init {
             ForInit::InitExpression(Some(expression)) => Ok(ForInit::InitExpression(Some(
                 self.type_check_expression(expression)?,
@@ -479,8 +479,8 @@ impl TypeChecker {
 
     fn type_check_block_item(
         &mut self,
-        block_item: &BlockItem<Expression>,
-    ) -> Result<BlockItem<Expression>, CompilerError> {
+        block_item: &BlockItem<Statement<Expression>, Expression>,
+    ) -> Result<BlockItem<Statement<Expression>, Expression>, CompilerError> {
         match block_item {
             BlockItem::Statement(statement) => {
                 Ok(BlockItem::Statement(self.type_check_statement(statement)?))
@@ -502,9 +502,9 @@ impl TypeChecker {
 
     pub fn type_check_function_declaration(
         &mut self,
-        function_declaration: &FunctionDeclaration<Expression>,
+        function_declaration: &FunctionDeclaration<Statement<Expression>, Expression>,
         top_level: bool,
-    ) -> Result<FunctionDeclaration<Expression>, CompilerError> {
+    ) -> Result<FunctionDeclaration<Statement<Expression>, Expression>, CompilerError> {
         let fun_type = TypeDefinition::FunType(function_declaration.parameters.iter().map(|(ty,_)| ty.clone()).collect(), function_declaration.fun_type.clone());
         let has_body = function_declaration.body.is_some();
         let mut already_defined = false;
@@ -579,10 +579,7 @@ impl TypeChecker {
         } else {
             None
         };
-        let function_declaration = FunctionDeclaration {
-            body: new_body,
-            ..function_declaration.clone()
-        };
+        let function_declaration = function_declaration.with_body(new_body);
 
         Ok(function_declaration)
     }
