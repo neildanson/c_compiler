@@ -1,7 +1,7 @@
 use super::loop_labelling::LLStatement;
 use super::type_checker::{self};
-use super::ValidateResult;
 use super::{identifier_resolution::*, loop_labelling::LoopLabelling};
+use super::{TCExpression, ValidateResult};
 use crate::error::*;
 use crate::parse::ast::*;
 
@@ -14,7 +14,7 @@ impl SemanticAnalysis {
         identifier_resolution: &mut IdentifierResolution,
         loop_labelling: &mut LoopLabelling,
         type_checker: &mut type_checker::TypeChecker,
-    ) -> Result<FunctionDeclaration<LLStatement<Expression>, Expression>, CompilerError> {
+    ) -> Result<FunctionDeclaration<LLStatement<TCExpression>, TCExpression>, CompilerError> {
         let function = identifier_resolution.resolve_function_declaration(function, false)?;
         let function = loop_labelling.label_function(function)?;
         //let function = loop_labelling.verify_function_labels(function)?;
@@ -22,7 +22,9 @@ impl SemanticAnalysis {
         Ok(function)
     }
 
-    pub fn semantic_validation(program: Program<Statement<Expression>, Expression>) -> Result<ValidateResult, CompilerError> {
+    pub fn semantic_validation(
+        program: Program<Statement<Expression>, Expression>,
+    ) -> Result<ValidateResult, CompilerError> {
         let mut identifier_resolution = IdentifierResolution::default();
         let mut loop_labelling = LoopLabelling::default();
         let mut type_checker = type_checker::TypeChecker::default();
@@ -33,7 +35,8 @@ impl SemanticAnalysis {
                 Declaration::Variable(variable) => {
                     let variable =
                         identifier_resolution.resolve_file_scope_variable_declaration(variable)?;
-                    type_checker.type_check_file_scope_variable_declaration(&variable)?;
+                    let variable =
+                        type_checker.type_check_file_scope_variable_declaration(&variable)?;
                     declarations.push(Declaration::Variable(variable));
                 }
                 Declaration::Function(function) => {

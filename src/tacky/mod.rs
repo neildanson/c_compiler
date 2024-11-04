@@ -15,8 +15,11 @@ pub use value::*;
 
 use crate::{
     error::CompilerError,
-    parse::{self, Expression},
-    validate::{IdentifierAttributes, InitialValue, StaticAttr, Symbol, ValidateResult, loop_labelling::LLStatement},
+    parse::{self},
+    validate::{
+        loop_labelling::LLStatement, type_checker::TCExpression, IdentifierAttributes,
+        InitialValue, StaticAttr, Symbol, ValidateResult,
+    },
 };
 use std::collections::HashMap;
 
@@ -45,15 +48,13 @@ impl Tacky {
 
     fn emit_tacky_expr(
         &mut self,
-        e: &parse::Expression,
+        e: &TCExpression,
         instructions: &mut Vec<Instruction>,
     ) -> Result<Value, CompilerError> {
         match e {
-            parse::Expression::BinOp(op, e1, e2, _) => {
-                self.emit_tacky_binop(op, e1, e2, instructions)
-            }
-            parse::Expression::Assignment(lhs, rhs, _) => match lhs.as_ref() {
-                parse::Expression::Var(v, _) => {
+            TCExpression::BinOp(op, e1, e2, _) => self.emit_tacky_binop(op, e1, e2, instructions),
+            TCExpression::Assignment(lhs, rhs, _) => match lhs.as_ref() {
+                TCExpression::Var(v, _) => {
                     let src = self.emit_tacky_expr(rhs, instructions)?;
                     instructions.push(Instruction::Copy {
                         src,
@@ -64,7 +65,7 @@ impl Tacky {
 
                 e => self.emit_tacky_expr(e, instructions),
             },
-            parse::Expression::FunctionCall(ident, params, _) => {
+            TCExpression::FunctionCall(ident, params, _) => {
                 let mut args = Vec::new();
                 for p in params {
                     let arg = self.emit_tacky_expr(p, instructions)?;
@@ -84,9 +85,9 @@ impl Tacky {
 
     fn emit_tacky_conditional(
         &mut self,
-        cond: &parse::Expression,
-        then: &parse::Expression,
-        els: &parse::Expression,
+        cond: &TCExpression,
+        then: &TCExpression,
+        els: &TCExpression,
         instructions: &mut Vec<Instruction>,
     ) -> Result<Value, CompilerError> {
         let cond = self.emit_tacky_expr(cond, instructions)?;
@@ -123,16 +124,14 @@ impl Tacky {
 
     fn emit_tacky_factor(
         &mut self,
-        f: &parse::Expression,
+        f: &TCExpression,
         instructions: &mut Vec<Instruction>,
     ) -> Result<Value, CompilerError> {
         match f {
-            parse::Expression::Constant(i) => Ok(Value::Constant(i.i32())),
-            parse::Expression::Unary(op, inner, _) => {
-                self.emit_tacky_unaryop(op, inner, instructions)
-            }
-            parse::Expression::Var(v, _) => Ok(Value::Var(v.clone())),
-            parse::Expression::Conditional(cond, then, els, _) => {
+            TCExpression::Constant(i) => Ok(Value::Constant(i.i32())),
+            TCExpression::Unary(op, inner, _) => self.emit_tacky_unaryop(op, inner, instructions),
+            TCExpression::Var(v, _) => Ok(Value::Var(v.clone())),
+            TCExpression::Conditional(cond, then, els, _) => {
                 self.emit_tacky_conditional(cond.as_ref(), then.as_ref(), els, instructions)
             }
             e => self.emit_tacky_expr(e, instructions),
@@ -142,7 +141,7 @@ impl Tacky {
     fn emit_tacky_unaryop(
         &mut self,
         op: &parse::UnaryOperator,
-        inner: &parse::Expression,
+        inner: &TCExpression,
         instructions: &mut Vec<Instruction>,
     ) -> Result<Value, CompilerError> {
         let dst_name = self.make_name();
@@ -214,8 +213,8 @@ impl Tacky {
     fn emit_tacky_binop(
         &mut self,
         op: &parse::BinaryOperator,
-        e1: &parse::Expression,
-        e2: &parse::Expression,
+        e1: &TCExpression,
+        e2: &TCExpression,
         instructions: &mut Vec<Instruction>,
     ) -> Result<Value, CompilerError> {
         match op {
@@ -306,7 +305,7 @@ impl Tacky {
 
     fn emit_tacky_variable_decl(
         &mut self,
-        d: &parse::VariableDeclaration,
+        d: &parse::VariableDeclaration<TCExpression>,
         instructions: &mut Vec<Instruction>,
     ) -> Result<(), CompilerError> {
         let name = d.name.clone();
@@ -332,7 +331,7 @@ impl Tacky {
 
     fn emit_tacky_decl(
         &mut self,
-        d: &parse::Declaration<LLStatement<Expression>, Expression>,
+        d: &parse::Declaration<LLStatement<TCExpression>, TCExpression>,
         instructions: &mut Vec<Instruction>,
     ) -> Result<(), CompilerError> {
         match d {
@@ -346,7 +345,7 @@ impl Tacky {
 
     fn emit_tacky_block_item(
         &mut self,
-        item: &parse::BlockItem<LLStatement<Expression>, Expression>,
+        item: &parse::BlockItem<LLStatement<TCExpression>, TCExpression>,
         instructions: &mut Vec<Instruction>,
     ) -> Result<(), CompilerError> {
         match item {
@@ -362,8 +361,8 @@ impl Tacky {
 
     fn emit_tacky_do_while(
         &mut self,
-        body: &LLStatement<Expression>,
-        cond: &parse::Expression,
+        body: &LLStatement<TCExpression>,
+        cond: &TCExpression,
         loop_label: &str,
         instructions: &mut Vec<Instruction>,
     ) -> Result<(), CompilerError> {
@@ -393,8 +392,8 @@ impl Tacky {
 
     fn emit_tacky_while(
         &mut self,
-        cond: &parse::Expression,
-        body: &LLStatement<Expression>,
+        cond: &TCExpression,
+        body: &LLStatement<TCExpression>,
         loop_label: &str,
         instructions: &mut Vec<Instruction>,
     ) -> Result<(), CompilerError> {
@@ -421,10 +420,10 @@ impl Tacky {
 
     fn emit_tacky_for_loop(
         &mut self,
-        for_init: &parse::ForInit<Expression>,
-        cond: &Option<Expression>,
-        post: &Option<Expression>,
-        body: &LLStatement<Expression>,
+        for_init: &parse::ForInit<TCExpression>,
+        cond: &Option<TCExpression>,
+        post: &Option<TCExpression>,
+        body: &LLStatement<TCExpression>,
         loop_label: &str,
         instructions: &mut Vec<Instruction>,
     ) -> Result<(), CompilerError> {
@@ -475,7 +474,7 @@ impl Tacky {
 
     fn emit_tacky_statement(
         &mut self,
-        s: &LLStatement<Expression>,
+        s: &LLStatement<TCExpression>,
         instructions: &mut Vec<Instruction>,
     ) -> Result<(), CompilerError> {
         match s {
@@ -555,7 +554,7 @@ impl Tacky {
 
     fn emit_tacky_function(
         &mut self,
-        f: parse::FunctionDeclaration<LLStatement<Expression>, Expression>,
+        f: parse::FunctionDeclaration<LLStatement<TCExpression>, TCExpression>,
         symbol_table: &HashMap<String, Symbol>,
     ) -> Result<Option<Function>, CompilerError> {
         let mut body = Vec::new();

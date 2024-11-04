@@ -77,45 +77,40 @@ impl IdentifierResolution {
 
     fn resolve_expression(&mut self, expr: &Expression) -> Result<Expression, CompilerError> {
         match expr {
-            Expression::Var(name, ty) => {
+            Expression::Var(name) => {
                 let map_entry =
                     self.identifier_map
                         .get(name)
                         .ok_or(CompilerError::SemanticAnalysis(
                             SemanticAnalysisError::VariableNotDeclared(name.clone()),
                         ))?;
-                Ok(Expression::Var(map_entry.unique_name.clone(), ty.clone()))
+                Ok(Expression::Var(map_entry.unique_name.clone()))
             }
-            Expression::Unary(op, expr, ty) => {
+            Expression::Unary(op, expr) => {
                 let expr = self.resolve_expression(expr)?;
-                Ok(Expression::Unary(op.clone(), Box::new(expr), ty.clone()))
+                Ok(Expression::Unary(op.clone(), Box::new(expr)))
             }
-            Expression::BinOp(op, expr1, expr2, ty) => {
+            Expression::BinOp(op, expr1, expr2) => {
                 let expr1 = self.resolve_expression(expr1)?;
                 let expr2 = self.resolve_expression(expr2)?;
                 Ok(Expression::BinOp(
                     op.clone(),
                     Box::new(expr1),
                     Box::new(expr2),
-                    ty.clone(),
                 ))
             }
-            Expression::Assignment(expr1, expr2, _ty) => match expr1.as_ref() {
-                Expression::Var(_, ty) => {
+            Expression::Assignment(expr1, expr2) => match expr1.as_ref() {
+                Expression::Var(_) => {
                     let expr1 = self.resolve_expression(expr1)?;
                     let expr2 = self.resolve_expression(expr2)?;
-                    Ok(Expression::Assignment(
-                        Box::new(expr1),
-                        Box::new(expr2),
-                        ty.clone(),
-                    ))
+                    Ok(Expression::Assignment(Box::new(expr1), Box::new(expr2)))
                 }
                 _ => Err(CompilerError::SemanticAnalysis(
                     SemanticAnalysisError::InvalidLValue,
                 )),
             },
             Expression::Constant(_) => Ok(expr.clone()),
-            Expression::Conditional(cond, then, els, ty) => {
+            Expression::Conditional(cond, then, els) => {
                 let cond = self.resolve_expression(cond)?;
                 let then = self.resolve_expression(then)?;
                 let els = self.resolve_expression(els)?;
@@ -123,10 +118,9 @@ impl IdentifierResolution {
                     Box::new(cond),
                     Box::new(then),
                     Box::new(els),
-                    ty.clone(),
                 ))
             }
-            Expression::FunctionCall(name, args, ty) => {
+            Expression::FunctionCall(name, args) => {
                 let ident = self.identifier_map.get(name);
                 match ident {
                     Some(ident) => {
@@ -135,7 +129,7 @@ impl IdentifierResolution {
                             .iter()
                             .map(|arg| self.resolve_expression(arg))
                             .collect::<Result<Vec<Expression>, CompilerError>>()?;
-                        Ok(Expression::FunctionCall(unique_name, args, ty.clone()))
+                        Ok(Expression::FunctionCall(unique_name, args))
                     }
                     None => Err(CompilerError::SemanticAnalysis(
                         SemanticAnalysisError::FunctionNotDeclared(name.clone()),
@@ -151,8 +145,8 @@ impl IdentifierResolution {
 
     pub fn resolve_file_scope_variable_declaration(
         &mut self,
-        decl: VariableDeclaration,
-    ) -> Result<VariableDeclaration, CompilerError> {
+        decl: VariableDeclaration<Expression>,
+    ) -> Result<VariableDeclaration<Expression>, CompilerError> {
         self.identifier_map.insert(
             decl.name.clone(),
             MapEntry::new(decl.name.clone(), true, true),
@@ -162,8 +156,8 @@ impl IdentifierResolution {
 
     fn resolve_local_variable_declaration(
         &mut self,
-        decl: VariableDeclaration,
-    ) -> Result<VariableDeclaration, CompilerError> {
+        decl: VariableDeclaration<Expression>,
+    ) -> Result<VariableDeclaration<Expression>, CompilerError> {
         if let Some(entry) = self.identifier_map.get(&decl.name) {
             if entry.from_current_scope
                 && !(entry.has_external_linkage && decl.storage_class == Some(StorageClass::Extern))
@@ -256,10 +250,19 @@ impl IdentifierResolution {
             None
         };
 
-        Ok(FunctionDeclaration::new(unique_name, parameters, body, decl.fun_type, decl.storage_class))
+        Ok(FunctionDeclaration::new(
+            unique_name,
+            parameters,
+            body,
+            decl.fun_type,
+            decl.storage_class,
+        ))
     }
 
-    fn resolve_block(&mut self, blocks: &[BlockItem<ParseStatement, Expression>]) -> Result<Vec<BlockItem<ParseStatement, Expression>>, CompilerError> {
+    fn resolve_block(
+        &mut self,
+        blocks: &[BlockItem<ParseStatement, Expression>],
+    ) -> Result<Vec<BlockItem<ParseStatement, Expression>>, CompilerError> {
         let mut new_block = Vec::new();
         for item in blocks {
             match item {
@@ -284,7 +287,10 @@ impl IdentifierResolution {
         Ok(new_block)
     }
 
-    fn resolve_for_init(&mut self, init: &ForInit<Expression>) -> Result<ForInit<Expression>, CompilerError> {
+    fn resolve_for_init(
+        &mut self,
+        init: &ForInit<Expression>,
+    ) -> Result<ForInit<Expression>, CompilerError> {
         match init {
             ForInit::InitDeclaration(decl) => {
                 let decl = self.resolve_local_variable_declaration(decl.clone())?;
@@ -298,7 +304,10 @@ impl IdentifierResolution {
         }
     }
 
-    fn resolve_statement(&mut self, stmt: &Statement<Expression>) -> Result<Statement<Expression>, CompilerError> {
+    fn resolve_statement(
+        &mut self,
+        stmt: &Statement<Expression>,
+    ) -> Result<Statement<Expression>, CompilerError> {
         match stmt {
             Statement::Return(expr) => {
                 let expr = self.resolve_expression(expr)?;
@@ -336,12 +345,7 @@ impl IdentifierResolution {
                     .transpose()?;
                 //let mut inner_scope = inner_scope.clone();
                 let body = inner_scope.resolve_statement(body)?;
-                Ok(Statement::For(
-                    for_init,
-                    cond,
-                    post,
-                    Box::new(body),
-                ))
+                Ok(Statement::For(for_init, cond, post, Box::new(body)))
             }
             Statement::DoWhile(body, cond) => {
                 let mut inner_scope = self.clone();

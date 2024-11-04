@@ -3,7 +3,7 @@ use crate::validate::StaticInit;
 pub type Identifier = String;
 
 #[derive(Debug, PartialEq)]
-pub struct Program<S : Clone, E : Clone> {
+pub struct Program<S: Clone, E: Clone> {
     pub declarations: Vec<Declaration<S, E>>,
 }
 
@@ -29,8 +29,14 @@ pub struct FunctionDeclaration<S: Clone, E: Clone> {
     _marker: std::marker::PhantomData<E>,
 }
 
-impl<S : Clone, E : Clone> FunctionDeclaration<S, E> {
-    pub fn new(name: Identifier, parameters: Vec<(Type, Identifier)>, body: Option<Vec<BlockItem<S, E>>>, fun_type: Type, storage_class: Option<StorageClass>) -> Self {
+impl<S: Clone, E: Clone> FunctionDeclaration<S, E> {
+    pub fn new(
+        name: Identifier,
+        parameters: Vec<(Type, Identifier)>,
+        body: Option<Vec<BlockItem<S, E>>>,
+        fun_type: Type,
+        storage_class: Option<StorageClass>,
+    ) -> Self {
         Self {
             name,
             parameters,
@@ -43,15 +49,15 @@ impl<S : Clone, E : Clone> FunctionDeclaration<S, E> {
 
     pub fn with_body(&self, body: Option<Vec<BlockItem<S, E>>>) -> Self {
         Self {
-            body: body,
+            body,
             ..self.clone()
         }
     }
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum Declaration<S : Clone, E: Clone> {
-    Variable(VariableDeclaration),
+pub enum Declaration<S: Clone, E: Clone> {
+    Variable(VariableDeclaration<E>),
     Function(FunctionDeclaration<S, E>),
 }
 
@@ -65,21 +71,21 @@ impl<S: Clone, E: Clone> Declaration<S, E> {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct VariableDeclaration {
+pub struct VariableDeclaration<E> {
     pub name: Identifier,
-    pub init: Option<Expression>,
+    pub init: Option<E>,
     pub storage_class: Option<StorageClass>,
     pub var_type: Type,
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum ForInit<E> {
-    InitDeclaration(VariableDeclaration),
+    InitDeclaration(VariableDeclaration<E>),
     InitExpression(Option<E>),
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum Statement<E:Clone> {
+pub enum Statement<E: Clone> {
     Return(E),
     Expression(E),
     If(E, Box<Statement<E>>, Option<Box<Statement<E>>>),
@@ -89,49 +95,19 @@ pub enum Statement<E:Clone> {
     Continue,
     While(E, Box<Statement<E>>),
     DoWhile(Box<Statement<E>>, E),
-    For(
-        ForInit<E>,
-        Option<E>,
-        Option<E>,
-        Box<Statement<E>>,
-    ),
+    For(ForInit<E>, Option<E>, Option<E>, Box<Statement<E>>),
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Expression {
-    Var(Identifier, Option<Type>),
-    Unary(UnaryOperator, Box<Expression>, Option<Type>),
-    BinOp(
-        BinaryOperator,
-        Box<Expression>,
-        Box<Expression>,
-        Option<Type>,
-    ),
-    Assignment(Box<Expression>, Box<Expression>, Option<Type>),
-    Conditional(
-        Box<Expression>,
-        Box<Expression>,
-        Box<Expression>,
-        Option<Type>,
-    ),
-    FunctionCall(Identifier, Vec<Expression>, Option<Type>),
+    Var(Identifier),
+    Unary(UnaryOperator, Box<Expression>),
+    BinOp(BinaryOperator, Box<Expression>, Box<Expression>),
+    Assignment(Box<Expression>, Box<Expression>),
+    Conditional(Box<Expression>, Box<Expression>, Box<Expression>),
+    FunctionCall(Identifier, Vec<Expression>),
     Cast(Type, Box<Expression>),
     Constant(Constant),
-}
-
-impl Expression {
-    pub fn get_type(&self) -> Option<Type> {
-        match self {
-            Expression::Var(_, t) => t.clone(),
-            Expression::Unary(_, _, t) => t.clone(),
-            Expression::BinOp(_, _, _, t) => t.clone(),
-            Expression::Assignment(_, _, t) => t.clone(),
-            Expression::Conditional(_, _, _, t) => t.clone(),
-            Expression::FunctionCall(_, _, t) => t.clone(),
-            Expression::Cast(t, _) => Some(t.clone()),
-            Expression::Constant(c) => Some(c.get_type()),
-        }
-    }
 }
 
 #[derive(Clone, Debug, PartialEq)]

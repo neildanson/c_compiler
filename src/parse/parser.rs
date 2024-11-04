@@ -149,51 +149,49 @@ fn parse_factor(tokens: &[Token]) -> Result<(Expression, &[Token])> {
         [Token::Minus, rest @ ..] => {
             let (factor, rest) = parse_factor(rest)?;
             (
-                Expression::Unary(UnaryOperator::Negation, Box::new(factor), None),
+                Expression::Unary(UnaryOperator::Negation, Box::new(factor)),
                 rest,
             )
         }
         [Token::Not, rest @ ..] => {
             let (factor, rest) = parse_factor(rest)?;
             (
-                Expression::Unary(UnaryOperator::Not, Box::new(factor), None),
+                Expression::Unary(UnaryOperator::Not, Box::new(factor)),
                 rest,
             )
         }
         [Token::Tilde, rest @ ..] => {
             let (factor, rest) = parse_factor(rest)?;
             (
-                Expression::Unary(UnaryOperator::Tilde, Box::new(factor), None),
+                Expression::Unary(UnaryOperator::Tilde, Box::new(factor)),
                 rest,
             )
         }
         [Token::DoublePlus, rest @ ..] => {
             let (factor, rest) = parse_factor(rest)?;
             (
-                Expression::Unary(UnaryOperator::PreIncrement, Box::new(factor), None),
+                Expression::Unary(UnaryOperator::PreIncrement, Box::new(factor)),
                 rest,
             )
         }
         [Token::DoubleMinus, rest @ ..] => {
             let (factor, rest) = parse_factor(rest)?;
             (
-                Expression::Unary(UnaryOperator::PreDecrement, Box::new(factor), None),
+                Expression::Unary(UnaryOperator::PreDecrement, Box::new(factor)),
                 rest,
             )
         }
         [Token::Identifier(name), Token::DoublePlus, rest @ ..] => (
             Expression::Unary(
                 UnaryOperator::PostIncrement,
-                Box::new(Expression::Var(name.clone(), None)),
-                None,
+                Box::new(Expression::Var(name.clone())),
             ),
             rest,
         ),
         [Token::Identifier(name), Token::DoubleMinus, rest @ ..] => (
             Expression::Unary(
                 UnaryOperator::PostDecrement,
-                Box::new(Expression::Var(name.clone(), None)),
-                None,
+                Box::new(Expression::Var(name.clone())),
             ),
             rest,
         ),
@@ -214,12 +212,9 @@ fn parse_factor(tokens: &[Token]) -> Result<(Expression, &[Token])> {
         }
         [Token::Identifier(name), Token::LParen, rest @ ..] => {
             let (arguments, rest) = parse_argument_list(rest)?;
-            (
-                Expression::FunctionCall(name.clone(), arguments, None),
-                rest,
-            )
+            (Expression::FunctionCall(name.clone(), arguments), rest)
         }
-        [Token::Identifier(name), rest @ ..] => (Expression::Var(name.clone(), None), rest),
+        [Token::Identifier(name), rest @ ..] => (Expression::Var(name.clone()), rest),
         toks => {
             return Err(CompilerError::Parse(format!("Factor Unexpected Tokens {:?}", toks)).into())
         }
@@ -274,7 +269,7 @@ fn parse_expression(tokens: &[Token], min_precedence: u16) -> Result<(Expression
         if next_token == &Token::Assignment {
             let (right_expr, new_tokens) = parse_expression(&tokens[1..], precedence(next_token))?;
             tokens = new_tokens;
-            left_expr = Expression::Assignment(Box::new(left_expr), Box::new(right_expr), None);
+            left_expr = Expression::Assignment(Box::new(left_expr), Box::new(right_expr));
             continue;
         }
 
@@ -286,7 +281,6 @@ fn parse_expression(tokens: &[Token], min_precedence: u16) -> Result<(Expression
                 Box::new(left_expr),
                 Box::new(then_expr),
                 Box::new(else_expr),
-                None,
             );
             continue;
         }
@@ -295,7 +289,7 @@ fn parse_expression(tokens: &[Token], min_precedence: u16) -> Result<(Expression
 
         let (right_expr, new_tokens) = parse_expression(rest, precedence(next_token) + 1)?;
         tokens = new_tokens;
-        left_expr = Expression::BinOp(binop, Box::new(left_expr), Box::new(right_expr), None);
+        left_expr = Expression::BinOp(binop, Box::new(left_expr), Box::new(right_expr));
     }
 
     let result = (left_expr, tokens);
@@ -368,19 +362,13 @@ fn parse_statement(tokens: &[Token]) -> Result<(Statement<Expression>, &[Token])
             let rest = swallow_one(Token::While, rest)?;
             let (expression, rest) = parse_expression(rest, 0)?;
             let rest = swallow_semicolon(rest)?;
-            (
-                Statement::DoWhile(Box::new(statement), expression),
-                rest,
-            )
+            (Statement::DoWhile(Box::new(statement), expression), rest)
         }
         [Token::While, Token::LParen, rest @ ..] => {
             let (expression, rest) = parse_expression(rest, 0)?;
             let rest = swallow_one(Token::RParen, rest)?;
             let (statement, rest) = parse_statement(rest)?;
-            (
-                Statement::While(expression, Box::new(statement)),
-                rest,
-            )
+            (Statement::While(expression, Box::new(statement)), rest)
         }
         [Token::Break, rest @ ..] => {
             let rest = swallow_semicolon(rest)?;
@@ -469,7 +457,9 @@ fn parse_type_and_storage(
     ))
 }
 
-fn parse_variable_declaration(tokens: &[Token]) -> Result<(VariableDeclaration, &[Token])> {
+fn parse_variable_declaration(
+    tokens: &[Token],
+) -> Result<(VariableDeclaration<Expression>, &[Token])> {
     let (var_type, storage_class, rest) = parse_type_and_storage(tokens)?;
     let (declaration, rest) = match rest {
         [Token::Identifier(name), Token::Assignment, rest @ ..] => {
@@ -504,7 +494,9 @@ fn parse_variable_declaration(tokens: &[Token]) -> Result<(VariableDeclaration, 
     Ok((declaration, rest))
 }
 
-fn parse_declaration(tokens: &[Token]) -> Result<(Declaration<Statement<Expression>,Expression>, &[Token])> {
+fn parse_declaration(
+    tokens: &[Token],
+) -> Result<(Declaration<Statement<Expression>, Expression>, &[Token])> {
     let declaration = parse_variable_declaration(tokens);
     if let Ok((declaration, rest)) = declaration {
         return Ok((Declaration::Variable(declaration), rest));
@@ -528,7 +520,9 @@ fn parse_declaration(tokens: &[Token]) -> Result<(Declaration<Statement<Expressi
     }
 }
 
-fn parse_block_item(tokens: &[Token]) -> Result<(BlockItem<Statement<Expression>, Expression>, &[Token])> {
+fn parse_block_item(
+    tokens: &[Token],
+) -> Result<(BlockItem<Statement<Expression>, Expression>, &[Token])> {
     let declaration = parse_declaration(tokens);
     if let Ok((declaration, rest)) = declaration {
         return Ok((BlockItem::Declaration(declaration), rest));
@@ -562,7 +556,9 @@ fn parse_constant(constant: &str) -> Result<Constant> {
     }
 }
 
-fn parse_function_body(tokens: &[Token]) -> Result<(Vec<BlockItem<Statement<Expression>,Expression>>, &[Token])> {
+fn parse_function_body(
+    tokens: &[Token],
+) -> Result<(Vec<BlockItem<Statement<Expression>, Expression>>, &[Token])> {
     let mut statements = Vec::new();
     let rest = tokens;
     let mut error = None;
@@ -588,7 +584,12 @@ fn parse_function_body(tokens: &[Token]) -> Result<(Vec<BlockItem<Statement<Expr
     }
 }
 
-fn parse_function_declaration(tokens: &[Token]) -> Result<(FunctionDeclaration<Statement<Expression>,Expression>, &[Token])> {
+fn parse_function_declaration(
+    tokens: &[Token],
+) -> Result<(
+    FunctionDeclaration<Statement<Expression>, Expression>,
+    &[Token],
+)> {
     let (fun_type, storage_class, rest) = parse_type_and_storage(tokens)?;
     let (function, rest) = match rest {
         [Token::Identifier(name), Token::LParen, rest @ ..] => {
@@ -644,7 +645,7 @@ pub fn parse_program(tokens: &[Token]) -> Result<Program<Statement<Expression>, 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{codegen::Function, lex::Tokenizer};
+    use crate::lex::Tokenizer;
 
     #[test]
     fn test_parse_statement() {
@@ -677,7 +678,6 @@ mod tests {
             Expression::Unary(
                 UnaryOperator::Negation,
                 Box::new(Expression::Constant(Constant::Int(42))),
-                None
             )
         );
         assert!(rest.is_empty());
@@ -748,12 +748,13 @@ int main(void) {
                         BinaryOperator::Add,
                         Box::new(Expression::Constant(Constant::Int(42))),
                         Box::new(Expression::Constant(Constant::Int(12))),
-                        None
                     )
                 ))]),
                 Type::Int,
-                None));
-        
+                None
+            )
+        );
+
         assert!(rest.is_empty());
     }
 }

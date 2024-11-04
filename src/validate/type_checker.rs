@@ -4,6 +4,78 @@ use crate::{error::*, parse::*};
 
 use super::loop_labelling::LLStatement;
 
+#[derive(Clone, Debug, PartialEq)]
+pub enum TCExpression {
+    Var(Identifier, Type),
+    Unary(UnaryOperator, Box<TCExpression>, Type),
+    BinOp(BinaryOperator, Box<TCExpression>, Box<TCExpression>, Type),
+    Assignment(Box<TCExpression>, Box<TCExpression>, Type),
+    Conditional(
+        Box<TCExpression>,
+        Box<TCExpression>,
+        Box<TCExpression>,
+        Type,
+    ),
+    FunctionCall(Identifier, Vec<TCExpression>, Type),
+    Cast(Type, Box<TCExpression>),
+    Constant(Constant),
+}
+
+impl TCExpression {
+    pub fn with_type(expr: &Expression, ty: Type) -> TCExpression {
+        match expr {
+            Expression::Var(name) => TCExpression::Var(name.clone(), ty),
+            Expression::Unary(op, expr) => {
+                TCExpression::Unary(op.clone(), Box::new(Self::with_type(expr, ty.clone())), ty)
+            }
+            Expression::BinOp(op, left, right) => TCExpression::BinOp(
+                op.clone(),
+                Box::new(Self::with_type(left, ty.clone())),
+                Box::new(Self::with_type(right, ty.clone())),
+                ty,
+            ),
+            Expression::Assignment(left, right) => TCExpression::Assignment(
+                Box::new(Self::with_type(left, ty.clone())),
+                Box::new(Self::with_type(right, ty.clone())),
+                ty,
+            ),
+            Expression::Conditional(condition, then_expression, else_expression) => {
+                TCExpression::Conditional(
+                    Box::new(Self::with_type(condition, ty.clone())),
+                    Box::new(Self::with_type(then_expression, ty.clone())),
+                    Box::new(Self::with_type(else_expression, ty.clone())),
+                    ty,
+                )
+            }
+            Expression::FunctionCall(name, arguments) => TCExpression::FunctionCall(
+                name.clone(),
+                arguments
+                    .iter()
+                    .map(|arg| Self::with_type(arg, ty.clone()))
+                    .collect(),
+                ty,
+            ),
+            Expression::Cast(ty, expr) => {
+                TCExpression::Cast(ty.clone(), Box::new(Self::with_type(expr, ty.clone())))
+            }
+            Expression::Constant(c) => TCExpression::Constant(c.clone()),
+        }
+    }
+
+    pub fn get_type(&self) -> Type {
+        match self {
+            TCExpression::Var(_, t) => t.clone(),
+            TCExpression::Unary(_, _, t) => t.clone(),
+            TCExpression::BinOp(_, _, _, t) => t.clone(),
+            TCExpression::Assignment(_, _, t) => t.clone(),
+            TCExpression::Conditional(_, _, _, t) => t.clone(),
+            TCExpression::FunctionCall(_, _, t) => t.clone(),
+            TCExpression::Cast(t, _) => t.clone(),
+            TCExpression::Constant(c) => c.get_type(),
+        }
+    }
+}
+
 #[derive(PartialEq, Debug, Clone)]
 enum TypeDefinition {
     Type(Type),
@@ -11,10 +83,10 @@ enum TypeDefinition {
 }
 
 impl TypeDefinition {
-    fn get_type(&self) -> Option<Type> {
+    fn get_type(&self) -> Type {
         match self {
-            TypeDefinition::Type(ty) => Some(ty.clone()),
-            TypeDefinition::FunType(_, ty) => Some(ty.clone()),
+            TypeDefinition::Type(ty) => ty.clone(),
+            TypeDefinition::FunType(_, ty) => ty.clone(),
         }
     }
 
@@ -118,8 +190,8 @@ pub(crate) struct TypeChecker {
 impl TypeChecker {
     pub fn type_check_file_scope_variable_declaration(
         &mut self,
-        variable_declaration: &VariableDeclaration,
-    ) -> Result<(), CompilerError> {
+        variable_declaration: &VariableDeclaration<Expression>,
+    ) -> Result<VariableDeclaration<TCExpression>, CompilerError> {
         let mut initial_value = if let Some(Expression::Constant(i)) = &variable_declaration.init {
             InitialValue::Initial(i.clone().into())
         } else if variable_declaration.init.is_none() {
@@ -182,13 +254,24 @@ impl TypeChecker {
             ),
         );
 
-        Ok(())
+        let variable_declaration = VariableDeclaration {
+            name: variable_declaration.name.clone(),
+            var_type: variable_declaration.var_type.clone(),
+            //TODO below -> typecheck expression instead?
+            init: variable_declaration
+                .init
+                .as_ref()
+                .map(|expr| TCExpression::with_type(expr, variable_declaration.var_type.clone())),
+            storage_class: variable_declaration.storage_class.clone(),
+        };
+
+        Ok(variable_declaration.clone())
     }
 
     fn type_check_local_variable_declaration(
         &mut self,
-        variable_declaration: &VariableDeclaration,
-    ) -> Result<VariableDeclaration, CompilerError> {
+        variable_declaration: &VariableDeclaration<Expression>,
+    ) -> Result<VariableDeclaration<TCExpression>, CompilerError> {
         if variable_declaration.storage_class == Some(StorageClass::Extern) {
             if variable_declaration.init.is_some() {
                 return Err(CompilerError::SemanticAnalysis(
@@ -243,36 +326,52 @@ impl TypeChecker {
                     IdentifierAttributes::Local,
                 ),
             );
-            if let Some(initializer) = variable_declaration.init.as_ref() {
-                self.type_check_expression(initializer)?;
-            }
+
+            let expr = if let Some(initializer) = variable_declaration.init.as_ref() {
+                Some(self.type_check_expression(initializer)?)
+            } else {
+                None
+            };
+            let variable_declaration = VariableDeclaration {
+                name: variable_declaration.name.clone(),
+                var_type: variable_declaration.var_type.clone(),
+                init: expr,
+                storage_class: variable_declaration.storage_class.clone(),
+            };
+            return Ok(variable_declaration);
         }
-        Ok(variable_declaration.clone())
+
+        let variable_declaration = VariableDeclaration {
+            name: variable_declaration.name.clone(),
+            var_type: variable_declaration.var_type.clone(),
+            init: None,
+            storage_class: variable_declaration.storage_class.clone(),
+        };
+        Ok(variable_declaration)
     }
 
     fn get_common_type(ty1: Type, ty2: Type) -> Type {
         if ty1 == ty2 {
-            return ty1;
+            ty1
         } else {
             Type::Long
         }
     }
 
-    fn convert_to(&self, ty: Type, expression: &Expression) -> Expression {
+    fn convert_to(&self, ty: Type, expression: &TCExpression) -> TCExpression {
         let expression_ty = expression.get_type();
-        if expression_ty == Some(ty.clone()) {
+        if expression_ty == ty.clone() {
             return expression.clone();
         }
-        let cast = Expression::Cast(ty.clone(), Box::new(expression.clone()));
-        cast
+        TCExpression::Cast(ty.clone(), Box::new(expression.clone()))
     }
 
     fn type_check_expression(
         &mut self,
         expression: &Expression,
-    ) -> Result<Expression, CompilerError> {
+    ) -> Result<TCExpression, CompilerError> {
         match expression {
-            Expression::FunctionCall(name, arguments, _) => {
+            Expression::FunctionCall(name, arguments) => {
                 let ty = if let Some(symbol) = self.symbol_table.get(name) {
                     if let TypeDefinition::FunType(ref expected_args, _) = symbol.type_definition {
                         if expected_args.len() != arguments.len() {
@@ -295,12 +394,13 @@ impl TypeChecker {
                 let converted_arguments = arguments
                     .iter()
                     .map(|arg| self.type_check_expression(arg))
-                    .collect::<Result<Vec<Expression>, CompilerError>>()?;
-                
-                let function_call = Expression::FunctionCall(name.clone(), converted_arguments.clone(), ty);
+                    .collect::<Result<Vec<TCExpression>, CompilerError>>()?;
+
+                let function_call =
+                    TCExpression::FunctionCall(name.clone(), converted_arguments.clone(), ty);
                 Ok(function_call) //
             }
-            Expression::Var(name, _ty) => {
+            Expression::Var(name) => {
                 if let Some(existing) = self.symbol_table.get(name) {
                     if existing.type_definition.is_function() {
                         return Err(CompilerError::SemanticAnalysis(
@@ -311,24 +411,26 @@ impl TypeChecker {
                 let ty = self
                     .symbol_table
                     .get(name)
-                    .map_or(None, |t| t.type_definition.get_type());
-                Ok(Expression::Var(name.clone(), ty))
+                    .unwrap()
+                    .type_definition
+                    .get_type();
+                Ok(TCExpression::Var(name.clone(), ty))
             }
-            Expression::BinOp(op, left, right, _) => {
+            Expression::BinOp(op, left, right) => {
                 let left = self.type_check_expression(left)?;
                 let right = self.type_check_expression(right)?;
                 match op {
-                    BinaryOperator::And | BinaryOperator::Or => Ok(Expression::BinOp(
+                    BinaryOperator::And | BinaryOperator::Or => Ok(TCExpression::BinOp(
                         op.clone(),
                         Box::new(left),
                         Box::new(right),
-                        Some(Type::Int),
+                        Type::Int,
                     )),
                     _ => {
                         let ty1 = left.get_type();
                         let ty2 = right.get_type();
 
-                        let ty = Self::get_common_type(ty1.unwrap(), ty2.unwrap());
+                        let ty = Self::get_common_type(ty1, ty2);
                         let left = self.convert_to(ty.clone(), &left);
                         let right = self.convert_to(ty.clone(), &right);
                         match op {
@@ -336,61 +438,71 @@ impl TypeChecker {
                             | BinaryOperator::Sub
                             | BinaryOperator::Mul
                             | BinaryOperator::Div
-                            | BinaryOperator::Mod => Ok(Expression::BinOp(
+                            | BinaryOperator::Mod => Ok(TCExpression::BinOp(
                                 op.clone(),
                                 Box::new(left),
                                 Box::new(right),
-                                Some(ty),
+                                ty,
                             )),
-                            _ => Ok(Expression::BinOp(
+                            _ => Ok(TCExpression::BinOp(
                                 op.clone(),
                                 Box::new(left),
                                 Box::new(right),
-                                Some(Type::Int),
+                                Type::Int,
                             )),
                         }
                     }
                 }
             }
-            Expression::Unary(UnaryOperator::Not, expression, _) => {
+            Expression::Unary(UnaryOperator::Not, expression) => {
                 let expression = self.type_check_expression(expression)?;
-                Ok(Expression::Unary(
+                Ok(TCExpression::Unary(
                     UnaryOperator::Not,
                     Box::new(expression),
-                    Some(Type::Int),
+                    Type::Int,
                 ))
             }
-            Expression::Unary(op, expression, _) => {
+            Expression::Unary(op, expression) => {
                 let expression = self.type_check_expression(expression)?;
                 let ty = expression.get_type();
-                Ok(Expression::Unary(op.clone(), Box::new(expression), ty))
+                Ok(TCExpression::Unary(op.clone(), Box::new(expression), ty))
             }
-            Expression::Assignment(left, right, _) => {
+            Expression::Assignment(left, right) => {
                 let left = self.type_check_expression(left)?;
                 let right = self.type_check_expression(right)?;
                 let ty = left.get_type();
-                let converted_right = self.convert_to(ty.clone().unwrap(), &right);
+                let converted_right = self.convert_to(ty.clone(), &right);
 
-                Ok(Expression::Assignment(Box::new(left), Box::new(converted_right), ty))
+                Ok(TCExpression::Assignment(
+                    Box::new(left),
+                    Box::new(converted_right),
+                    ty,
+                ))
             }
-            Expression::Conditional(condition, then_expression, else_expression, _) => {
+            Expression::Conditional(condition, then_expression, else_expression) => {
                 let condition = self.type_check_expression(condition)?;
                 let then_expression = self.type_check_expression(then_expression)?;
                 let else_expression = self.type_check_expression(else_expression)?;
                 let ty = then_expression.get_type();
-                Ok(Expression::Conditional(
+                Ok(TCExpression::Conditional(
                     Box::new(condition),
                     Box::new(then_expression),
                     Box::new(else_expression),
                     ty,
                 ))
             }
-            Expression::Constant(_) => Ok(expression.clone()),
-            Expression::Cast(_, _) => Ok(expression.clone()),
+            Expression::Constant(c) => Ok(TCExpression::Constant(c.clone())),
+            Expression::Cast(ty, expr) => Ok(TCExpression::Cast(
+                ty.clone(),
+                Box::new(self.type_check_expression(expr)?),
+            )),
         }
     }
 
-    fn type_check_for_init(&mut self, for_init: &ForInit<Expression>) -> Result<ForInit<Expression>, CompilerError> {
+    fn type_check_for_init(
+        &mut self,
+        for_init: &ForInit<Expression>,
+    ) -> Result<ForInit<TCExpression>, CompilerError> {
         match for_init {
             ForInit::InitExpression(Some(expression)) => Ok(ForInit::InitExpression(Some(
                 self.type_check_expression(expression)?,
@@ -408,7 +520,10 @@ impl TypeChecker {
         }
     }
 
-    fn type_check_statement(&mut self, statement: &LLStatement<Expression>) -> Result<LLStatement<Expression>, CompilerError> {
+    fn type_check_statement(
+        &mut self,
+        statement: &LLStatement<Expression>,
+    ) -> Result<LLStatement<TCExpression>, CompilerError> {
         match statement {
             LLStatement::Expression(expression) => Ok(LLStatement::Expression(
                 self.type_check_expression(expression)?,
@@ -482,7 +597,7 @@ impl TypeChecker {
     fn type_check_block_item(
         &mut self,
         block_item: &BlockItem<LLStatement<Expression>, Expression>,
-    ) -> Result<BlockItem<LLStatement<Expression>, Expression>, CompilerError> {
+    ) -> Result<BlockItem<LLStatement<TCExpression>, TCExpression>, CompilerError> {
         match block_item {
             BlockItem::Statement(statement) => {
                 Ok(BlockItem::Statement(self.type_check_statement(statement)?))
@@ -506,16 +621,23 @@ impl TypeChecker {
         &mut self,
         function_declaration: &FunctionDeclaration<LLStatement<Expression>, Expression>,
         top_level: bool,
-    ) -> Result<FunctionDeclaration<LLStatement<Expression>, Expression>, CompilerError> {
-        let fun_type = TypeDefinition::FunType(function_declaration.parameters.iter().map(|(ty,_)| ty.clone()).collect(), function_declaration.fun_type.clone());
+    ) -> Result<FunctionDeclaration<LLStatement<TCExpression>, TCExpression>, CompilerError> {
+        let fun_type = TypeDefinition::FunType(
+            function_declaration
+                .parameters
+                .iter()
+                .map(|(ty, _)| ty.clone())
+                .collect(),
+            function_declaration.fun_type.clone(),
+        );
         let has_body = function_declaration.body.is_some();
         let mut already_defined = false;
         let mut global = function_declaration.storage_class != Some(StorageClass::Static);
         if let Some(old_decl) = self.symbol_table.get(&function_declaration.name) {
             if let IdentifierAttributes::Fun(old_fun_attr) = old_decl.attributes.clone() {
-                println!("Old fun type {:?}", old_decl.attributes);
-                println!("New fun attr {:?}", fun_type);
-                if old_decl.type_definition != fun_type || old_decl.type_definition != fun_type {
+                if old_decl.type_definition != fun_type
+                /*TODO Check parameter types */
+                {
                     return Err(CompilerError::SemanticAnalysis(
                         SemanticAnalysisError::IncompatibleFunctionDeclarations,
                     ));
@@ -581,7 +703,14 @@ impl TypeChecker {
         } else {
             None
         };
-        let function_declaration = function_declaration.with_body(new_body);
+
+        let function_declaration = FunctionDeclaration::new(
+            function_declaration.name.clone(),
+            function_declaration.parameters.clone(),
+            new_body,
+            function_declaration.fun_type.clone(),
+            function_declaration.storage_class.clone(),
+        );
 
         Ok(function_declaration)
     }
