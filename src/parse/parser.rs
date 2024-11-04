@@ -69,7 +69,7 @@ where
     }
 }
 
-fn parse_nth_parameter(tokens: &[Token]) -> Result<(Identifier, Type,  &[Token])> {
+fn parse_nth_parameter(tokens: &[Token]) -> Result<(Identifier, Type, &[Token])> {
     match tokens {
         [Token::Comma, ty, Token::Identifier(name), rest @ ..] => {
             let ty = parse_type(&[ty])?;

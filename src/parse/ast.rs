@@ -174,7 +174,7 @@ impl Constant {
     pub fn i32(&self) -> i32 {
         match self {
             Constant::Int(val) => *val,
-            _ => panic!("Invalid conversion")
+            _ => panic!("Invalid conversion"),
         }
     }
 }

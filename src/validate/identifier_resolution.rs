@@ -199,7 +199,11 @@ impl IdentifierResolution {
 
     //This is very similar to resolve_variable_declaration
     //Consider refactoring
-    fn resolve_param(&mut self, ty: &Type,  param: Identifier) -> Result<(Type, Identifier), CompilerError> {
+    fn resolve_param(
+        &mut self,
+        ty: &Type,
+        param: Identifier,
+    ) -> Result<(Type, Identifier), CompilerError> {
         if self.identifier_map.contains_key(&param)
             && self.identifier_map[&param].from_current_scope
         {

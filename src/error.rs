@@ -38,6 +38,8 @@ pub enum SemanticAnalysisError {
     ExternVariableCannotHaveInitializer,
     NonConstantInitializerForLocalStaticVariable,
     StaticValueNotValidInForLoopInitializer,
+    IncompatibleTypesInAssignment,
+    IncompatibleTypesInConditional,
 }
 
 impl Display for SemanticAnalysisError {
@@ -93,6 +95,12 @@ impl Display for SemanticAnalysisError {
             }
             SemanticAnalysisError::StaticValueNotValidInForLoopInitializer => {
                 write!(f, "Static value not valid in for loop initializer")
+            }
+            SemanticAnalysisError::IncompatibleTypesInAssignment => {
+                write!(f, "Incompatible types in assignment")
+            }
+            SemanticAnalysisError::IncompatibleTypesInConditional => {
+                write!(f, "Incompatible types in conditional")
             }
         }
     }

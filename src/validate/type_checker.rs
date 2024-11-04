@@ -39,7 +39,7 @@ impl Symbol {
 #[derive(PartialEq, Clone, Debug)]
 pub enum StaticInit {
     IntInit(i32),
-    LongInit(i64)
+    LongInit(i64),
 }
 
 impl StaticInit {
@@ -47,11 +47,10 @@ impl StaticInit {
     pub fn i32(&self) -> i32 {
         match self {
             StaticInit::IntInit(val) => *val,
-            _ => panic!("Invalid conversion")
+            _ => panic!("Invalid conversion"),
         }
     }
 }
-
 
 #[derive(PartialEq, Clone, Debug)]
 pub enum InitialValue {
@@ -136,7 +135,7 @@ impl TypeChecker {
         let mut global = variable_declaration.storage_class != Some(StorageClass::Static);
 
         if let Some(old_decl) = self.symbol_table.get(&variable_declaration.name) {
-            if old_decl.type_definition.is_function()  {
+            if old_decl.type_definition.is_function() {
                 return Err(CompilerError::SemanticAnalysis(
                     SemanticAnalysisError::FunctionRedclaredAsVariable(
                         variable_declaration.name.clone(),
@@ -175,7 +174,10 @@ impl TypeChecker {
 
         self.symbol_table.insert(
             variable_declaration.name.clone(),
-            Symbol::new(TypeDefinition::Type(variable_declaration.var_type.clone()), attrs),
+            Symbol::new(
+                TypeDefinition::Type(variable_declaration.var_type.clone()),
+                attrs,
+            ),
         );
 
         Ok(())
@@ -234,7 +236,10 @@ impl TypeChecker {
         } else {
             self.symbol_table.insert(
                 variable_declaration.name.clone(),
-                Symbol::new(TypeDefinition::Type(variable_declaration.var_type.clone()), IdentifierAttributes::Local),
+                Symbol::new(
+                    TypeDefinition::Type(variable_declaration.var_type.clone()),
+                    IdentifierAttributes::Local,
+                ),
             );
             if let Some(initializer) = variable_declaration.init.as_ref() {
                 self.type_check_expression(initializer)?;
@@ -243,7 +248,7 @@ impl TypeChecker {
         Ok(variable_declaration.clone())
     }
 
-    fn get_common_type(ty1 : Type, ty2: Type) -> Type {
+    fn get_common_type(ty1: Type, ty2: Type) -> Type {
         if ty1 == ty2 {
             return ty1;
         } else {
@@ -260,16 +265,20 @@ impl TypeChecker {
         cast
     }
 
-    fn type_check_expression(&mut self, expression: &Expression) -> Result<Expression, CompilerError> {
+    fn type_check_expression(
+        &mut self,
+        expression: &Expression,
+    ) -> Result<Expression, CompilerError> {
         match expression {
             Expression::FunctionCall(name, arguments, _) => {
-                if let Some(symbol) = self.symbol_table.get(name) {
+                let ty = if let Some(symbol) = self.symbol_table.get(name) {
                     if let TypeDefinition::FunType(expected_args) = symbol.type_definition {
                         if expected_args != arguments.len() {
                             return Err(CompilerError::SemanticAnalysis(
                                 SemanticAnalysisError::FunctionNotDeclared(name.clone()),
                             ));
                         }
+                        symbol.type_definition.get_type() //Wong - this always returns None for a function currently
                     } else {
                         return Err(CompilerError::SemanticAnalysis(
                             SemanticAnalysisError::VariableUsedAsFunctionName,
@@ -279,11 +288,13 @@ impl TypeChecker {
                     return Err(CompilerError::SemanticAnalysis(
                         SemanticAnalysisError::FunctionNotDeclared(name.clone()),
                     ));
-                }
+                };
+                //let symbol = self.symbol_table.get(name).unwrap(); //We know it exists, but cant put in block above due to mutable self
                 for argument in arguments {
                     self.type_check_expression(argument)?;
                 }
-                Ok(expression.clone()) //
+                let function_call = Expression::FunctionCall(name.clone(), arguments.clone(), ty);
+                Ok(function_call) //
             }
             Expression::Var(name, _ty) => {
                 if let Some(existing) = self.symbol_table.get(name) {
@@ -293,14 +304,59 @@ impl TypeChecker {
                         ));
                     }
                 }
-                let ty = self.symbol_table.get(name).map_or(None, |t| t.type_definition.get_type());
-                Ok(Expression::Var(name.clone(), ty)) 
+                let ty = self
+                    .symbol_table
+                    .get(name)
+                    .map_or(None, |t| t.type_definition.get_type());
+                Ok(Expression::Var(name.clone(), ty))
             }
             Expression::BinOp(op, left, right, _) => {
                 let left = self.type_check_expression(left)?;
                 let right = self.type_check_expression(right)?;
-                let ty = left.get_type();
-                Ok(Expression::BinOp(op.clone(), Box::new(left), Box::new(right), ty))
+                match op {
+                    BinaryOperator::And | BinaryOperator::Or => Ok(Expression::BinOp(
+                        op.clone(),
+                        Box::new(left),
+                        Box::new(right),
+                        Some(Type::Int),
+                    )),
+                    _ => {
+                        let ty1 = left.get_type();
+                        let ty2 = right.get_type();
+
+                        println!("left: {:?}, right: {:?}", left, right);
+
+                        let ty = Self::get_common_type(ty1.unwrap(), ty2.unwrap());
+                        let left = self.convert_to(ty.clone(), &left);
+                        let right = self.convert_to(ty.clone(), &right);
+                        match op {
+                            BinaryOperator::Add
+                            | BinaryOperator::Sub
+                            | BinaryOperator::Mul
+                            | BinaryOperator::Div
+                            | BinaryOperator::Mod => Ok(Expression::BinOp(
+                                op.clone(),
+                                Box::new(left),
+                                Box::new(right),
+                                Some(ty),
+                            )),
+                            _ => Ok(Expression::BinOp(
+                                op.clone(),
+                                Box::new(left),
+                                Box::new(right),
+                                Some(Type::Int),
+                            )),
+                        }
+                    }
+                }
+            }
+            Expression::Unary(UnaryOperator::Not, expression, _) => {
+                let expression = self.type_check_expression(expression)?;
+                Ok(Expression::Unary(
+                    UnaryOperator::Not,
+                    Box::new(expression),
+                    Some(Type::Int),
+                ))
             }
             Expression::Unary(op, expression, _) => {
                 let expression = self.type_check_expression(expression)?;
@@ -310,23 +366,20 @@ impl TypeChecker {
             Expression::Assignment(left, right, _) => {
                 let left = self.type_check_expression(left)?;
                 let right = self.type_check_expression(right)?;
-                //if left.get_type() != right.get_type() {
-                //    return Err(CompilerError::SemanticAnalysis(
-                //        SemanticAnalysisError::IncompatibleTypesInAssignment,
-                //    ));
-                //}
                 let ty = left.get_type();
-                Ok(Expression::Assignment(Box::new(left), Box::new(right), ty))
+                let converted_right = self.convert_to(ty.clone().unwrap(), &right);
+
+                Ok(Expression::Assignment(Box::new(left), Box::new(converted_right), ty))
             }
             Expression::Conditional(condition, then_expression, else_expression, _) => {
                 let condition = self.type_check_expression(condition)?;
                 let then_expression = self.type_check_expression(then_expression)?;
                 let else_expression = self.type_check_expression(else_expression)?;
-                //if then_expression.get_type() != else_expression.get_type() {
-                //    return Err(CompilerError::SemanticAnalysis(
-                //        SemanticAnalysisError::IncompatibleTypesInConditional,
-                //    ));
-                //}
+                if then_expression.get_type() != else_expression.get_type() {
+                    return Err(CompilerError::SemanticAnalysis(
+                        SemanticAnalysisError::IncompatibleTypesInConditional,
+                    ));
+                }
                 let ty = then_expression.get_type();
                 Ok(Expression::Conditional(
                     Box::new(condition),
@@ -342,9 +395,9 @@ impl TypeChecker {
 
     fn type_check_for_init(&mut self, for_init: &ForInit) -> Result<ForInit, CompilerError> {
         match for_init {
-            ForInit::InitExpression(Some(expression)) => {
-                Ok(ForInit::InitExpression(Some(self.type_check_expression(expression)?)))
-            }
+            ForInit::InitExpression(Some(expression)) => Ok(ForInit::InitExpression(Some(
+                self.type_check_expression(expression)?,
+            ))),
             ForInit::InitExpression(None) => Ok(ForInit::InitExpression(None)),
             ForInit::InitDeclaration(declaration) => {
                 if declaration.storage_class.is_some() {
@@ -353,16 +406,16 @@ impl TypeChecker {
                     ));
                 }
                 let declaration = self.type_check_local_variable_declaration(declaration)?;
-                Ok(ForInit::InitDeclaration(declaration)) 
+                Ok(ForInit::InitDeclaration(declaration))
             }
         }
     }
 
     fn type_check_statement(&mut self, statement: &Statement) -> Result<Statement, CompilerError> {
         match statement {
-            Statement::Expression(expression) => {
-                Ok(Statement::Expression(self.type_check_expression(expression)?))
-            }
+            Statement::Expression(expression) => Ok(Statement::Expression(
+                self.type_check_expression(expression)?,
+            )),
             Statement::Return(expression) => {
                 Ok(Statement::Return(self.type_check_expression(expression)?))
             }
@@ -379,12 +432,20 @@ impl TypeChecker {
             Statement::While(condition, block, loop_label) => {
                 let condition = self.type_check_expression(condition)?;
                 let block = self.type_check_statement(block)?;
-                Ok(Statement::While(condition, Box::new(block), loop_label.clone()))
+                Ok(Statement::While(
+                    condition,
+                    Box::new(block),
+                    loop_label.clone(),
+                ))
             }
             Statement::DoWhile(body, condition, loop_label) => {
                 let body = self.type_check_statement(body)?;
                 let condition = self.type_check_expression(condition)?;
-                Ok(Statement::DoWhile(Box::new(body), condition, loop_label.clone()))
+                Ok(Statement::DoWhile(
+                    Box::new(body),
+                    condition,
+                    loop_label.clone(),
+                ))
             }
             Statement::For(for_init, condition, post, block, loop_label) => {
                 let for_init = self.type_check_for_init(for_init)?;
@@ -420,17 +481,24 @@ impl TypeChecker {
         }
     }
 
-    fn type_check_block_item(&mut self, block_item: &BlockItem) -> Result<BlockItem, CompilerError> {
+    fn type_check_block_item(
+        &mut self,
+        block_item: &BlockItem,
+    ) -> Result<BlockItem, CompilerError> {
         match block_item {
             BlockItem::Statement(statement) => {
                 Ok(BlockItem::Statement(self.type_check_statement(statement)?))
             }
             BlockItem::Declaration(declaration) => match declaration {
                 Declaration::Variable(variable_declaration) => {
-                    Ok(BlockItem::Declaration(Declaration::Variable(self.type_check_local_variable_declaration(variable_declaration)?)))
+                    Ok(BlockItem::Declaration(Declaration::Variable(
+                        self.type_check_local_variable_declaration(variable_declaration)?,
+                    )))
                 }
                 Declaration::Function(function_declaration) => {
-                    Ok(BlockItem::Declaration(Declaration::Function(self.type_check_function_declaration(function_declaration, false)?)))
+                    Ok(BlockItem::Declaration(Declaration::Function(
+                        self.type_check_function_declaration(function_declaration, false)?,
+                    )))
                 }
             },
         }
@@ -495,12 +563,14 @@ impl TypeChecker {
                 Symbol::new(fun_type, attrs)
             });
 
-        let new_body =     
-            if let Some(body) = function_declaration.body.as_ref() {
+        let new_body = if let Some(body) = function_declaration.body.as_ref() {
             for (ty, param) in &function_declaration.parameters {
                 self.symbol_table.insert(
                     param.clone(),
-                    Symbol::new(TypeDefinition::Type(ty.clone()), IdentifierAttributes::Local),
+                    Symbol::new(
+                        TypeDefinition::Type(ty.clone()),
+                        IdentifierAttributes::Local,
+                    ),
                 );
             }
             let mut new_body = Vec::new();
@@ -512,10 +582,10 @@ impl TypeChecker {
             None
         };
         let function_declaration = FunctionDeclaration {
-            body : new_body,
+            body: new_body,
             ..function_declaration.clone()
         };
 
-        Ok(function_declaration) 
+        Ok(function_declaration)
     }
 }

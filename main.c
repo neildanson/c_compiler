@@ -1,10 +1,11 @@
-
-long add(long a, long b) {
-    return a + b;
+int my_function(long a, long int b, int long c) {
+    return a + b + c;
 }
 
 int main(void) {
-    long x = 1l;
-    long y = add(x, 2l);
+    if (my_function(1,  2, 3) != 6) {
+        return 4;
+    }
+
     return 0;
 }
