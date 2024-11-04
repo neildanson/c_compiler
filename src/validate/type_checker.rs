@@ -373,11 +373,11 @@ impl TypeChecker {
                 let condition = self.type_check_expression(condition)?;
                 let then_expression = self.type_check_expression(then_expression)?;
                 let else_expression = self.type_check_expression(else_expression)?;
-                if then_expression.get_type() != else_expression.get_type() {
-                    return Err(CompilerError::SemanticAnalysis(
-                        SemanticAnalysisError::IncompatibleTypesInConditional,
-                    ));
-                }
+                //if then_expression.get_type() != else_expression.get_type() {
+                //    return Err(CompilerError::SemanticAnalysis(
+                //       SemanticAnalysisError::IncompatibleTypesInConditional,
+                //    ));
+                //}
                 let ty = then_expression.get_type();
                 Ok(Expression::Conditional(
                     Box::new(condition),

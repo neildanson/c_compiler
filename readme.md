@@ -14,6 +14,17 @@ Test Suite here into folder _next to_ this repo.
 
 `../writing-a-c-compiler-tests/test_compiler ./target/debug/c_compiler --chapter 1 --stage lex`
 
+## Compiler Stages
+
+* Lex
+* Parse
+* Semantic Validation
+    * Identifer Resolution
+    * Loop Labelling
+    * Type Checking
+* Tacky Generation
+* CodeGen
+
 ## Example commands (WIP)
 
 Run Lexer (turn text into Tokens)
@@ -50,7 +61,7 @@ A Convenience script called `compile_asm.sh` will compile _just_ the `a.s` file,
 
 Assembly reference
 
-### mov
+# mov
 
 `mov src, dst`
 
