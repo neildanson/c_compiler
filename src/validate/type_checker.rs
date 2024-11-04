@@ -5,7 +5,7 @@ use crate::{error::*, parse::*};
 #[derive(PartialEq, Debug, Clone)]
 enum TypeDefinition {
     Type(Type),
-    FunType(usize, Type),
+    FunType(Vec<Type>, Type),
 }
 
 impl TypeDefinition {
@@ -272,8 +272,8 @@ impl TypeChecker {
         match expression {
             Expression::FunctionCall(name, arguments, _) => {
                 let ty = if let Some(symbol) = self.symbol_table.get(name) {
-                    if let TypeDefinition::FunType(expected_args, _) = symbol.type_definition {
-                        if expected_args != arguments.len() {
+                    if let TypeDefinition::FunType(ref expected_args, _) = symbol.type_definition {
+                        if expected_args.len() != arguments.len() {
                             return Err(CompilerError::SemanticAnalysis(
                                 SemanticAnalysisError::FunctionNotDeclared(name.clone()),
                             ));
@@ -289,11 +289,13 @@ impl TypeChecker {
                         SemanticAnalysisError::FunctionNotDeclared(name.clone()),
                     ));
                 };
-                for argument in arguments {
-                    self.type_check_expression(argument)?;
-                }
+
+                let converted_arguments = arguments
+                    .iter()
+                    .map(|arg| self.type_check_expression(arg))
+                    .collect::<Result<Vec<Expression>, CompilerError>>()?;
                 
-                let function_call = Expression::FunctionCall(name.clone(), arguments.clone(), ty);
+                let function_call = Expression::FunctionCall(name.clone(), converted_arguments.clone(), ty);
                 Ok(function_call) //
             }
             Expression::Var(name, _ty) => {
@@ -373,11 +375,6 @@ impl TypeChecker {
                 let condition = self.type_check_expression(condition)?;
                 let then_expression = self.type_check_expression(then_expression)?;
                 let else_expression = self.type_check_expression(else_expression)?;
-                //if then_expression.get_type() != else_expression.get_type() {
-                //    return Err(CompilerError::SemanticAnalysis(
-                //       SemanticAnalysisError::IncompatibleTypesInConditional,
-                //    ));
-                //}
                 let ty = then_expression.get_type();
                 Ok(Expression::Conditional(
                     Box::new(condition),
@@ -415,6 +412,7 @@ impl TypeChecker {
                 self.type_check_expression(expression)?,
             )),
             Statement::Return(expression) => {
+                //TODO: Check if the return type is compatible with the function return type
                 Ok(Statement::Return(self.type_check_expression(expression)?))
             }
             Statement::If(condition, then_block, else_block) => {
@@ -507,13 +505,15 @@ impl TypeChecker {
         function_declaration: &FunctionDeclaration,
         top_level: bool,
     ) -> Result<FunctionDeclaration, CompilerError> {
-        let fun_type = TypeDefinition::FunType(function_declaration.parameters.len(), function_declaration.fun_type.clone());
+        let fun_type = TypeDefinition::FunType(function_declaration.parameters.iter().map(|(ty,_)| ty.clone()).collect(), function_declaration.fun_type.clone());
         let has_body = function_declaration.body.is_some();
         let mut already_defined = false;
         let mut global = function_declaration.storage_class != Some(StorageClass::Static);
         if let Some(old_decl) = self.symbol_table.get(&function_declaration.name) {
             if let IdentifierAttributes::Fun(old_fun_attr) = old_decl.attributes.clone() {
-                if old_decl.type_definition != fun_type {
+                println!("Old fun type {:?}", old_decl.attributes);
+                println!("New fun attr {:?}", fun_type);
+                if old_decl.type_definition != fun_type || old_decl.type_definition != fun_type {
                     return Err(CompilerError::SemanticAnalysis(
                         SemanticAnalysisError::IncompatibleFunctionDeclarations,
                     ));

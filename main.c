@@ -1,11 +1,9 @@
-int my_function(long a, long int b, int long c) {
-    return a + b + c;
-}
+/* It's illegal to declare a function multiple times with different parameter types */
+
+int foo(int a);
 
 int main(void) {
-    if (my_function(1,  2, 3) != 6) {
-        return 4;
-    }
-
     return 0;
 }
+
+int foo(long a);
