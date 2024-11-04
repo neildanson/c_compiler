@@ -332,7 +332,7 @@ impl Tacky {
 
     fn emit_tacky_decl(
         &mut self,
-        d: &parse::Declaration,
+        d: &parse::Declaration<Expression>,
         instructions: &mut Vec<Instruction>,
     ) -> Result<(), CompilerError> {
         match d {
@@ -346,7 +346,7 @@ impl Tacky {
 
     fn emit_tacky_block_item(
         &mut self,
-        item: &parse::BlockItem,
+        item: &parse::BlockItem<Expression>,
         instructions: &mut Vec<Instruction>,
     ) -> Result<(), CompilerError> {
         match item {
@@ -362,7 +362,7 @@ impl Tacky {
 
     fn emit_tacky_do_while(
         &mut self,
-        body: &parse::Statement,
+        body: &parse::Statement<Expression>,
         cond: &parse::Expression,
         loop_label: &Option<String>,
         instructions: &mut Vec<Instruction>,
@@ -395,7 +395,7 @@ impl Tacky {
     fn emit_tacky_while(
         &mut self,
         cond: &parse::Expression,
-        body: &parse::Statement,
+        body: &parse::Statement<Expression>,
         loop_label: &Option<String>,
         instructions: &mut Vec<Instruction>,
     ) -> Result<(), CompilerError> {
@@ -426,7 +426,7 @@ impl Tacky {
         for_init: &parse::ForInit,
         cond: &Option<Expression>,
         post: &Option<Expression>,
-        body: &parse::Statement,
+        body: &parse::Statement<Expression>,
         loop_label: &Option<String>,
         instructions: &mut Vec<Instruction>,
     ) -> Result<(), CompilerError> {
@@ -478,7 +478,7 @@ impl Tacky {
 
     fn emit_tacky_statement(
         &mut self,
-        s: &parse::Statement,
+        s: &parse::Statement<Expression>,
         instructions: &mut Vec<Instruction>,
     ) -> Result<(), CompilerError> {
         match s {
@@ -558,7 +558,7 @@ impl Tacky {
 
     fn emit_tacky_function(
         &mut self,
-        f: parse::FunctionDeclaration,
+        f: parse::FunctionDeclaration<Expression>,
         symbol_table: &HashMap<String, Symbol>,
     ) -> Result<Option<Function>, CompilerError> {
         let mut body = Vec::new();

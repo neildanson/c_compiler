@@ -3,8 +3,8 @@ use crate::validate::StaticInit;
 pub type Identifier = String;
 
 #[derive(Debug, PartialEq)]
-pub struct Program {
-    pub declarations: Vec<Declaration>,
+pub struct Program<E> {
+    pub declarations: Vec<Declaration<E>>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -14,27 +14,27 @@ pub enum StorageClass {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum BlockItem {
-    Declaration(Declaration),
-    Statement(Statement),
+pub enum BlockItem<E> {
+    Declaration(Declaration<E>),
+    Statement(Statement<E>),
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub struct FunctionDeclaration {
+pub struct FunctionDeclaration<E> {
     pub name: Identifier,
     pub parameters: Vec<(Type, Identifier)>,
-    pub body: Option<Vec<BlockItem>>,
+    pub body: Option<Vec<BlockItem<E>>>,
     pub fun_type: Type,
     pub storage_class: Option<StorageClass>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum Declaration {
+pub enum Declaration<E> {
     Variable(VariableDeclaration),
-    Function(FunctionDeclaration),
+    Function(FunctionDeclaration<E>),
 }
 
-impl Declaration {
+impl<E> Declaration<E> {
     pub fn get_name(&self) -> Identifier {
         match self {
             Declaration::Variable(decl) => decl.name.clone(),
@@ -60,21 +60,21 @@ pub enum ForInit {
 type LoopIdentifier = Option<Identifier>;
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum Statement {
-    Return(Expression),
+pub enum Statement<E> {
+    Return(E),
     Expression(Expression),
-    If(Expression, Box<Statement>, Option<Box<Statement>>),
-    Compound(Vec<BlockItem>),
+    If(Expression, Box<Statement<E>>, Option<Box<Statement<E>>>),
+    Compound(Vec<BlockItem<E>>),
     Null,
     Break(LoopIdentifier),
     Continue(LoopIdentifier),
-    While(Expression, Box<Statement>, LoopIdentifier),
-    DoWhile(Box<Statement>, Expression, LoopIdentifier),
+    While(Expression, Box<Statement<E>>, LoopIdentifier),
+    DoWhile(Box<Statement<E>>, Expression, LoopIdentifier),
     For(
         ForInit,
         Option<Expression>,
         Option<Expression>,
-        Box<Statement>,
+        Box<Statement<E>>,
         LoopIdentifier,
     ),
 }

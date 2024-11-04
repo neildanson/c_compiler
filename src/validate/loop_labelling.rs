@@ -15,9 +15,9 @@ impl LoopLabelling {
 
     fn label_block(
         &mut self,
-        blocks: &[BlockItem],
+        blocks: &[BlockItem<Expression>],
         current_label: Option<String>,
-    ) -> Result<Vec<BlockItem>, CompilerError> {
+    ) -> Result<Vec<BlockItem<Expression>>, CompilerError> {
         let mut new_block = Vec::new();
         for item in blocks {
             match item {
@@ -35,9 +35,9 @@ impl LoopLabelling {
 
     fn label_statement(
         &mut self,
-        stmt: Statement,
+        stmt: Statement<Expression>,
         current_label: Option<String>,
-    ) -> Result<Statement, CompilerError> {
+    ) -> Result<Statement<Expression>, CompilerError> {
         match stmt {
             Statement::Break(_) => {
                 if current_label.is_none() {
@@ -91,8 +91,8 @@ impl LoopLabelling {
 
     pub fn label_function(
         &mut self,
-        function: FunctionDeclaration,
-    ) -> Result<FunctionDeclaration, CompilerError> {
+        function: FunctionDeclaration<Expression>,
+    ) -> Result<FunctionDeclaration<Expression>, CompilerError> {
         match function.body {
             Some(body) => {
                 let new_body = self.label_block(&body, None)?;
@@ -108,7 +108,7 @@ impl LoopLabelling {
         }
     }
 
-    fn verify_statement_labels(stmt: Statement) -> Result<Statement, CompilerError> {
+    fn verify_statement_labels(stmt: Statement<Expression>) -> Result<Statement<Expression>, CompilerError> {
         match stmt {
             Statement::Break(None) => Err(CompilerError::SemanticAnalysis(
                 SemanticAnalysisError::InvalidBreak,
@@ -145,8 +145,8 @@ impl LoopLabelling {
 
     pub fn verify_function_labels(
         &self,
-        function: FunctionDeclaration,
-    ) -> Result<FunctionDeclaration, CompilerError> {
+        function: FunctionDeclaration<Expression>,
+    ) -> Result<FunctionDeclaration<Expression>, CompilerError> {
         let mut new_body = Vec::new();
 
         if let Some(body) = function.body {

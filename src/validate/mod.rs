@@ -8,10 +8,10 @@ use std::collections::HashMap;
 pub use semantic_analysis::*;
 pub use type_checker::*;
 
-use crate::parse::Program;
+use crate::parse::{Expression, Program};
 
 #[derive(Debug)]
 pub struct ValidateResult {
-    pub program: Program,
+    pub program: Program<Expression>,
     pub symbols: HashMap<String, Symbol>,
 }

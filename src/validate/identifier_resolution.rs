@@ -217,9 +217,9 @@ impl IdentifierResolution {
 
     pub fn resolve_function_declaration(
         &mut self,
-        decl: FunctionDeclaration,
+        decl: FunctionDeclaration<Expression>,
         nested: bool,
-    ) -> Result<FunctionDeclaration, CompilerError> {
+    ) -> Result<FunctionDeclaration<Expression>, CompilerError> {
         if let Some(entry) = self.identifier_map.get(&decl.name) {
             if entry.from_current_scope && !entry.has_external_linkage {
                 {
@@ -263,7 +263,7 @@ impl IdentifierResolution {
         })
     }
 
-    fn resolve_block(&mut self, blocks: &[BlockItem]) -> Result<Vec<BlockItem>, CompilerError> {
+    fn resolve_block(&mut self, blocks: &[BlockItem<Expression>]) -> Result<Vec<BlockItem<Expression>>, CompilerError> {
         let mut new_block = Vec::new();
         for item in blocks {
             match item {
@@ -302,7 +302,7 @@ impl IdentifierResolution {
         }
     }
 
-    fn resolve_statement(&mut self, stmt: &Statement) -> Result<Statement, CompilerError> {
+    fn resolve_statement(&mut self, stmt: &Statement<Expression>) -> Result<Statement<Expression>, CompilerError> {
         match stmt {
             Statement::Return(expr) => {
                 let expr = self.resolve_expression(expr)?;

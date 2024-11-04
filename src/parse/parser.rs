@@ -319,7 +319,7 @@ fn parse_for_init(tokens: &[Token]) -> Result<(ForInit, &[Token])> {
     }
 }
 
-fn parse_statement(tokens: &[Token]) -> Result<(Statement, &[Token])> {
+fn parse_statement(tokens: &[Token]) -> Result<(Statement<Expression>, &[Token])> {
     let (statement, tokens) = match tokens {
         [Token::Return, rest @ ..] => {
             let (expression, rest) = parse_expression(rest, 0)?;
@@ -504,7 +504,7 @@ fn parse_variable_declaration(tokens: &[Token]) -> Result<(VariableDeclaration, 
     Ok((declaration, rest))
 }
 
-fn parse_declaration(tokens: &[Token]) -> Result<(Declaration, &[Token])> {
+fn parse_declaration(tokens: &[Token]) -> Result<(Declaration<Expression>, &[Token])> {
     let declaration = parse_variable_declaration(tokens);
     if let Ok((declaration, rest)) = declaration {
         return Ok((Declaration::Variable(declaration), rest));
@@ -528,7 +528,7 @@ fn parse_declaration(tokens: &[Token]) -> Result<(Declaration, &[Token])> {
     }
 }
 
-fn parse_block_item(tokens: &[Token]) -> Result<(BlockItem, &[Token])> {
+fn parse_block_item(tokens: &[Token]) -> Result<(BlockItem<Expression>, &[Token])> {
     let declaration = parse_declaration(tokens);
     if let Ok((declaration, rest)) = declaration {
         return Ok((BlockItem::Declaration(declaration), rest));
@@ -562,7 +562,7 @@ fn parse_constant(constant: &str) -> Result<Constant> {
     }
 }
 
-fn parse_function_body(tokens: &[Token]) -> Result<(Vec<BlockItem>, &[Token])> {
+fn parse_function_body(tokens: &[Token]) -> Result<(Vec<BlockItem<Expression>>, &[Token])> {
     let mut statements = Vec::new();
     let rest = tokens;
     let mut error = None;
@@ -588,7 +588,7 @@ fn parse_function_body(tokens: &[Token]) -> Result<(Vec<BlockItem>, &[Token])> {
     }
 }
 
-fn parse_function_declaration(tokens: &[Token]) -> Result<(FunctionDeclaration, &[Token])> {
+fn parse_function_declaration(tokens: &[Token]) -> Result<(FunctionDeclaration<Expression>, &[Token])> {
     let (fun_type, storage_class, rest) = parse_type_and_storage(tokens)?;
     let (function, rest) = match rest {
         [Token::Identifier(name), Token::LParen, rest @ ..] => {
@@ -622,7 +622,7 @@ fn parse_function_declaration(tokens: &[Token]) -> Result<(FunctionDeclaration, 
     Ok((function, rest))
 }
 
-pub fn parse_program(tokens: &[Token]) -> Result<Program> {
+pub fn parse_program(tokens: &[Token]) -> Result<Program<Expression>> {
     let mut tokens = tokens;
     let mut declarations = Vec::new();
     let mut error = None;
