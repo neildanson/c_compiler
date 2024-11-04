@@ -1,115 +1,12 @@
 pub mod ast;
+pub mod symbol;
 
 use std::collections::HashMap;
 use crate::{error::*, parse::*};
 use super::loop_labelling::LLStatement;
 pub use ast::TCExpression;
+pub use symbol::*;
 
-#[derive(PartialEq, Debug, Clone)]
-enum TypeDefinition {
-    Type(Type),
-    FunType(Vec<Type>, Type),
-}
-
-impl TypeDefinition {
-    fn get_type(&self) -> Type {
-        match self {
-            TypeDefinition::Type(ty) => ty.clone(),
-            TypeDefinition::FunType(_, ty) => ty.clone(),
-        }
-    }
-
-    fn is_function(&self) -> bool {
-        matches!(self, TypeDefinition::FunType(_, _))
-    }
-}
-
-#[derive(PartialEq, Debug, Clone)]
-pub struct Symbol {
-    type_definition: TypeDefinition,
-    pub attributes: IdentifierAttributes,
-}
-
-impl Symbol {
-    fn new(type_definition: TypeDefinition, attributes: IdentifierAttributes) -> Self {
-        Symbol {
-            type_definition,
-            attributes,
-        }
-    }
-}
-
-#[derive(PartialEq, Clone, Debug)]
-pub enum StaticInit {
-    IntInit(i32),
-    LongInit(i64),
-}
-
-impl StaticInit {
-    //TODO: Remove this functionn
-    pub fn i32(&self) -> i32 {
-        match self {
-            StaticInit::IntInit(val) => *val,
-            _ => panic!("Invalid conversion"),
-        }
-    }
-}
-
-#[derive(PartialEq, Clone, Debug)]
-pub enum InitialValue {
-    Tentative,
-    Initial(StaticInit),
-    NoInitializer,
-}
-
-impl InitialValue {
-    fn is_constant(&self) -> bool {
-        matches!(self, InitialValue::Initial(_))
-    }
-    fn is_tentative(&self) -> bool {
-        matches!(self, InitialValue::Tentative)
-    }
-}
-
-#[derive(PartialEq, Clone, Debug)]
-pub struct FunAttr {
-    defined: bool,
-    global: bool,
-}
-
-#[derive(PartialEq, Clone, Debug)]
-pub struct StaticAttr {
-    pub init: InitialValue,
-    pub global: bool,
-}
-
-#[derive(PartialEq, Clone, Debug)]
-pub enum IdentifierAttributes {
-    Fun(FunAttr),
-    Static(StaticAttr),
-    Local,
-}
-
-impl IdentifierAttributes {
-    pub fn is_global(&self) -> bool {
-        match self {
-            IdentifierAttributes::Fun(fun_attr) => fun_attr.global,
-            IdentifierAttributes::Static(static_attr) => static_attr.global,
-            IdentifierAttributes::Local => false,
-        }
-    }
-
-    pub fn init(&self) -> InitialValue {
-        match self {
-            IdentifierAttributes::Static(static_attr) => static_attr.init.clone(),
-            _ => InitialValue::NoInitializer,
-        }
-    }
-
-    pub fn is_static(&self) -> bool {
-        matches!(self, IdentifierAttributes::Static { .. })
-    }
-}
 
 #[derive(Default)]
 pub(crate) struct TypeChecker {
