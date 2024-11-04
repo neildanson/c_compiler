@@ -25,6 +25,12 @@ Test Suite here into folder _next to_ this repo.
 * Tacky Generation
 * CodeGen
 
+## Big refactors
+
+* Split Parse AST. Too many optionals and potential holes
+* A lot of string cloning. If utilize Some form of RcString where we can share underlying `str` and slice into it.
+* The Symbol stuff is very disjointed. 
+
 ## Example commands (WIP)
 
 Run Lexer (turn text into Tokens)
