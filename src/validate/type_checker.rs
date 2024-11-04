@@ -5,19 +5,19 @@ use crate::{error::*, parse::*};
 #[derive(PartialEq, Debug, Clone)]
 enum TypeDefinition {
     Type(Type),
-    FunType(usize),
+    FunType(usize, Type),
 }
 
 impl TypeDefinition {
     fn get_type(&self) -> Option<Type> {
         match self {
             TypeDefinition::Type(ty) => Some(ty.clone()),
-            TypeDefinition::FunType(_) => None,
+            TypeDefinition::FunType(_, ty) => Some(ty.clone()),
         }
     }
 
     fn is_function(&self) -> bool {
-        matches!(self, TypeDefinition::FunType(_))
+        matches!(self, TypeDefinition::FunType(_, _))
     }
 }
 
@@ -272,7 +272,7 @@ impl TypeChecker {
         match expression {
             Expression::FunctionCall(name, arguments, _) => {
                 let ty = if let Some(symbol) = self.symbol_table.get(name) {
-                    if let TypeDefinition::FunType(expected_args) = symbol.type_definition {
+                    if let TypeDefinition::FunType(expected_args, _) = symbol.type_definition {
                         if expected_args != arguments.len() {
                             return Err(CompilerError::SemanticAnalysis(
                                 SemanticAnalysisError::FunctionNotDeclared(name.clone()),
@@ -289,10 +289,10 @@ impl TypeChecker {
                         SemanticAnalysisError::FunctionNotDeclared(name.clone()),
                     ));
                 };
-                //let symbol = self.symbol_table.get(name).unwrap(); //We know it exists, but cant put in block above due to mutable self
                 for argument in arguments {
                     self.type_check_expression(argument)?;
                 }
+                
                 let function_call = Expression::FunctionCall(name.clone(), arguments.clone(), ty);
                 Ok(function_call) //
             }
@@ -323,8 +323,6 @@ impl TypeChecker {
                     _ => {
                         let ty1 = left.get_type();
                         let ty2 = right.get_type();
-
-                        println!("left: {:?}, right: {:?}", left, right);
 
                         let ty = Self::get_common_type(ty1.unwrap(), ty2.unwrap());
                         let left = self.convert_to(ty.clone(), &left);
@@ -509,7 +507,7 @@ impl TypeChecker {
         function_declaration: &FunctionDeclaration,
         top_level: bool,
     ) -> Result<FunctionDeclaration, CompilerError> {
-        let fun_type = TypeDefinition::FunType(function_declaration.parameters.len());
+        let fun_type = TypeDefinition::FunType(function_declaration.parameters.len(), function_declaration.fun_type.clone());
         let has_body = function_declaration.body.is_some();
         let mut already_defined = false;
         let mut global = function_declaration.storage_class != Some(StorageClass::Static);
