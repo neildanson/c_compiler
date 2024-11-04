@@ -1,3 +1,4 @@
+use super::loop_labelling::LLStatement;
 use super::type_checker::{self};
 use super::ValidateResult;
 use super::{identifier_resolution::*, loop_labelling::LoopLabelling};
@@ -13,10 +14,10 @@ impl SemanticAnalysis {
         identifier_resolution: &mut IdentifierResolution,
         loop_labelling: &mut LoopLabelling,
         type_checker: &mut type_checker::TypeChecker,
-    ) -> Result<FunctionDeclaration<Statement<Expression>, Expression>, CompilerError> {
+    ) -> Result<FunctionDeclaration<LLStatement<Expression>, Expression>, CompilerError> {
         let function = identifier_resolution.resolve_function_declaration(function, false)?;
         let function = loop_labelling.label_function(function)?;
-        let function = loop_labelling.verify_function_labels(function)?;
+        //let function = loop_labelling.verify_function_labels(function)?;
         let function = type_checker.type_check_function_declaration(&function, true)?;
         Ok(function)
     }

@@ -15,8 +15,8 @@ pub use value::*;
 
 use crate::{
     error::CompilerError,
-    parse::{self, Expression, Statement},
-    validate::{IdentifierAttributes, InitialValue, StaticAttr, Symbol, ValidateResult},
+    parse::{self, Expression},
+    validate::{IdentifierAttributes, InitialValue, StaticAttr, Symbol, ValidateResult, loop_labelling::LLStatement},
 };
 use std::collections::HashMap;
 
@@ -332,7 +332,7 @@ impl Tacky {
 
     fn emit_tacky_decl(
         &mut self,
-        d: &parse::Declaration<Statement<Expression>, Expression>,
+        d: &parse::Declaration<LLStatement<Expression>, Expression>,
         instructions: &mut Vec<Instruction>,
     ) -> Result<(), CompilerError> {
         match d {
@@ -346,7 +346,7 @@ impl Tacky {
 
     fn emit_tacky_block_item(
         &mut self,
-        item: &parse::BlockItem<Statement<Expression>, Expression>,
+        item: &parse::BlockItem<LLStatement<Expression>, Expression>,
         instructions: &mut Vec<Instruction>,
     ) -> Result<(), CompilerError> {
         match item {
@@ -362,12 +362,11 @@ impl Tacky {
 
     fn emit_tacky_do_while(
         &mut self,
-        body: &parse::Statement<Expression>,
+        body: &LLStatement<Expression>,
         cond: &parse::Expression,
-        loop_label: &Option<String>,
+        loop_label: &str,
         instructions: &mut Vec<Instruction>,
     ) -> Result<(), CompilerError> {
-        let loop_label = loop_label.clone().unwrap();
         let start_label = self.make_label("start".to_string());
         let break_label = format!("break_{loop_label}");
         let continue_label = format!("continue_{loop_label}");
@@ -395,11 +394,10 @@ impl Tacky {
     fn emit_tacky_while(
         &mut self,
         cond: &parse::Expression,
-        body: &parse::Statement<Expression>,
-        loop_label: &Option<String>,
+        body: &LLStatement<Expression>,
+        loop_label: &str,
         instructions: &mut Vec<Instruction>,
     ) -> Result<(), CompilerError> {
-        let loop_label = loop_label.clone().unwrap();
         let break_label = format!("break_{loop_label}");
         let continue_label = format!("continue_{loop_label}");
         instructions.push(Instruction::Label {
@@ -426,11 +424,10 @@ impl Tacky {
         for_init: &parse::ForInit<Expression>,
         cond: &Option<Expression>,
         post: &Option<Expression>,
-        body: &parse::Statement<Expression>,
-        loop_label: &Option<String>,
+        body: &LLStatement<Expression>,
+        loop_label: &str,
         instructions: &mut Vec<Instruction>,
     ) -> Result<(), CompilerError> {
-        let loop_label = loop_label.clone().unwrap();
         let start_label = self.make_label("start".to_string());
         let break_label = format!("break_{loop_label}");
         let continue_label = format!("continue_{loop_label}");
@@ -478,11 +475,11 @@ impl Tacky {
 
     fn emit_tacky_statement(
         &mut self,
-        s: &parse::Statement<Expression>,
+        s: &LLStatement<Expression>,
         instructions: &mut Vec<Instruction>,
     ) -> Result<(), CompilerError> {
         match s {
-            parse::Statement::If(cond, then, els) => {
+            LLStatement::If(cond, then, els) => {
                 let cond = self.emit_tacky_expr(cond, instructions)?;
                 let cond = self.emit_temp(cond, instructions);
                 let else_label = self.make_label("else".to_string());
@@ -514,40 +511,40 @@ impl Tacky {
 
                 Ok(())
             }
-            parse::Statement::Return(e) => {
+            LLStatement::Return(e) => {
                 let value = self.emit_tacky_expr(e, instructions)?;
                 instructions.push(Instruction::Return(value));
                 Ok(())
             }
-            parse::Statement::Expression(e) => {
+            LLStatement::Expression(e) => {
                 let _value = self.emit_tacky_expr(e, instructions)?;
                 Ok(())
             }
-            parse::Statement::Null => Ok(()),
-            parse::Statement::Compound(block) => {
+            LLStatement::Null => Ok(()),
+            LLStatement::Compound(block) => {
                 for item in block {
                     self.emit_tacky_block_item(item, instructions)?;
                 }
                 Ok(())
             }
-            parse::Statement::DoWhile(body, cond, loop_label) => {
+            LLStatement::DoWhile(body, cond, loop_label) => {
                 self.emit_tacky_do_while(body, cond, loop_label, instructions)
             }
-            parse::Statement::While(cond, body, label) => {
+            LLStatement::While(cond, body, label) => {
                 self.emit_tacky_while(cond, body, label, instructions)
             }
-            parse::Statement::For(for_init, cond, post, body, loop_label) => {
+            LLStatement::For(for_init, cond, post, body, loop_label) => {
                 self.emit_tacky_for_loop(for_init, cond, post, body, loop_label, instructions)
             }
-            parse::Statement::Break(label) => {
-                let break_label = format!("break_{}", label.clone().unwrap());
+            LLStatement::Break(label) => {
+                let break_label = format!("break_{}", label.clone());
                 instructions.push(Instruction::Jump {
                     target: break_label,
                 });
                 Ok(())
             }
-            parse::Statement::Continue(label) => {
-                let continue_label = format!("continue_{}", label.clone().unwrap());
+            LLStatement::Continue(label) => {
+                let continue_label = format!("continue_{}", label.clone());
                 instructions.push(Instruction::Jump {
                     target: continue_label,
                 });
@@ -558,7 +555,7 @@ impl Tacky {
 
     fn emit_tacky_function(
         &mut self,
-        f: parse::FunctionDeclaration<Statement<Expression>, Expression>,
+        f: parse::FunctionDeclaration<LLStatement<Expression>, Expression>,
         symbol_table: &HashMap<String, Symbol>,
     ) -> Result<Option<Function>, CompilerError> {
         let mut body = Vec::new();

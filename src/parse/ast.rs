@@ -78,8 +78,6 @@ pub enum ForInit<E> {
     InitExpression(Option<E>),
 }
 
-type LoopIdentifier = Option<Identifier>;
-
 #[derive(Clone, Debug, PartialEq)]
 pub enum Statement<E:Clone> {
     Return(E),
@@ -87,16 +85,15 @@ pub enum Statement<E:Clone> {
     If(E, Box<Statement<E>>, Option<Box<Statement<E>>>),
     Compound(Vec<BlockItem<Statement<E>, E>>),
     Null,
-    Break(LoopIdentifier),
-    Continue(LoopIdentifier),
-    While(E, Box<Statement<E>>, LoopIdentifier),
-    DoWhile(Box<Statement<E>>, E, LoopIdentifier),
+    Break,
+    Continue,
+    While(E, Box<Statement<E>>),
+    DoWhile(Box<Statement<E>>, E),
     For(
         ForInit<E>,
         Option<E>,
         Option<E>,
         Box<Statement<E>>,
-        LoopIdentifier,
     ),
 }
 

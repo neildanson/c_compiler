@@ -323,7 +323,7 @@ impl IdentifierResolution {
                 Ok(Statement::Compound(blocks))
             }
             Statement::Null => Ok(Statement::Null),
-            Statement::For(init, cond, post, body, loop_id) => {
+            Statement::For(init, cond, post, body) => {
                 let mut inner_scope = self.clone();
                 let for_init = inner_scope.resolve_for_init(init)?;
                 let cond = cond
@@ -341,23 +341,22 @@ impl IdentifierResolution {
                     cond,
                     post,
                     Box::new(body),
-                    loop_id.clone(),
                 ))
             }
-            Statement::DoWhile(body, cond, loop_id) => {
+            Statement::DoWhile(body, cond) => {
                 let mut inner_scope = self.clone();
                 let body = inner_scope.resolve_statement(body)?;
                 let cond = self.resolve_expression(cond)?;
-                Ok(Statement::DoWhile(Box::new(body), cond, loop_id.clone()))
+                Ok(Statement::DoWhile(Box::new(body), cond))
             }
-            Statement::While(cond, body, loop_id) => {
+            Statement::While(cond, body) => {
                 let cond = self.resolve_expression(cond)?;
                 let mut inner_scope = self.clone();
                 let body = inner_scope.resolve_statement(body)?;
-                Ok(Statement::While(cond, Box::new(body), loop_id.clone()))
+                Ok(Statement::While(cond, Box::new(body)))
             }
-            Statement::Break(loop_id) => Ok(Statement::Break(loop_id.clone())),
-            Statement::Continue(loop_id) => Ok(Statement::Continue(loop_id.clone())),
+            Statement::Break => Ok(Statement::Break),
+            Statement::Continue => Ok(Statement::Continue),
             //d => Ok(d.clone()), //TODO: Implement the rest of the statements
         }
     }

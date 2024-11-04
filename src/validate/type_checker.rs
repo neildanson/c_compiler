@@ -2,6 +2,8 @@ use std::collections::HashMap;
 
 use crate::{error::*, parse::*};
 
+use super::loop_labelling::LLStatement;
+
 #[derive(PartialEq, Debug, Clone)]
 enum TypeDefinition {
     Type(Type),
@@ -406,16 +408,16 @@ impl TypeChecker {
         }
     }
 
-    fn type_check_statement(&mut self, statement: &Statement<Expression>) -> Result<Statement<Expression>, CompilerError> {
+    fn type_check_statement(&mut self, statement: &LLStatement<Expression>) -> Result<LLStatement<Expression>, CompilerError> {
         match statement {
-            Statement::Expression(expression) => Ok(Statement::Expression(
+            LLStatement::Expression(expression) => Ok(LLStatement::Expression(
                 self.type_check_expression(expression)?,
             )),
-            Statement::Return(expression) => {
+            LLStatement::Return(expression) => {
                 //TODO: Check if the return type is compatible with the function return type
-                Ok(Statement::Return(self.type_check_expression(expression)?))
+                Ok(LLStatement::Return(self.type_check_expression(expression)?))
             }
-            Statement::If(condition, then_block, else_block) => {
+            LLStatement::If(condition, then_block, else_block) => {
                 let condition = self.type_check_expression(condition)?;
                 let then_block = self.type_check_statement(then_block.as_ref())?;
                 let else_block = if let Some(statement) = else_block {
@@ -423,27 +425,27 @@ impl TypeChecker {
                 } else {
                     None
                 };
-                Ok(Statement::If(condition, Box::new(then_block), else_block))
+                Ok(LLStatement::If(condition, Box::new(then_block), else_block))
             }
-            Statement::While(condition, block, loop_label) => {
+            LLStatement::While(condition, block, loop_label) => {
                 let condition = self.type_check_expression(condition)?;
                 let block = self.type_check_statement(block)?;
-                Ok(Statement::While(
+                Ok(LLStatement::While(
                     condition,
                     Box::new(block),
                     loop_label.clone(),
                 ))
             }
-            Statement::DoWhile(body, condition, loop_label) => {
+            LLStatement::DoWhile(body, condition, loop_label) => {
                 let body = self.type_check_statement(body)?;
                 let condition = self.type_check_expression(condition)?;
-                Ok(Statement::DoWhile(
+                Ok(LLStatement::DoWhile(
                     Box::new(body),
                     condition,
                     loop_label.clone(),
                 ))
             }
-            Statement::For(for_init, condition, post, block, loop_label) => {
+            LLStatement::For(for_init, condition, post, block, loop_label) => {
                 let for_init = self.type_check_for_init(for_init)?;
                 let condition = if let Some(condition) = condition {
                     Some(self.type_check_expression(condition)?)
@@ -456,7 +458,7 @@ impl TypeChecker {
                     None
                 };
                 let block = self.type_check_statement(block)?;
-                Ok(Statement::For(
+                Ok(LLStatement::For(
                     for_init,
                     condition,
                     post,
@@ -464,23 +466,23 @@ impl TypeChecker {
                     loop_label.clone(),
                 ))
             }
-            Statement::Compound(block_items) => {
+            LLStatement::Compound(block_items) => {
                 let mut new_block_items = Vec::new();
                 for block_item in block_items {
                     new_block_items.push(self.type_check_block_item(block_item)?);
                 }
-                Ok(Statement::Compound(new_block_items))
+                Ok(LLStatement::Compound(new_block_items))
             }
-            Statement::Null => Ok(Statement::Null),
-            Statement::Continue(loop_label) => Ok(Statement::Continue(loop_label.clone())),
-            Statement::Break(loop_label) => Ok(Statement::Break(loop_label.clone())),
+            LLStatement::Null => Ok(LLStatement::Null),
+            LLStatement::Continue(loop_label) => Ok(LLStatement::Continue(loop_label.clone())),
+            LLStatement::Break(loop_label) => Ok(LLStatement::Break(loop_label.clone())),
         }
     }
 
     fn type_check_block_item(
         &mut self,
-        block_item: &BlockItem<Statement<Expression>, Expression>,
-    ) -> Result<BlockItem<Statement<Expression>, Expression>, CompilerError> {
+        block_item: &BlockItem<LLStatement<Expression>, Expression>,
+    ) -> Result<BlockItem<LLStatement<Expression>, Expression>, CompilerError> {
         match block_item {
             BlockItem::Statement(statement) => {
                 Ok(BlockItem::Statement(self.type_check_statement(statement)?))
@@ -502,9 +504,9 @@ impl TypeChecker {
 
     pub fn type_check_function_declaration(
         &mut self,
-        function_declaration: &FunctionDeclaration<Statement<Expression>, Expression>,
+        function_declaration: &FunctionDeclaration<LLStatement<Expression>, Expression>,
         top_level: bool,
-    ) -> Result<FunctionDeclaration<Statement<Expression>, Expression>, CompilerError> {
+    ) -> Result<FunctionDeclaration<LLStatement<Expression>, Expression>, CompilerError> {
         let fun_type = TypeDefinition::FunType(function_declaration.parameters.iter().map(|(ty,_)| ty.clone()).collect(), function_declaration.fun_type.clone());
         let has_body = function_declaration.body.is_some();
         let mut already_defined = false;

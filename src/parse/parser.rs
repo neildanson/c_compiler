@@ -369,7 +369,7 @@ fn parse_statement(tokens: &[Token]) -> Result<(Statement<Expression>, &[Token])
             let (expression, rest) = parse_expression(rest, 0)?;
             let rest = swallow_semicolon(rest)?;
             (
-                Statement::DoWhile(Box::new(statement), expression, None),
+                Statement::DoWhile(Box::new(statement), expression),
                 rest,
             )
         }
@@ -378,17 +378,17 @@ fn parse_statement(tokens: &[Token]) -> Result<(Statement<Expression>, &[Token])
             let rest = swallow_one(Token::RParen, rest)?;
             let (statement, rest) = parse_statement(rest)?;
             (
-                Statement::While(expression, Box::new(statement), None),
+                Statement::While(expression, Box::new(statement)),
                 rest,
             )
         }
         [Token::Break, rest @ ..] => {
             let rest = swallow_semicolon(rest)?;
-            (Statement::Break(None), rest)
+            (Statement::Break, rest)
         }
         [Token::Continue, rest @ ..] => {
             let rest = swallow_semicolon(rest)?;
-            (Statement::Continue(None), rest)
+            (Statement::Continue, rest)
         }
         [Token::For, Token::LParen, rest @ ..] => {
             let (init, rest) = parse_for_init(rest)?;
@@ -398,7 +398,7 @@ fn parse_statement(tokens: &[Token]) -> Result<(Statement<Expression>, &[Token])
             let rest = swallow_one(Token::RParen, rest)?;
             let (statement, rest) = parse_statement(rest)?;
             (
-                Statement::For(init, condition, post, Box::new(statement), None),
+                Statement::For(init, condition, post, Box::new(statement)),
                 rest,
             )
         }
