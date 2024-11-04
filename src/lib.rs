@@ -13,7 +13,7 @@ use anyhow::Result;
 use parse::{Expression, Statement};
 use std::io::{Read, Write};
 use tacky::TackyResult;
-use validate::{SemanticAnalysis, ValidateResult};
+use validate::{semantic_analysis::SemanticAnalysis, ValidateResult};
 
 pub fn read_file(filename: &str) -> Result<String> {
     let file = std::fs::File::open(filename)?;

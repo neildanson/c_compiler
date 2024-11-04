@@ -6,7 +6,6 @@ pub mod semantic_analysis;
 use std::collections::HashMap;
 use loop_labelling::LLStatement;
 
-pub use semantic_analysis::*;
 pub use type_checker::*;
 
 use crate::parse::Program;
