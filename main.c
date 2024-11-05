@@ -1,7 +1,9 @@
-/* The result of a cast expression is not an lvalue */
+long a;
 
 int main(void) {
-    int i = 0;
-    i = (long) i = 10;
+    /* This declaration refers to the global 'a' variable,
+     * but has a conflicting type.
+     */
+    extern int a;
     return 0;
 }

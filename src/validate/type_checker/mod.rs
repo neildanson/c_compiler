@@ -109,6 +109,13 @@ impl TypeChecker {
                         ),
                     ));
                 }
+                if old_decl.get_type() != variable_declaration.var_type {
+                    return Err(CompilerError::SemanticAnalysis(
+                        SemanticAnalysisError::ConflictingVariableLinkage( //Wrong error
+                            variable_declaration.name.clone(),
+                        ),
+                    ));
+                }
             } else {
                 self.symbol_table.insert(
                     variable_declaration.name.clone(),
