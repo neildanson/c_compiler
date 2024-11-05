@@ -50,7 +50,6 @@ pub enum Value {
     Local(Type),
 }
 
-
 #[derive(PartialEq, Debug, Clone)]
 pub enum Symbol {
     Value(Value),

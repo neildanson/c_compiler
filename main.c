@@ -1,10 +1,7 @@
-int foo = 3;
-
-/* It's illegal to declare the same variable
- * with different types
- */
-long foo;
+/* The result of a cast expression is not an lvalue */
 
 int main(void) {
-    return foo;
+    int i = 0;
+    i = (long) i = 10;
+    return 0;
 }

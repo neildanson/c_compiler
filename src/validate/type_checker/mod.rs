@@ -42,7 +42,8 @@ impl TypeChecker {
                 ));
             }
             if old_decl.get_type() != variable_declaration.var_type {
-                return Err(CompilerError::SemanticAnalysis( //TODO
+                return Err(CompilerError::SemanticAnalysis(
+                    //TODO
                     SemanticAnalysisError::ConflictingVariableLinkage(
                         variable_declaration.name.clone(),
                     ),
@@ -118,7 +119,8 @@ impl TypeChecker {
                 }
                 if old_decl.get_type() != variable_declaration.var_type {
                     return Err(CompilerError::SemanticAnalysis(
-                        SemanticAnalysisError::ConflictingVariableLinkage( //Wrong error
+                        SemanticAnalysisError::ConflictingVariableLinkage(
+                            //Wrong error
                             variable_declaration.name.clone(),
                         ),
                     ));
