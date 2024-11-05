@@ -1,9 +1,10 @@
-long a;
+int foo = 3;
+
+/* It's illegal to declare the same variable
+ * with different types
+ */
+long foo;
 
 int main(void) {
-    /* This declaration refers to the global 'a' variable,
-     * but has a conflicting type.
-     */
-    extern int a;
-    return 0;
+    return foo;
 }

@@ -41,6 +41,13 @@ impl TypeChecker {
                     ),
                 ));
             }
+            if old_decl.get_type() != variable_declaration.var_type {
+                return Err(CompilerError::SemanticAnalysis( //TODO
+                    SemanticAnalysisError::ConflictingVariableLinkage(
+                        variable_declaration.name.clone(),
+                    ),
+                ));
+            }
             if variable_declaration.storage_class == Some(StorageClass::Extern) {
                 global = old_decl.is_global();
             } else if old_decl.is_global() != global {
