@@ -163,7 +163,7 @@ impl IdentifierResolution {
                 && !(entry.has_external_linkage && decl.storage_class == Some(StorageClass::Extern))
             {
                 return Err(CompilerError::SemanticAnalysis(
-                    SemanticAnalysisError::VariableAlreadyDeclared(decl.name), //TODO
+                    SemanticAnalysisError::VariableAlreadyDeclared(decl.name), 
                 ));
             }
         }
@@ -361,7 +361,6 @@ impl IdentifierResolution {
             }
             Statement::Break => Ok(Statement::Break),
             Statement::Continue => Ok(Statement::Continue),
-            //d => Ok(d.clone()), //TODO: Implement the rest of the statements
         }
     }
 }

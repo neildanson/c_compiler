@@ -88,7 +88,6 @@ impl TypeChecker {
         let variable_declaration = VariableDeclaration {
             name: variable_declaration.name.clone(),
             var_type: variable_declaration.var_type.clone(),
-            //TODO below -> typecheck expression instead?
             init: variable_declaration
                 .init
                 .as_ref()

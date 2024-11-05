@@ -569,7 +569,7 @@ impl Tacky {
             Ok(Some(Function {
                 name: f.name.clone(),
                 global: symbol_table.get(&f.name).unwrap().is_global(),
-                params: f.parameters.iter().map(|(_, name)| name.clone()).collect(), //TODO Dont do this
+                params: f.parameters.iter().map(|(_, name)| name.clone()).collect(), 
                 body: Some(body),
             }))
         } else {

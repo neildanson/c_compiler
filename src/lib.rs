@@ -59,7 +59,6 @@ pub fn tacky(filename: &str) -> Result<TackyResult> {
 
 pub fn codegen(filename: &str) -> Result<codegen::Program> {
     let tacky = tacky(filename)?;
-    //TODO try_into from TaskyResult?
     let mut asm: codegen::Program = tacky.program.try_into()?;
     asm.fixup(&tacky.statics);
     Ok(asm)
