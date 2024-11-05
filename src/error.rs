@@ -40,6 +40,7 @@ pub enum SemanticAnalysisError {
     StaticValueNotValidInForLoopInitializer,
     IncompatibleTypesInAssignment,
     IncompatibleTypesInConditional,
+    InvalidCastInAssignment
 }
 
 impl Display for SemanticAnalysisError {
@@ -101,6 +102,9 @@ impl Display for SemanticAnalysisError {
             }
             SemanticAnalysisError::IncompatibleTypesInConditional => {
                 write!(f, "Incompatible types in conditional")
+            }
+            SemanticAnalysisError::InvalidCastInAssignment => {
+                write!(f, "Invalid cast in assignment")
             }
         }
     }

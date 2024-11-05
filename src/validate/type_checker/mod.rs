@@ -322,7 +322,15 @@ impl TypeChecker {
                 ))
             }
             Expression::Constant(c) => Ok(TCExpression::Constant(c.clone())),
-            Expression::Cast(ty, expr) =>  Ok(self.convert_to(ty.clone(), &self.type_check_expression(expr)?))
+            Expression::Cast(ty, expr) => {
+                if let Expression::Assignment(_, _) = expr.as_ref() {
+                    return Err(CompilerError::SemanticAnalysis(
+                        SemanticAnalysisError::InvalidCastInAssignment,
+                    ));
+                    
+                }   
+                Ok(self.convert_to(ty.clone(), &self.type_check_expression(expr)?))
+            }
         }
     }
 
