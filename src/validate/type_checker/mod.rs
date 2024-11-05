@@ -225,14 +225,14 @@ impl TypeChecker {
                         let function_call = TCExpression::FunctionCall(name.clone(), converted_arguments.clone(), ty.clone());
                         Ok(function_call) 
                     } else {
-                        return Err(CompilerError::SemanticAnalysis(
+                        Err(CompilerError::SemanticAnalysis(
                             SemanticAnalysisError::VariableUsedAsFunctionName,
-                        ));
+                        ))
                     }
                 } else {
-                    return Err(CompilerError::SemanticAnalysis(
+                    Err(CompilerError::SemanticAnalysis(
                         SemanticAnalysisError::FunctionNotDeclared(name.clone()),
-                    ));
+                    ))
                 }         
             }
             Expression::Var(name) => {
