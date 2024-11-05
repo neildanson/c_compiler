@@ -1,12 +1,7 @@
-int foo = 10;
+/* The result of a cast expression is not an lvalue */
 
 int main(void) {
-    /* Since this declaration has external linkage,
-     * it refers to the same entity as the declaration
-     * of foo above. But the earlier declaration declares
-     * a variable and this one declares a function,
-     * so they conflict.
-     */
-    int foo(void);
+    int i = 0;
+    i = (long) i = 10;
     return 0;
 }

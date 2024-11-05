@@ -453,7 +453,7 @@ impl TypeChecker {
         if let Some(symbol) = self.symbol_table.get(&function_declaration.name) {
             if let Symbol::FunType(old_fun_attr, old_parameters, old_return_type) = symbol {
                 //check parameters better
-                if old_parameters.len() != new_parameters.len()
+                if old_parameters != &new_parameters
                     || old_return_type != &function_return_type
                 {
                     return Err(CompilerError::SemanticAnalysis(
