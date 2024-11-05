@@ -1,10 +1,10 @@
 mod identifier_resolution;
 pub mod loop_labelling;
-pub mod type_checker;
 pub mod semantic_analysis;
+pub mod type_checker;
 
-use std::collections::HashMap;
 use loop_labelling::LLStatement;
+use std::collections::HashMap;
 
 pub use type_checker::*;
 

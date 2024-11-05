@@ -1,39 +1,5 @@
 use crate::parse::*;
 
-#[derive(PartialEq, Debug, Clone)]
-pub enum TypeDefinition {
-    Type(Type),
-    FunType(Vec<Type>, Type),
-}
-
-impl TypeDefinition {
-    pub fn get_type(&self) -> Type {
-        match self {
-            TypeDefinition::Type(ty) => ty.clone(),
-            TypeDefinition::FunType(_, ty) => ty.clone(),
-        }
-    }
-
-    pub fn is_function(&self) -> bool {
-        matches!(self, TypeDefinition::FunType(_, _))
-    }
-}
-
-#[derive(PartialEq, Debug, Clone)]
-pub struct Symbol {
-    pub type_definition: TypeDefinition,
-    pub attributes: IdentifierAttributes,
-}
-
-impl Symbol {
-    pub fn new(type_definition: TypeDefinition, attributes: IdentifierAttributes) -> Self {
-        Symbol {
-            type_definition,
-            attributes,
-        }
-    }
-}
-
 #[derive(PartialEq, Clone, Debug)]
 pub enum StaticInit {
     IntInit(i32),
@@ -78,30 +44,51 @@ pub struct StaticAttr {
     pub global: bool,
 }
 
-#[derive(PartialEq, Clone, Debug)]
-pub enum IdentifierAttributes {
-    Fun(FunAttr),
-    Static(StaticAttr),
-    Local,
+#[derive(PartialEq, Debug, Clone)]
+pub enum Value {
+    Static(StaticAttr, Type),
+    Local(Type),
 }
 
-impl IdentifierAttributes {
+#[derive(PartialEq, Debug, Clone)]
+pub enum Symbol {
+    Value(Value),
+    FunType(FunAttr, Vec<Type>, Type),
+}
+
+impl Symbol {
     pub fn is_global(&self) -> bool {
         match self {
-            IdentifierAttributes::Fun(fun_attr) => fun_attr.global,
-            IdentifierAttributes::Static(static_attr) => static_attr.global,
-            IdentifierAttributes::Local => false,
+            Symbol::FunType(fun_attr, _, _) => fun_attr.global,
+            Symbol::Value(Value::Static(static_attr, _)) => static_attr.global,
+            Symbol::Value(Value::Local(_)) => false,
         }
     }
 
     pub fn init(&self) -> InitialValue {
         match self {
-            IdentifierAttributes::Static(static_attr) => static_attr.init.clone(),
+            Symbol::Value(Value::Static(static_attr, _)) => static_attr.init.clone(),
             _ => InitialValue::NoInitializer,
         }
     }
 
     pub fn is_static(&self) -> bool {
-        matches!(self, IdentifierAttributes::Static { .. })
+        matches!(self, Symbol::Value(Value::Static { .. }))
+    }
+    pub fn get_type(&self) -> Type {
+        match self {
+            Symbol::Value(Value::Static(_, ty)) => ty.clone(),
+            Symbol::Value(Value::Local(ty)) => ty.clone(),
+            Symbol::FunType(_, _, ty) => ty.clone(),
+        }
+    }
+
+    pub fn is_function(&self) -> bool {
+        matches!(self, Symbol::FunType(_, _, _))
     }
 }
+
+//Thoughts
+//Move fun_attr to TypeDefinition::FunType
+//Move static_attr to TypeDefinition::Type
+//Move IdentifierAttributes::Local to TypeDefinition::Type ???

@@ -17,7 +17,8 @@ use crate::{
     error::CompilerError,
     parse::{self},
     validate::{
-        loop_labelling::LLStatement, type_checker::TCExpression, IdentifierAttributes,
+        loop_labelling::LLStatement,
+        type_checker::{self, TCExpression},
         InitialValue, StaticAttr, Symbol, ValidateResult,
     },
 };
@@ -567,7 +568,7 @@ impl Tacky {
 
             Ok(Some(Function {
                 name: f.name.clone(),
-                global: symbol_table.get(&f.name).unwrap().attributes.is_global(),
+                global: symbol_table.get(&f.name).unwrap().is_global(),
                 params: f.parameters.iter().map(|(_, name)| name.clone()).collect(), //TODO Dont do this
                 body: Some(body),
             }))
@@ -643,7 +644,8 @@ impl Tacky {
         symbol_table
             .iter()
             .filter_map(|(name, symbol)| {
-                if let IdentifierAttributes::Static(static_attr) = &symbol.attributes {
+                if let Symbol::Value(type_checker::symbol::Value::Static(static_attr, _)) = &symbol
+                {
                     Some((name.clone(), static_attr.clone()))
                 } else {
                     None

@@ -1,12 +1,11 @@
 pub mod ast;
 pub mod symbol;
 
-use std::collections::HashMap;
-use crate::{error::*, parse::*};
 use super::loop_labelling::LLStatement;
+use crate::{error::*, parse::*};
 pub use ast::TCExpression;
+use std::collections::HashMap;
 pub use symbol::*;
-
 
 #[derive(Default)]
 pub(crate) struct TypeChecker {
@@ -35,7 +34,7 @@ impl TypeChecker {
         let mut global = variable_declaration.storage_class != Some(StorageClass::Static);
 
         if let Some(old_decl) = self.symbol_table.get(&variable_declaration.name) {
-            if old_decl.type_definition.is_function() {
+            if old_decl.is_function() {
                 return Err(CompilerError::SemanticAnalysis(
                     SemanticAnalysisError::FunctionRedclaredAsVariable(
                         variable_declaration.name.clone(),
@@ -43,8 +42,8 @@ impl TypeChecker {
                 ));
             }
             if variable_declaration.storage_class == Some(StorageClass::Extern) {
-                global = old_decl.attributes.is_global();
-            } else if old_decl.attributes.is_global() != global {
+                global = old_decl.is_global();
+            } else if old_decl.is_global() != global {
                 return Err(CompilerError::SemanticAnalysis(
                     SemanticAnalysisError::ConflictingVariableLinkage(
                         variable_declaration.name.clone(),
@@ -52,7 +51,7 @@ impl TypeChecker {
                 ));
             }
 
-            if let InitialValue::Initial(_) = old_decl.attributes.init() {
+            if let InitialValue::Initial(_) = old_decl.init() {
                 if let InitialValue::Initial(_) = initial_value {
                     return Err(CompilerError::SemanticAnalysis(
                         SemanticAnalysisError::ConflictingFileScopeVariableDefinitions(
@@ -60,24 +59,22 @@ impl TypeChecker {
                         ),
                     ));
                 } else {
-                    initial_value = old_decl.attributes.init();
+                    initial_value = old_decl.init();
                 }
-            } else if !initial_value.is_constant() && old_decl.attributes.init().is_tentative() {
+            } else if !initial_value.is_constant() && old_decl.init().is_tentative() {
                 initial_value = InitialValue::Tentative;
             }
         }
 
-        let attrs = IdentifierAttributes::Static(StaticAttr {
-            init: initial_value,
-            global,
-        });
-
         self.symbol_table.insert(
             variable_declaration.name.clone(),
-            Symbol::new(
-                TypeDefinition::Type(variable_declaration.var_type.clone()),
-                attrs,
-            ),
+            Symbol::Value(Value::Static(
+                StaticAttr {
+                    init: initial_value,
+                    global,
+                },
+                variable_declaration.var_type.clone(),
+            )),
         );
 
         let variable_declaration = VariableDeclaration {
@@ -105,7 +102,7 @@ impl TypeChecker {
                 ));
             }
             if let Some(old_decl) = self.symbol_table.get(&variable_declaration.name) {
-                if old_decl.type_definition.is_function() {
+                if old_decl.is_function() {
                     return Err(CompilerError::SemanticAnalysis(
                         SemanticAnalysisError::FunctionRedclaredAsVariable(
                             variable_declaration.name.clone(),
@@ -115,13 +112,13 @@ impl TypeChecker {
             } else {
                 self.symbol_table.insert(
                     variable_declaration.name.clone(),
-                    Symbol::new(
-                        TypeDefinition::Type(variable_declaration.var_type.clone()),
-                        IdentifierAttributes::Static(StaticAttr {
+                    Symbol::Value(Value::Static(
+                        StaticAttr {
                             init: InitialValue::NoInitializer,
                             global: true,
-                        }),
-                    ),
+                        },
+                        variable_declaration.var_type.clone(),
+                    )),
                 );
             }
         } else if variable_declaration.storage_class == Some(StorageClass::Static) {
@@ -136,21 +133,18 @@ impl TypeChecker {
             };
             self.symbol_table.insert(
                 variable_declaration.name.clone(),
-                Symbol::new(
-                    TypeDefinition::Type(variable_declaration.var_type.clone()),
-                    IdentifierAttributes::Static(StaticAttr {
+                Symbol::Value(Value::Static(
+                    StaticAttr {
                         init: initial_value,
                         global: false,
-                    }),
-                ),
+                    },
+                    variable_declaration.var_type.clone(),
+                )),
             );
         } else {
             self.symbol_table.insert(
                 variable_declaration.name.clone(),
-                Symbol::new(
-                    TypeDefinition::Type(variable_declaration.var_type.clone()),
-                    IdentifierAttributes::Local,
-                ),
+                Symbol::Value(Value::Local(variable_declaration.var_type.clone())),
             );
 
             let expr = if let Some(initializer) = variable_declaration.init.as_ref() {
@@ -198,20 +192,24 @@ impl TypeChecker {
     ) -> Result<TCExpression, CompilerError> {
         match expression {
             Expression::FunctionCall(name, arguments) => {
-                let ty = if let Some(symbol) = self.symbol_table.get(name) {
-                    if let TypeDefinition::FunType(ref expected_args, _) = symbol.type_definition {
-                        if expected_args.len() != arguments.len() {
-                            return Err(CompilerError::SemanticAnalysis(
-                                SemanticAnalysisError::FunctionNotDeclared(name.clone()),
-                            ));
-                        }
-                        symbol.type_definition.get_type() //Wong - this always returns None for a function currently
-                    } else {
+                let ty = if let Some(Symbol::FunType(_, expected_args, ty)) =
+                    self.symbol_table.get(name)
+                {
+                    if expected_args.len() != arguments.len() {
+                        return Err(CompilerError::SemanticAnalysis(
+                            SemanticAnalysisError::FunctionNotDeclared(name.clone()),
+                        ));
+                    }
+                    ty.clone()
+                } else {
+                    /*
+                    else {
                         return Err(CompilerError::SemanticAnalysis(
                             SemanticAnalysisError::VariableUsedAsFunctionName,
                         ));
                     }
-                } else {
+                     */
+
                     return Err(CompilerError::SemanticAnalysis(
                         SemanticAnalysisError::FunctionNotDeclared(name.clone()),
                     ));
@@ -228,18 +226,13 @@ impl TypeChecker {
             }
             Expression::Var(name) => {
                 if let Some(existing) = self.symbol_table.get(name) {
-                    if existing.type_definition.is_function() {
+                    if existing.is_function() {
                         return Err(CompilerError::SemanticAnalysis(
                             SemanticAnalysisError::VariableUsedAsFunctionName,
                         ));
                     }
                 }
-                let ty = self
-                    .symbol_table
-                    .get(name)
-                    .unwrap()
-                    .type_definition
-                    .get_type();
+                let ty = self.symbol_table.get(name).unwrap().get_type();
                 Ok(TCExpression::Var(name.clone(), ty))
             }
             Expression::BinOp(op, left, right) => {
@@ -448,21 +441,20 @@ impl TypeChecker {
         function_declaration: &FunctionDeclaration<LLStatement<Expression>, Expression>,
         top_level: bool,
     ) -> Result<FunctionDeclaration<LLStatement<TCExpression>, TCExpression>, CompilerError> {
-        let fun_type = TypeDefinition::FunType(
-            function_declaration
-                .parameters
-                .iter()
-                .map(|(ty, _)| ty.clone())
-                .collect(),
-            function_declaration.fun_type.clone(),
-        );
+        let new_parameters: Vec<_> = function_declaration
+            .parameters
+            .iter()
+            .map(|(ty, _)| ty.clone())
+            .collect();
+        let function_return_type = function_declaration.fun_type.clone();
         let has_body = function_declaration.body.is_some();
         let mut already_defined = false;
         let mut global = function_declaration.storage_class != Some(StorageClass::Static);
-        if let Some(old_decl) = self.symbol_table.get(&function_declaration.name) {
-            if let IdentifierAttributes::Fun(old_fun_attr) = old_decl.attributes.clone() {
-                if old_decl.type_definition != fun_type
-                /*TODO Check parameter types */
+        if let Some(symbol) = self.symbol_table.get(&function_declaration.name) {
+            if let Symbol::FunType(old_fun_attr, old_parameters, old_return_type) = symbol {
+                //check parameters better
+                if old_parameters.len() != new_parameters.len()
+                    || old_return_type != &function_return_type
                 {
                     return Err(CompilerError::SemanticAnalysis(
                         SemanticAnalysisError::IncompatibleFunctionDeclarations,
@@ -489,7 +481,9 @@ impl TypeChecker {
                 global = old_fun_attr.global;
             } else {
                 return Err(CompilerError::SemanticAnalysis(
-                    SemanticAnalysisError::IncompatibleFunctionDeclarations,
+                    SemanticAnalysisError::FunctionRedclaredAsVariable(
+                        function_declaration.name.clone(),
+                    ),
                 ));
             }
         }
@@ -502,24 +496,19 @@ impl TypeChecker {
             ));
         }
 
-        let attrs = IdentifierAttributes::Fun(FunAttr {
+        let new_attrs = FunAttr {
             defined: has_body || already_defined,
             global,
-        });
+        };
         self.symbol_table
             .insert(function_declaration.name.clone(), {
-                Symbol::new(fun_type, attrs)
+                Symbol::FunType(new_attrs, new_parameters, function_return_type)
             });
 
         let new_body = if let Some(body) = function_declaration.body.as_ref() {
             for (ty, param) in &function_declaration.parameters {
-                self.symbol_table.insert(
-                    param.clone(),
-                    Symbol::new(
-                        TypeDefinition::Type(ty.clone()),
-                        IdentifierAttributes::Local,
-                    ),
-                );
+                self.symbol_table
+                    .insert(param.clone(), Symbol::Value(Value::Local(ty.clone())));
             }
             let mut new_body = Vec::new();
             for block_item in body {
