@@ -17,7 +17,6 @@ impl SemanticAnalysis {
     ) -> Result<FunctionDeclaration<LLStatement<TCExpression>, TCExpression>, CompilerError> {
         let function = identifier_resolution.resolve_function_declaration(function, false)?;
         let function = loop_labelling.label_function(function)?;
-        //let function = loop_labelling.verify_function_labels(function)?;
         let function = type_checker.type_check_function_declaration(&function, true)?;
         Ok(function)
     }

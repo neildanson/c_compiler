@@ -322,10 +322,7 @@ impl TypeChecker {
                 ))
             }
             Expression::Constant(c) => Ok(TCExpression::Constant(c.clone())),
-            Expression::Cast(ty, expr) => Ok(TCExpression::Cast(
-                ty.clone(),
-                Box::new(self.type_check_expression(expr)?),
-            )),
+            Expression::Cast(ty, expr) =>  Ok(self.convert_to(ty.clone(), &self.type_check_expression(expr)?))
         }
     }
 
