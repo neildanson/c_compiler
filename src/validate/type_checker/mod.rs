@@ -215,7 +215,6 @@ impl TypeChecker {
                                 SemanticAnalysisError::FunctionNotDeclared(name.clone()),
                             ));
                         }
-                        //TODO zip args and params and convert
                         let converted_arguments = arguments.iter().zip(expected_args.iter()).map(|(arg, ty)| {
                             let arg = self.type_check_expression(arg)?;
                             let ty = ty.clone();
