@@ -434,8 +434,6 @@ fn parse_type_and_storage(
         }
     }
 
-    //println!("types: {:?}, \n\nstorage_classes: {:?}", types, storage_classes);
-
     if types.is_empty() {
         return Err(CompilerError::Parse("Invalid type specifier".to_string()).into());
     }

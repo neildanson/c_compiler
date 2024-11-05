@@ -353,20 +353,24 @@ impl TypeChecker {
     fn type_check_statement(
         &mut self,
         statement: &LLStatement<Expression>,
+        containing_function_name : &str
     ) -> Result<LLStatement<TCExpression>, CompilerError> {
         match statement {
             LLStatement::Expression(expression) => Ok(LLStatement::Expression(
                 self.type_check_expression(expression)?,
             )),
             LLStatement::Return(expression) => {
-                //TODO: Check if the return type is compatible with the function return type
-                Ok(LLStatement::Return(self.type_check_expression(expression)?))
+                let return_type = self.symbol_table.get(containing_function_name).unwrap().get_type();
+                let expression = self.type_check_expression(expression)?;
+                let expression_type = expression.get_type();
+                let common_type = Self::get_common_type(return_type.clone(), expression_type);
+                Ok(LLStatement::Return(self.convert_to(common_type, &expression)))
             }
             LLStatement::If(condition, then_block, else_block) => {
                 let condition = self.type_check_expression(condition)?;
-                let then_block = self.type_check_statement(then_block.as_ref())?;
+                let then_block = self.type_check_statement(then_block.as_ref(), containing_function_name)?;
                 let else_block = if let Some(statement) = else_block {
-                    Some(Box::new(self.type_check_statement(statement)?))
+                    Some(Box::new(self.type_check_statement(statement, containing_function_name)?))
                 } else {
                     None
                 };
@@ -374,7 +378,7 @@ impl TypeChecker {
             }
             LLStatement::While(condition, block, loop_label) => {
                 let condition = self.type_check_expression(condition)?;
-                let block = self.type_check_statement(block)?;
+                let block = self.type_check_statement(block, containing_function_name)?;
                 Ok(LLStatement::While(
                     condition,
                     Box::new(block),
@@ -382,7 +386,7 @@ impl TypeChecker {
                 ))
             }
             LLStatement::DoWhile(body, condition, loop_label) => {
-                let body = self.type_check_statement(body)?;
+                let body = self.type_check_statement(body, containing_function_name)?;
                 let condition = self.type_check_expression(condition)?;
                 Ok(LLStatement::DoWhile(
                     Box::new(body),
@@ -402,7 +406,7 @@ impl TypeChecker {
                 } else {
                     None
                 };
-                let block = self.type_check_statement(block)?;
+                let block = self.type_check_statement(block, containing_function_name)?;
                 Ok(LLStatement::For(
                     for_init,
                     condition,
@@ -414,7 +418,7 @@ impl TypeChecker {
             LLStatement::Compound(block_items) => {
                 let mut new_block_items = Vec::new();
                 for block_item in block_items {
-                    new_block_items.push(self.type_check_block_item(block_item)?);
+                    new_block_items.push(self.type_check_block_item(block_item, containing_function_name)?);
                 }
                 Ok(LLStatement::Compound(new_block_items))
             }
@@ -427,10 +431,11 @@ impl TypeChecker {
     fn type_check_block_item(
         &mut self,
         block_item: &BlockItem<LLStatement<Expression>, Expression>,
+        containing_function_name : &str
     ) -> Result<BlockItem<LLStatement<TCExpression>, TCExpression>, CompilerError> {
         match block_item {
             BlockItem::Statement(statement) => {
-                Ok(BlockItem::Statement(self.type_check_statement(statement)?))
+                Ok(BlockItem::Statement(self.type_check_statement(statement, containing_function_name)?))
             }
             BlockItem::Declaration(declaration) => match declaration {
                 Declaration::Variable(variable_declaration) => {
@@ -521,7 +526,7 @@ impl TypeChecker {
             }
             let mut new_body = Vec::new();
             for block_item in body {
-                new_body.push(self.type_check_block_item(block_item)?);
+                new_body.push(self.type_check_block_item(block_item, &function_declaration.name)?);
             }
             Some(new_body)
         } else {
