@@ -192,24 +192,20 @@ impl TypeChecker {
     ) -> Result<TCExpression, CompilerError> {
         match expression {
             Expression::FunctionCall(name, arguments) => {
-                let ty = if let Some(Symbol::FunType(_, expected_args, ty)) =
-                    self.symbol_table.get(name)
-                {
-                    if expected_args.len() != arguments.len() {
-                        return Err(CompilerError::SemanticAnalysis(
-                            SemanticAnalysisError::FunctionNotDeclared(name.clone()),
-                        ));
-                    }
-                    ty.clone()
-                } else {
-                    /*
-                    else {
+                let ty = if let Some(symbol) = self.symbol_table.get(name) {
+                    if let Symbol::FunType(_, expected_args, ty) = symbol {
+                        if expected_args.len() != arguments.len() {
+                            return Err(CompilerError::SemanticAnalysis(
+                                SemanticAnalysisError::FunctionNotDeclared(name.clone()),
+                            ));
+                        }
+                        ty.clone()
+                    } else {
                         return Err(CompilerError::SemanticAnalysis(
                             SemanticAnalysisError::VariableUsedAsFunctionName,
                         ));
                     }
-                     */
-
+                } else {
                     return Err(CompilerError::SemanticAnalysis(
                         SemanticAnalysisError::FunctionNotDeclared(name.clone()),
                     ));
@@ -453,9 +449,7 @@ impl TypeChecker {
         if let Some(symbol) = self.symbol_table.get(&function_declaration.name) {
             if let Symbol::FunType(old_fun_attr, old_parameters, old_return_type) = symbol {
                 //check parameters better
-                if old_parameters != &new_parameters
-                    || old_return_type != &function_return_type
-                {
+                if old_parameters != &new_parameters || old_return_type != &function_return_type {
                     return Err(CompilerError::SemanticAnalysis(
                         SemanticAnalysisError::IncompatibleFunctionDeclarations,
                     ));
