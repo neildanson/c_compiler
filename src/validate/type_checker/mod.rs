@@ -203,19 +203,29 @@ impl TypeChecker {
     }
 
     fn type_check_expression(
-        &mut self,
+        &self,
         expression: &Expression,
     ) -> Result<TCExpression, CompilerError> {
         match expression {
             Expression::FunctionCall(name, arguments) => {
-                let ty = if let Some(symbol) = self.symbol_table.get(name) {
+                if let Some(symbol) = self.symbol_table.get(name) {
                     if let Symbol::FunType(_, expected_args, ty) = symbol {
                         if expected_args.len() != arguments.len() {
                             return Err(CompilerError::SemanticAnalysis(
                                 SemanticAnalysisError::FunctionNotDeclared(name.clone()),
                             ));
                         }
-                        ty.clone()
+                        //TODO zip args and params and convert
+                        let converted_arguments = arguments.iter().zip(expected_args.iter()).map(|(arg, ty)| {
+                            let arg = self.type_check_expression(arg)?;
+                            let ty = ty.clone();
+                            let converted = self.convert_to(ty, &arg);
+                            Ok(converted)
+                        }).collect::<Result<Vec<TCExpression>, CompilerError>>()?;
+
+
+                        let function_call = TCExpression::FunctionCall(name.clone(), converted_arguments.clone(), ty.clone());
+                        Ok(function_call) 
                     } else {
                         return Err(CompilerError::SemanticAnalysis(
                             SemanticAnalysisError::VariableUsedAsFunctionName,
@@ -225,16 +235,7 @@ impl TypeChecker {
                     return Err(CompilerError::SemanticAnalysis(
                         SemanticAnalysisError::FunctionNotDeclared(name.clone()),
                     ));
-                };
-
-                let converted_arguments = arguments
-                    .iter()
-                    .map(|arg| self.type_check_expression(arg))
-                    .collect::<Result<Vec<TCExpression>, CompilerError>>()?;
-
-                let function_call =
-                    TCExpression::FunctionCall(name.clone(), converted_arguments.clone(), ty);
-                Ok(function_call) //
+                }         
             }
             Expression::Var(name) => {
                 if let Some(existing) = self.symbol_table.get(name) {
