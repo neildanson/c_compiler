@@ -241,10 +241,14 @@ impl TypeChecker {
                         return Err(CompilerError::SemanticAnalysis(
                             SemanticAnalysisError::VariableUsedAsFunctionName,
                         ));
+                    } else {
+                        let ty = existing.get_type();
+                        return Ok(TCExpression::Var(name.clone(), ty))
                     }
                 }
-                let ty = self.symbol_table.get(name).unwrap().get_type();
-                Ok(TCExpression::Var(name.clone(), ty))
+                Err(CompilerError::SemanticAnalysis(
+                    SemanticAnalysisError::VariableNotDeclared(name.clone()),
+                ))
             }
             Expression::BinOp(op, left, right) => {
                 let left = self.type_check_expression(left)?;

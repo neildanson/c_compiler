@@ -1,7 +1,4 @@
-/* The result of a cast expression is not an lvalue */
-
+int i = 100L;
 int main(void) {
-    int i = 0;
-    i = (long) i = 10;
-    return 0;
+    return i;
 }
