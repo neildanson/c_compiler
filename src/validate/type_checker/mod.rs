@@ -13,6 +13,27 @@ pub(crate) struct TypeChecker {
 }
 
 impl TypeChecker {
+
+    fn compile_cast(i : InitialValue, ty: &Type) -> InitialValue {
+        match i {
+            InitialValue::Initial(StaticInit::IntInit(val)) => {
+                match ty {
+                    Type::Int => InitialValue::Initial(StaticInit::IntInit(val)),
+                    Type::Long => InitialValue::Initial(StaticInit::LongInit(val as i64)),
+                    _ => panic!("Invalid cast")
+                }
+            }
+            InitialValue::Initial(StaticInit::LongInit(val)) => {
+                match ty {
+                    Type::Int => InitialValue::Initial(StaticInit::IntInit(val as i32)),
+                    Type::Long => InitialValue::Initial(StaticInit::LongInit(val)),
+                    _ => panic!("Invalid cast")
+                }
+            }
+            _ => i
+        }
+    }
+
     pub fn type_check_file_scope_variable_declaration(
         &mut self,
         variable_declaration: &VariableDeclaration<Expression>,
@@ -74,24 +95,28 @@ impl TypeChecker {
             }
         }
 
+        let init = Self::compile_cast(initial_value, &variable_declaration.var_type);
+        let ty = init.get_type(variable_declaration.var_type.clone());
         self.symbol_table.insert(
             variable_declaration.name.clone(),
             Symbol::Value(Value::Static(
                 StaticAttr {
-                    init: initial_value,
+                    init : init.clone() ,
                     global,
                 },
-                variable_declaration.var_type.clone(),
+                ty.clone(),
             )),
         );
 
+        let expr = match init {
+            InitialValue::NoInitializer => None,
+            _ => Some(init.into()),
+        };
+
         let variable_declaration = VariableDeclaration {
             name: variable_declaration.name.clone(),
-            var_type: variable_declaration.var_type.clone(),
-            init: variable_declaration
-                .init
-                .as_ref()
-                .map(|expr| TCExpression::with_type(expr, variable_declaration.var_type.clone())),
+            var_type: ty.clone(),
+            init: expr,
             storage_class: variable_declaration.storage_class.clone(),
         };
 
@@ -145,15 +170,19 @@ impl TypeChecker {
                 return Err(CompilerError::SemanticAnalysis(
                     SemanticAnalysisError::NonConstantInitializerForLocalStaticVariable,
                 ));
-            };
+            };           
+
+            let init = Self::compile_cast(initial_value, &variable_declaration.var_type);
+            let ty = init.get_type(variable_declaration.var_type.clone());
+
             self.symbol_table.insert(
                 variable_declaration.name.clone(),
                 Symbol::Value(Value::Static(
                     StaticAttr {
-                        init: initial_value,
+                        init: init,
                         global: false,
                     },
-                    variable_declaration.var_type.clone(),
+                    ty.clone(),
                 )),
             );
         } else {
@@ -163,7 +192,10 @@ impl TypeChecker {
             );
 
             let expr = if let Some(initializer) = variable_declaration.init.as_ref() {
-                Some(self.type_check_expression(initializer)?)
+                //Not sure if this is correct
+                let initializer = self.type_check_expression(initializer)?;
+                let initializer = self.convert_to(variable_declaration.var_type.clone(), &initializer);
+                Some(initializer)
             } else {
                 None
             };
@@ -317,7 +349,7 @@ impl TypeChecker {
                 let condition = self.type_check_expression(condition)?;
                 let then_expression = self.type_check_expression(then_expression)?;
                 let else_expression = self.type_check_expression(else_expression)?;
-                let ty = then_expression.get_type();
+                let ty = Self::get_common_type(then_expression.get_type(), else_expression.get_type());
                 Ok(TCExpression::Conditional(
                     Box::new(condition),
                     Box::new(then_expression),

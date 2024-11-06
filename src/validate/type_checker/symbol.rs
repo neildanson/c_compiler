@@ -1,5 +1,7 @@
 use crate::parse::*;
 
+use super::TCExpression;
+
 #[derive(PartialEq, Clone, Debug)]
 pub enum StaticInit {
     IntInit(i32),
@@ -29,6 +31,24 @@ impl InitialValue {
     }
     pub fn is_tentative(&self) -> bool {
         matches!(self, InitialValue::Tentative)
+    }
+
+    pub fn get_type(&self, fallback:Type) -> Type {
+        match self {
+            InitialValue::Initial(StaticInit::IntInit(_)) => Type::Int,
+            InitialValue::Initial(StaticInit::LongInit(_)) => Type::Long,
+            _ => fallback
+        }
+    }
+}
+
+impl From<InitialValue> for TCExpression {
+    fn from(value: InitialValue) -> Self {
+        match value {
+            InitialValue::Initial(StaticInit::IntInit(val)) => TCExpression::Constant(Constant::Int(val)),
+            InitialValue::Initial(StaticInit::LongInit(val)) => TCExpression::Constant(Constant::Long(val)),
+            _ => panic!("Invalid conversion"),
+        }
     }
 }
 

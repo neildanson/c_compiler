@@ -1,4 +1,4 @@
-use crate::validate::StaticInit;
+use crate::validate::{InitialValue, StaticInit};
 
 pub type Identifier = String;
 
@@ -181,3 +181,5 @@ impl From<Constant> for StaticInit {
         }
     }
 }
+
+
