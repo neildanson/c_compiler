@@ -109,8 +109,8 @@ impl TypeChecker {
         );
 
         let expr = match init {
-            InitialValue::NoInitializer => None,
-            _ => Some(init.into()),
+            InitialValue::Initial(i) => Some(i.into()),
+            _ => None,
         };
 
         let variable_declaration = VariableDeclaration {

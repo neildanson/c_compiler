@@ -18,6 +18,25 @@ impl StaticInit {
     }
 }
 
+impl From<Constant> for StaticInit {
+    fn from(value: Constant) -> Self {
+        match value {
+            Constant::Int(val) => StaticInit::IntInit(val),
+            Constant::Long(val) => StaticInit::LongInit(val),
+        }
+    }
+}
+
+impl From<StaticInit> for TCExpression {
+    fn from(value: StaticInit) -> Self {
+        match value {
+            StaticInit::IntInit(val) => TCExpression::Constant(Constant::Int(val)),
+            StaticInit::LongInit(val) => TCExpression::Constant(Constant::Long(val)),
+        }
+    }
+}
+
+
 #[derive(PartialEq, Clone, Debug)]
 pub enum InitialValue {
     Tentative,
@@ -38,16 +57,6 @@ impl InitialValue {
             InitialValue::Initial(StaticInit::IntInit(_)) => Type::Int,
             InitialValue::Initial(StaticInit::LongInit(_)) => Type::Long,
             _ => fallback
-        }
-    }
-}
-
-impl From<InitialValue> for TCExpression {
-    fn from(value: InitialValue) -> Self {
-        match value {
-            InitialValue::Initial(StaticInit::IntInit(val)) => TCExpression::Constant(Constant::Int(val)),
-            InitialValue::Initial(StaticInit::LongInit(val)) => TCExpression::Constant(Constant::Long(val)),
-            _ => panic!("Invalid conversion"),
         }
     }
 }
@@ -108,7 +117,3 @@ impl Symbol {
     }
 }
 
-//Thoughts
-//Move fun_attr to TypeDefinition::FunType
-//Move static_attr to TypeDefinition::Type
-//Move IdentifierAttributes::Local to TypeDefinition::Type ???

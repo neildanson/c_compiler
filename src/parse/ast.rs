@@ -1,5 +1,3 @@
-use crate::validate::{InitialValue, StaticInit};
-
 pub type Identifier = String;
 
 #[derive(Debug, PartialEq)]
@@ -169,15 +167,6 @@ impl Constant {
         match self {
             Constant::Int(val) => *val,
             _ => panic!("Invalid conversion"),
-        }
-    }
-}
-
-impl From<Constant> for StaticInit {
-    fn from(value: Constant) -> Self {
-        match value {
-            Constant::Int(val) => StaticInit::IntInit(val),
-            Constant::Long(val) => StaticInit::LongInit(val),
         }
     }
 }
