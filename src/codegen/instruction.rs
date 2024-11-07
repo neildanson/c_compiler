@@ -318,6 +318,8 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
             tacky::Instruction::FunCall { name, args, dst } => {
                 convert_function_call(name, args, dst)
             }
+            tacky::Instruction::SignExtend { src, dst } => unimplemented!("SignExtend"),
+            tacky::Instruction::Truncate { src, dst } => unimplemented!("Truncate"),
         }
     }
 }

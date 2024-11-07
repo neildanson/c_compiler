@@ -5,6 +5,6 @@ long sixsixsix(void) {
 }
 
 int main(void) {
-    int j = sixsixsix();
+    int j = (int)sixsixsix();
     return i + j;
 }

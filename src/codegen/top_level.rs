@@ -129,7 +129,7 @@ impl TryFrom<tacky::StaticVariable> for StaticVariable {
         Ok(StaticVariable {
             identfiier: ast.identifier,
             global: ast.global,
-            value: ast.init,
+            value: ast.init.i32(), //TODO
         })
     }
 }

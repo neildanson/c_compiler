@@ -15,11 +15,9 @@ pub use value::*;
 
 use crate::{
     error::CompilerError,
-    parse::{self},
+    parse::{self, Constant, Type},
     validate::{
-        loop_labelling::LLStatement,
-        type_checker::{self, TCExpression},
-        InitialValue, StaticAttr, Symbol, ValidateResult,
+        loop_labelling::LLStatement, type_checker::{self, TCExpression}, InitialValue, StaticAttr, StaticInit, Symbol, ValidateResult
     },
 };
 use std::collections::HashMap;
@@ -129,7 +127,7 @@ impl Tacky {
         instructions: &mut Vec<Instruction>,
     ) -> Result<Value, CompilerError> {
         match f {
-            TCExpression::Constant(i) => Ok(Value::Constant(i.i32())),
+            TCExpression::Constant(i) => Ok(Value::Constant(i.clone().into())),
             TCExpression::Unary(op, inner, _) => self.emit_tacky_unaryop(op, inner, instructions),
             TCExpression::Var(v, _) => Ok(Value::Var(v.clone())),
             TCExpression::Conditional(cond, then, els, _) => {
@@ -153,7 +151,7 @@ impl Tacky {
                 instructions.push(Instruction::Binary {
                     op: BinaryOp::Add,
                     src1: src.clone(),
-                    src2: Value::Constant(1),
+                    src2: Value::Constant(Constant::Int(1)),
                     dst: dst.clone(),
                 });
                 Ok(dst)
@@ -163,7 +161,7 @@ impl Tacky {
                 instructions.push(Instruction::Binary {
                     op: BinaryOp::Subtract,
                     src1: src.clone(),
-                    src2: Value::Constant(1),
+                    src2: Value::Constant(Constant::Int(1)),
                     dst: dst.clone(),
                 });
                 Ok(dst)
@@ -173,7 +171,7 @@ impl Tacky {
                 instructions.push(Instruction::Binary {
                     op: BinaryOp::Subtract,
                     src1: src.clone(),
-                    src2: Value::Constant(1),
+                    src2: Value::Constant(Constant::Int(1)),
                     dst: dst.clone(),
                 });
                 Ok(src)
@@ -183,7 +181,7 @@ impl Tacky {
                 instructions.push(Instruction::Binary {
                     op: BinaryOp::Add,
                     src1: src.clone(),
-                    src2: Value::Constant(1),
+                    src2: Value::Constant(Constant::Int(1)),
                     dst: dst.clone(),
                 });
                 Ok(src)
@@ -234,8 +232,8 @@ impl Tacky {
                     condition: v2,
                     target: false_label.clone(),
                 });
-                let one = Value::Constant(1);
-                let zero = Value::Constant(0);
+                let one = Value::Constant(Constant::Int(1)); //TODO -> Get real type
+                let zero = Value::Constant(Constant::Int(0)); //TODO -> Get real type
                 let dst = Value::Var(self.make_name());
                 instructions.push(Instruction::Copy {
                     src: one,
@@ -269,8 +267,8 @@ impl Tacky {
                     condition: v2,
                     target: true_label.clone(),
                 });
-                let one = Value::Constant(1);
-                let zero = Value::Constant(0);
+                let one = Value::Constant(Constant::Int(1)); //TODO -> Get real type
+                let zero = Value::Constant(Constant::Int(0)); //TODO -> Get real type
                 let dst = Value::Var(self.make_name());
                 instructions.push(Instruction::Copy {
                     src: zero,
@@ -321,7 +319,7 @@ impl Tacky {
             return Ok(());
         }
         if d.storage_class != Some(parse::StorageClass::Extern) {
-            let value = value.unwrap_or(Value::Constant(0));
+            let value = value.unwrap_or(Value::Constant(Constant::Int(0)));  //TODO get real type
             instructions.push(Instruction::Copy {
                 src: value,
                 dst: Value::Var(name),
@@ -587,14 +585,16 @@ impl Tacky {
                     new_symbols.push(TopLevel::StaticVariable(StaticVariable {
                         identifier: name.clone(),
                         global: static_attr.global,
-                        init: i.i32(), //TODO
+                        init: i.clone(), 
+                        ty: i.get_type()
                     }));
                 }
                 InitialValue::Tentative => {
                     new_symbols.push(TopLevel::StaticVariable(StaticVariable {
                         identifier: name.clone(),
                         global: static_attr.global,
-                        init: 0,
+                        init: StaticInit::IntInit(0), //TODO -> Get real type
+                        ty: Type::Int,//TODO -> Get real type
                     }));
                 }
                 _ => {}
@@ -637,7 +637,7 @@ impl Tacky {
         if let Some(Instruction::Return(_)) = last {
             return;
         }
-        instructions.push(Instruction::Return(Value::Constant(0)));
+        instructions.push(Instruction::Return(Value::Constant(Constant::Int(0)))); //Return type doesnt really matter ?
     }
 
     fn statics(symbol_table: &HashMap<String, Symbol>) -> HashMap<String, StaticAttr> {

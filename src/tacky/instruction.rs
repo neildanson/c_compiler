@@ -37,4 +37,12 @@ pub enum Instruction {
         args: Vec<Value>,
         dst: Value,
     },
+    SignExtend {
+        src: Value,
+        dst: Value,
+    },
+    Truncate {
+        src: Value,
+        dst: Value,
+    },
 }

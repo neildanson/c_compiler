@@ -1,3 +1,5 @@
+use crate::{parse::Type, validate::StaticInit};
+
 use super::Instruction;
 
 #[derive(Clone, Debug)]
@@ -12,7 +14,8 @@ pub struct Function {
 pub struct StaticVariable {
     pub identifier: String,
     pub global: bool,
-    pub init: i32,
+    pub init: StaticInit,
+    pub ty: Type
 }
 
 #[derive(Clone, Debug)]

@@ -9,6 +9,13 @@ pub enum StaticInit {
 }
 
 impl StaticInit {
+    pub fn get_type(&self) -> Type {
+        match self {
+            StaticInit::IntInit(_) => Type::Int,
+            StaticInit::LongInit(_) => Type::Long,
+        }
+    }
+
     //TODO: Remove this functionn
     pub fn i32(&self) -> i32 {
         match self {
@@ -27,6 +34,15 @@ impl From<Constant> for StaticInit {
     }
 }
 
+impl From<StaticInit> for Constant {
+    fn from(value: StaticInit) -> Self {
+        match value {
+            StaticInit::IntInit(val) => Constant::Int(val),
+            StaticInit::LongInit(val) => Constant::Long(val),
+        }
+    }
+}
+
 impl From<StaticInit> for TCExpression {
     fn from(value: StaticInit) -> Self {
         match value {
@@ -35,6 +51,8 @@ impl From<StaticInit> for TCExpression {
         }
     }
 }
+
+
 
 
 #[derive(PartialEq, Clone, Debug)]
@@ -54,8 +72,7 @@ impl InitialValue {
 
     pub fn get_type(&self, fallback:Type) -> Type {
         match self {
-            InitialValue::Initial(StaticInit::IntInit(_)) => Type::Int,
-            InitialValue::Initial(StaticInit::LongInit(_)) => Type::Long,
+            InitialValue::Initial(s) => s.get_type(),
             _ => fallback
         }
     }
