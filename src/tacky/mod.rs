@@ -78,6 +78,24 @@ impl Tacky {
                 });
                 Ok(result)
             }
+            TCExpression::Cast(ty, expr) =>{
+                let expr_ty = expr.get_type();
+                let expr = self.emit_tacky_expr(expr, instructions)?;
+                if expr_ty == *ty {
+                    Ok(expr)
+                } else {
+                    let dst_name  = self.make_name();
+                    let result = Value::Var(dst_name.clone());
+                    let dst = Value::Var(dst_name);
+                    match ty {
+                        Type::Int => instructions.push(Instruction::SignExtend { src: expr, dst: dst }),
+                        Type::Long => instructions.push(Instruction::Truncate { src: expr, dst: dst }),
+                        _ => return Err(CompilerError::InvalidCast (expr_ty, ty.clone() ))
+
+                    }
+                    Ok(result)
+                }
+            },
             e => self.emit_tacky_factor(e, instructions),
         }
     }

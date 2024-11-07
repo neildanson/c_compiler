@@ -1,5 +1,7 @@
 use std::{error::Error, fmt::Display};
 
+use crate::parse::Type;
+
 #[derive(Debug)]
 pub enum CodeGenError {
     InvalidConditionCode,
@@ -117,6 +119,7 @@ pub enum CompilerError {
     Parse(String),
     SemanticAnalysis(SemanticAnalysisError),
     CodeGen(CodeGenError),
+    InvalidCast(Type, Type)
 }
 
 impl Display for CompilerError {
@@ -127,6 +130,7 @@ impl Display for CompilerError {
             CompilerError::Parse(s) => write!(f, "Parsing Error : {}", s),
             CompilerError::SemanticAnalysis(s) => write!(f, "Semantic Analysis Error : {}", s),
             CompilerError::CodeGen(c) => write!(f, "Code Generation Error : {}", c),
+            CompilerError::InvalidCast(from, to) => write!(f, "Invalid cast from {:?} to {:?}", from, to)
         }
     }
 }
