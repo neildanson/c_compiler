@@ -22,10 +22,20 @@ use crate::{
 };
 use std::collections::HashMap;
 
-#[derive(Default)]
 pub struct Tacky {
     counter: u32,
     labels: HashMap<String, u32>,
+    validate_result: ValidateResult,
+}
+
+impl Tacky {
+    pub fn new(validate_result: ValidateResult) -> Self {
+        Tacky {
+            counter: 0,
+            labels: HashMap::new(),
+            validate_result
+        }
+    }
 }
 
 impl Tacky {
@@ -33,6 +43,12 @@ impl Tacky {
         let name = format!("tacky{}", self.counter);
         self.counter += 1;
         name
+    }
+
+    fn make_tacky_var(&mut self, ty:Type) -> Value {
+        let name = self.make_name();
+        self.validate_result.symbols.insert(name.clone(), Symbol::Value(type_checker::symbol::Value::Local(ty)));
+        Value::Var(name)
     }
 
     fn make_label(&mut self, label: String) -> String {
@@ -84,16 +100,14 @@ impl Tacky {
                 if expr_ty == *ty {
                     Ok(expr)
                 } else {
-                    let dst_name  = self.make_name();
-                    let result = Value::Var(dst_name.clone());
-                    let dst = Value::Var(dst_name);
+                    let dst = self.make_tacky_var(ty.clone());
                     match ty {
-                        Type::Int => instructions.push(Instruction::SignExtend { src: expr, dst: dst }),
-                        Type::Long => instructions.push(Instruction::Truncate { src: expr, dst: dst }),
+                        Type::Int => instructions.push(Instruction::SignExtend { src: expr, dst: dst.clone() }),
+                        Type::Long => instructions.push(Instruction::Truncate { src: expr, dst: dst.clone() }),
                         _ => return Err(CompilerError::InvalidCast (expr_ty, ty.clone() ))
 
                     }
-                    Ok(result)
+                    Ok(dst)
                 }
             },
             e => self.emit_tacky_factor(e, instructions),
@@ -306,8 +320,8 @@ impl Tacky {
             _ => {
                 let src1 = self.emit_tacky_expr(e1, instructions)?;
                 let src2 = self.emit_tacky_expr(e2, instructions)?;
-                let dst_name = self.make_name();
-                let dst = Value::Var(dst_name);
+                //Check this get_type
+                let dst = self.make_tacky_var(e1.get_type());
                 let tacky_op = op.try_into()?;
                 instructions.push(Instruction::Binary {
                     op: tacky_op,
@@ -571,11 +585,11 @@ impl Tacky {
 
     fn emit_tacky_function(
         &mut self,
-        f: parse::FunctionDeclaration<LLStatement<TCExpression>, TCExpression>,
-        symbol_table: &HashMap<String, Symbol>,
+        f: &parse::FunctionDeclaration<LLStatement<TCExpression>, TCExpression>,
+
     ) -> Result<Option<Function>, CompilerError> {
         let mut body = Vec::new();
-        if let Some(body_stmt) = f.body {
+        if let Some(body_stmt) = f.body.as_ref() {
             for block_item in body_stmt {
                 self.emit_tacky_block_item(&block_item, &mut body)?;
             }
@@ -584,7 +598,7 @@ impl Tacky {
 
             Ok(Some(Function {
                 name: f.name.clone(),
-                global: symbol_table.get(&f.name).unwrap().is_global(),
+                global: self.validate_result.symbols.get(&f.name).unwrap().is_global(),
                 params: f.parameters.iter().map(|(_, name)| name.clone()).collect(), 
                 body: Some(body),
             }))
@@ -623,13 +637,12 @@ impl Tacky {
 
     pub fn emit_tacky(
         &mut self,
-        validate_result: ValidateResult,
     ) -> Result<TackyResult, CompilerError> {
         let mut top_level = Vec::new();
-        for decl in validate_result.program.declarations {
+        for decl in self.validate_result.program.declarations.clone().into_iter() {
             match decl {
                 parse::Declaration::Function(f) => {
-                    let function = self.emit_tacky_function(f, &validate_result.symbols)?;
+                    let function = self.emit_tacky_function(&f)?;
                     if let Some(function) = function {
                         top_level.push(TopLevel::Function(function));
                     }
@@ -641,7 +654,7 @@ impl Tacky {
         }
 
         //Walk the tree and emit the static variables
-        let static_variables = Self::statics(&validate_result.symbols);
+        let static_variables = Self::statics(&self.validate_result.symbols);
         top_level.extend(Tacky::convert_static_variables_to_tacky(&static_variables));
         let result = TackyResult {
             program: Program { top_level },

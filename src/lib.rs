@@ -52,8 +52,8 @@ pub fn validate(filename: &str) -> Result<ValidateResult> {
 
 pub fn tacky(filename: &str) -> Result<TackyResult> {
     let validate_result = validate(filename)?;
-    let mut tacky = Tacky::default();
-    let tacky = tacky.emit_tacky(validate_result)?;
+    let mut tacky = Tacky::new(validate_result);
+    let tacky = tacky.emit_tacky()?;
     Ok(tacky)
 }
 
