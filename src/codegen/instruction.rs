@@ -4,28 +4,42 @@ use std::fmt::{Display, Formatter};
 use super::*;
 
 #[derive(Debug, PartialEq, Clone)]
+pub enum AssemblyType {
+    LongWord, //32 bit
+    QuadWord, //64 bit
+}
+
+#[derive(Debug, PartialEq, Clone)]
 pub enum Instruction {
     Mov {
+        assembly_type : AssemblyType,
+        src: Operand,
+        dst: Operand,
+    },
+    Movsx {
         src: Operand,
         dst: Operand,
     },
     Unary {
         op: UnaryOp,
+        assembly_type : AssemblyType,
         dst: Operand,
     },
     Binary {
         op: BinaryOp,
+        assembly_type : AssemblyType,
         src2: Operand,
         dst: Operand,
     },
     Idiv {
+        assembly_type : AssemblyType,
         src: Operand,
     },
-    Cdq,
+    Cdq(AssemblyType),
     AllocateStack(usize),
     DeallocateStack(usize),
     Ret,
-    Cmp(Operand, Operand),
+    Cmp(AssemblyType, Operand, Operand),
     Jmp(String),
     JmpCC(ConditionCode, String),
     SetCC(ConditionCode, Operand),
@@ -33,6 +47,7 @@ pub enum Instruction {
     Push(Operand),
     Pop(Reg), //Defined for pop rdi, but will be introduced later in one of last chapters !
     Call(String),
+
 }
 
 fn format_label(label: &str) -> String {
@@ -54,7 +69,7 @@ pub fn format_fn_call(name: &str) -> String {
 impl Display for Instruction {
     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
         match self {
-            Instruction::Mov { src, dst } => {
+            Instruction::Mov { assembly_type, src, dst } => {
                 write!(f, "\tmovl {}, {}", src, dst)
             }
             Instruction::Ret => {
@@ -63,7 +78,7 @@ impl Display for Instruction {
                 write!(f, "\tret")
             }
 
-            Instruction::Unary { op, dst } => {
+            Instruction::Unary { assembly_type,  op, dst } => {
                 write!(f, "\t{} {}", op, dst)
             }
 
@@ -75,16 +90,16 @@ impl Display for Instruction {
             Instruction::DeallocateStack(size) => {
                 write!(f, "\taddq ${}, %rsp", size)
             }
-            Instruction::Idiv { src } => {
+            Instruction::Idiv { assembly_type, src } => {
                 write!(f, "\tidivl {}", src)
             }
-            Instruction::Cdq => {
+            Instruction::Cdq(assembly_type)=> {
                 write!(f, "\tcdq")
             }
-            Instruction::Binary { op, src2, dst } => {
+            Instruction::Binary { op, assembly_type, src2, dst } => {
                 write!(f, "\t{} {}, {}", op, src2, dst)
             }
-            Instruction::Cmp(src1, src2) => {
+            Instruction::Cmp(assembly_type, src1, src2) => {
                 write!(f, "\tcmpl {}, {}", src1, src2)
             }
             Instruction::Jmp(target) => {
@@ -120,7 +135,8 @@ impl Display for Instruction {
             }
             Instruction::Pop(register) => {
                 write!(f, "\tpopq {:.8}", register)
-            } //instruction => unimplemented!("Instruction {}", instruction), //Add the rest of the instructions
+            } 
+            instruction => unimplemented!("Instruction {}", instruction), //Add the rest of the instructions
         }
     }
 }
@@ -149,6 +165,7 @@ fn convert_function_call(
     for (i, arg) in register_args.iter().enumerate() {
         let assembly_arg = (*arg).clone().into();
         instructions.push(Instruction::Mov {
+            assembly_type: AssemblyType::QuadWord, //All arguments are 64 bit?
             src: assembly_arg,
             dst: Operand::arg(i),
         });
@@ -157,11 +174,12 @@ fn convert_function_call(
     for arg in stack_args.iter().rev() {
         let assembly_arg = (*arg).clone().into();
         match assembly_arg {
-            Operand::Register(_) | Operand::Immediate { imm: _ } => {
+            Operand::Register(_) | Operand::Immediate { imm: _ } /*TODO or Quadword */ {
                 instructions.push(Instruction::Push(assembly_arg));
             }
             _ => {
                 instructions.push(Instruction::Mov {
+                    assembly_type : AssemblyType::LongWord,
                     src: assembly_arg,
                     dst: Operand::Register(Reg::AX),
                 });

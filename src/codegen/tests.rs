@@ -6,14 +6,17 @@ use super::*;
 fn test_replace_pseudo_with_stack() {
     let body = vec![
         Instruction::Mov {
+            assembly_type: AssemblyType::LongWord,
             src: Operand::Pseudo("a".to_string()),
             dst: Operand::Register(Reg::AX),
         },
         Instruction::Mov {
+            assembly_type: AssemblyType::LongWord,
             src: Operand::Pseudo("b".to_string()),
             dst: Operand::Register(Reg::AX),
         },
         Instruction::Mov {
+            assembly_type: AssemblyType::LongWord,
             src: Operand::Pseudo("a".to_string()),
             dst: Operand::Register(Reg::AX),
         },
@@ -23,14 +26,17 @@ fn test_replace_pseudo_with_stack() {
         new_body,
         vec![
             Instruction::Mov {
+                assembly_type: AssemblyType::LongWord,
                 src: Operand::Stack(-4),
                 dst: Operand::Register(Reg::AX)
             },
             Instruction::Mov {
+                assembly_type: AssemblyType::LongWord,
                 src: Operand::Stack(-8),
                 dst: Operand::Register(Reg::AX)
             },
             Instruction::Mov {
+                assembly_type: AssemblyType::LongWord,
                 src: Operand::Stack(-4),
                 dst: Operand::Register(Reg::AX)
             },
@@ -43,6 +49,7 @@ fn test_replace_pseudo_with_stack() {
 fn fixup_binary_pseudo_with_stack() {
     let body = vec![Instruction::Binary {
         op: BinaryOp::Add,
+        assembly_type: AssemblyType::LongWord,
         src2: Operand::Pseudo("a".to_string()),
         dst: Operand::Pseudo("b".to_string()),
     }];
@@ -51,6 +58,7 @@ fn fixup_binary_pseudo_with_stack() {
         new_body,
         vec![Instruction::Binary {
             op: BinaryOp::Add,
+            assembly_type: AssemblyType::LongWord,
             src2: Operand::Stack(-4),
             dst: Operand::Stack(-8)
         }]
@@ -60,6 +68,7 @@ fn fixup_binary_pseudo_with_stack() {
 #[test]
 fn fixup_idiv_stack() {
     let body = vec![Instruction::Idiv {
+        assembly_type: AssemblyType::LongWord,
         src: Operand::Immediate { imm: 3 },
     }];
     let new_body = fixup_stack_operations(body);
@@ -67,10 +76,12 @@ fn fixup_idiv_stack() {
         new_body,
         vec![
             Instruction::Mov {
+                assembly_type: AssemblyType::LongWord,
                 src: Operand::Immediate { imm: 3 },
                 dst: Operand::Register(Reg::R10)
             },
             Instruction::Idiv {
+                assembly_type: AssemblyType::LongWord,
                 src: Operand::Register(Reg::R10)
             }
         ]
@@ -81,6 +92,7 @@ fn fixup_idiv_stack() {
 fn fixup_mul_stack() {
     let body = vec![Instruction::Binary {
         op: BinaryOp::Mult,
+        assembly_type: AssemblyType::LongWord,
         src2: Operand::Immediate { imm: 3 },
         dst: Operand::Stack(4),
     }];
@@ -89,15 +101,18 @@ fn fixup_mul_stack() {
         new_body,
         vec![
             Instruction::Mov {
+                assembly_type: AssemblyType::LongWord,
                 src: Operand::Stack(4),
                 dst: Operand::Register(Reg::R11)
             },
             Instruction::Binary {
                 op: BinaryOp::Mult,
+                assembly_type: AssemblyType::LongWord,
                 src2: Operand::Immediate { imm: 3 },
                 dst: Operand::Register(Reg::R11)
             },
             Instruction::Mov {
+                assembly_type: AssemblyType::LongWord,
                 src: Operand::Register(Reg::R11),
                 dst: Operand::Stack(4)
             }
@@ -109,6 +124,7 @@ fn fixup_mul_stack() {
 fn fixup_add_stack() {
     let body = vec![Instruction::Binary {
         op: BinaryOp::Add,
+        assembly_type: AssemblyType::LongWord,
         src2: Operand::Stack(4),
         dst: Operand::Stack(8),
     }];
@@ -117,11 +133,13 @@ fn fixup_add_stack() {
         new_body,
         vec![
             Instruction::Mov {
+                assembly_type: AssemblyType::LongWord,
                 src: Operand::Stack(4),
                 dst: Operand::Register(Reg::R10)
             },
             Instruction::Binary {
                 op: BinaryOp::Add,
+                assembly_type: AssemblyType::LongWord,
                 src2: Operand::Register(Reg::R10),
                 dst: Operand::Stack(8)
             },
@@ -133,6 +151,7 @@ fn fixup_add_stack() {
 fn fixup_sub_stack() {
     let body = vec![Instruction::Binary {
         op: BinaryOp::Sub,
+        assembly_type: AssemblyType::LongWord,
         src2: Operand::Stack(4),
         dst: Operand::Stack(8),
     }];
@@ -141,11 +160,13 @@ fn fixup_sub_stack() {
         new_body,
         vec![
             Instruction::Mov {
+                assembly_type: AssemblyType::LongWord,
                 src: Operand::Stack(4),
                 dst: Operand::Register(Reg::R10)
             },
             Instruction::Binary {
                 op: BinaryOp::Sub,
+                assembly_type: AssemblyType::LongWord,
                 src2: Operand::Register(Reg::R10),
                 dst: Operand::Stack(8)
             },
@@ -156,6 +177,7 @@ fn fixup_sub_stack() {
 #[test]
 fn test_fixup_invalid_instructions() {
     let body = vec![Instruction::Mov {
+        assembly_type: AssemblyType::LongWord,
         src: Operand::Stack(0),
         dst: Operand::Stack(1),
     }];
@@ -164,10 +186,12 @@ fn test_fixup_invalid_instructions() {
         new_body,
         vec![
             Instruction::Mov {
+                assembly_type: AssemblyType::LongWord,
                 src: Operand::Stack(0),
                 dst: Operand::Register(Reg::R10)
             },
             Instruction::Mov {
+                assembly_type: AssemblyType::LongWord,
                 src: Operand::Register(Reg::R10),
                 dst: Operand::Stack(1)
             },

@@ -17,6 +17,7 @@ pub enum Reg {
     R9,
     R10,
     R11,
+    SP
 }
 
 impl Reg {
@@ -32,6 +33,7 @@ impl Reg {
                 Reg::R9 => "%r9b".to_string(),
                 Reg::R10 => "%r10b".to_string(),
                 Reg::R11 => "%r11b".to_string(),
+                Reg::SP => "%spl".to_string(), //TODO
             },
             RegisterSize::FourByte => match self {
                 Reg::AX => "%eax".to_string(),
@@ -43,6 +45,7 @@ impl Reg {
                 Reg::R9 => "%r9d".to_string(),
                 Reg::R10 => "%r10d".to_string(),
                 Reg::R11 => "%r11d".to_string(),
+                Reg::SP => "%spl".to_string(), //TODO
             },
             RegisterSize::EightByte => match self {
                 Reg::AX => "%rax".to_string(),
@@ -54,6 +57,7 @@ impl Reg {
                 Reg::R9 => "%r9".to_string(),
                 Reg::R10 => "%r10".to_string(),
                 Reg::R11 => "%r11".to_string(),
+                Reg::SP => "%spl".to_string(), //TODO
             },
         }
     }

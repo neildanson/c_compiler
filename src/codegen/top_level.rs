@@ -44,6 +44,7 @@ impl TryFrom<tacky::Function> for Function {
                 body.insert(
                     0,
                     Instruction::Mov {
+                        assembly_type: AssemblyType::LongWord, //TODO
                         src: Operand::arg(i),
                         dst: Operand::Pseudo(parameter),
                     },
