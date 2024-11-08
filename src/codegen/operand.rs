@@ -6,7 +6,7 @@ use super::Reg;
 #[derive(Debug, PartialEq, Clone)]
 pub enum Operand {
     Register(Reg),
-    Immediate { imm: i32 },
+    Immediate { imm: i64 },
     Pseudo(String),
     Stack(i32),
     Data(String),
@@ -33,7 +33,7 @@ impl Display for Operand {
 impl From<tacky::Value> for Operand {
     fn from(value: tacky::Value) -> Self {
         match value {
-            tacky::Value::Constant(imm) => Operand::Immediate { imm : imm.i32() },
+            tacky::Value::Constant(imm) => Operand::Immediate { imm : imm.i64() },
             tacky::Value::Var(name) => Operand::Pseudo(name),
         }
     }

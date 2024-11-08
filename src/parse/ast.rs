@@ -163,10 +163,10 @@ impl Constant {
     }
 
     //TODO remove this function
-    pub fn i32(&self) -> i32 {
+    pub fn i64(&self) -> i64 {
         match self {
-            Constant::Int(val) => *val,
-            _ => panic!("Invalid conversion"),
+            Constant::Int(val) => *val as i64,
+            Constant::Long(val) => *val,
         }
     }
 }

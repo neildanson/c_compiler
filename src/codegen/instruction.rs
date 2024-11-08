@@ -136,7 +136,9 @@ impl Display for Instruction {
             Instruction::Pop(register) => {
                 write!(f, "\tpopq {:.8}", register)
             } 
-            instruction => unimplemented!("Instruction {}", instruction), //Add the rest of the instructions
+            Instruction::Movsx { src, dst } => {
+                write!(f, "\tmovsxl {}, {}", src, dst)
+            }
         }
     }
 }
@@ -352,8 +354,16 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
             tacky::Instruction::FunCall { name, args, dst } => {
                 convert_function_call(name, args, dst)
             }
-            tacky::Instruction::SignExtend { src, dst } => unimplemented!("SignExtend"),
-            tacky::Instruction::Truncate { src, dst } => unimplemented!("Truncate"),
+            tacky::Instruction::SignExtend { src, dst } => {
+                let src = src.into();
+                let dst = dst.into();
+                Ok(vec![Instruction::Movsx { src, dst }]) //TODO
+            },
+            tacky::Instruction::Truncate { src, dst } => {
+                let src = src.into();
+                let dst = dst.into();
+                Ok(vec![Instruction::Mov { assembly_type : AssemblyType::LongWord, src, dst }]) //TODO
+            },
         }
     }
 }

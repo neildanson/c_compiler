@@ -3,7 +3,7 @@ use std::{
     fmt::{Display, Formatter},
 };
 
-use crate::{error::CompilerError, tacky, validate::StaticAttr};
+use crate::{error::CompilerError, tacky, validate::{StaticAttr, StaticInit}};
 
 use super::*;
 
@@ -88,7 +88,8 @@ impl Function {
 pub struct StaticVariable {
     identfiier: String,
     global: bool,
-    value: i32,
+    alignment:i32,
+    value: StaticInit,
 }
 
 //TODO properly: Implement TryFrom for StaticVariable
@@ -101,7 +102,7 @@ impl Display for StaticVariable {
                 writeln!(f, "\t.globl {}", self.identfiier)?;
             }
         }
-        if self.value == 0 {
+        if self.value == StaticInit::IntInit(0) {
             writeln!(f, "\t.balign 4")?;
             writeln!(f, "\t.bss")?;
             if cfg!(target_os = "macos") {
@@ -118,7 +119,7 @@ impl Display for StaticVariable {
             } else {
                 writeln!(f, "{}:", self.identfiier)?;
             }
-            writeln!(f, "\t.long {}", self.value)
+            writeln!(f, "\t.long {:?}", self.value) //TODO
         }
     }
 }
@@ -130,7 +131,8 @@ impl TryFrom<tacky::StaticVariable> for StaticVariable {
         Ok(StaticVariable {
             identfiier: ast.identifier,
             global: ast.global,
-            value: ast.init.i32(), //TODO
+            alignment: 8, //TODO
+            value: ast.init, 
         })
     }
 }
