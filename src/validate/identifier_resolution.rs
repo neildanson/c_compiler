@@ -163,7 +163,7 @@ impl IdentifierResolution {
                 && !(entry.has_external_linkage && decl.storage_class == Some(StorageClass::Extern))
             {
                 return Err(CompilerError::SemanticAnalysis(
-                    SemanticAnalysisError::VariableAlreadyDeclared(decl.name), 
+                    SemanticAnalysisError::VariableAlreadyDeclared(decl.name),
                 ));
             }
         }

@@ -13,24 +13,19 @@ pub(crate) struct TypeChecker {
 }
 
 impl TypeChecker {
-
-    fn compile_cast(i : InitialValue, ty: &Type) -> InitialValue {
+    fn compile_cast(i: InitialValue, ty: &Type) -> InitialValue {
         match i {
-            InitialValue::Initial(StaticInit::IntInit(val)) => {
-                match ty {
-                    Type::Int => InitialValue::Initial(StaticInit::IntInit(val)),
-                    Type::Long => InitialValue::Initial(StaticInit::LongInit(val as i64)),
-                    _ => panic!("Invalid cast")
-                }
-            }
-            InitialValue::Initial(StaticInit::LongInit(val)) => {
-                match ty {
-                    Type::Int => InitialValue::Initial(StaticInit::IntInit(val as i32)),
-                    Type::Long => InitialValue::Initial(StaticInit::LongInit(val)),
-                    _ => panic!("Invalid cast")
-                }
-            }
-            _ => i
+            InitialValue::Initial(StaticInit::IntInit(val)) => match ty {
+                Type::Int => InitialValue::Initial(StaticInit::IntInit(val)),
+                Type::Long => InitialValue::Initial(StaticInit::LongInit(val as i64)),
+                _ => panic!("Invalid cast"),
+            },
+            InitialValue::Initial(StaticInit::LongInit(val)) => match ty {
+                Type::Int => InitialValue::Initial(StaticInit::IntInit(val as i32)),
+                Type::Long => InitialValue::Initial(StaticInit::LongInit(val)),
+                _ => panic!("Invalid cast"),
+            },
+            _ => i,
         }
     }
 
@@ -101,7 +96,7 @@ impl TypeChecker {
             variable_declaration.name.clone(),
             Symbol::Value(Value::Static(
                 StaticAttr {
-                    init : init.clone() ,
+                    init: init.clone(),
                     global,
                 },
                 ty.clone(),
@@ -170,7 +165,7 @@ impl TypeChecker {
                 return Err(CompilerError::SemanticAnalysis(
                     SemanticAnalysisError::NonConstantInitializerForLocalStaticVariable,
                 ));
-            };           
+            };
 
             let init = Self::compile_cast(initial_value, &variable_declaration.var_type);
             let ty = init.get_type(variable_declaration.var_type.clone());
@@ -194,7 +189,8 @@ impl TypeChecker {
             let expr = if let Some(initializer) = variable_declaration.init.as_ref() {
                 //Not sure if this is correct
                 let initializer = self.type_check_expression(initializer)?;
-                let initializer = self.convert_to(variable_declaration.var_type.clone(), &initializer);
+                let initializer =
+                    self.convert_to(variable_declaration.var_type.clone(), &initializer);
                 Some(initializer)
             } else {
                 None
@@ -246,16 +242,23 @@ impl TypeChecker {
                                 SemanticAnalysisError::FunctionNotDeclared(name.clone()),
                             ));
                         }
-                        let converted_arguments = arguments.iter().zip(expected_args.iter()).map(|(arg, ty)| {
-                            let arg = self.type_check_expression(arg)?;
-                            let ty = ty.clone();
-                            let converted = self.convert_to(ty, &arg);
-                            Ok(converted)
-                        }).collect::<Result<Vec<TCExpression>, CompilerError>>()?;
+                        let converted_arguments = arguments
+                            .iter()
+                            .zip(expected_args.iter())
+                            .map(|(arg, ty)| {
+                                let arg = self.type_check_expression(arg)?;
+                                let ty = ty.clone();
+                                let converted = self.convert_to(ty, &arg);
+                                Ok(converted)
+                            })
+                            .collect::<Result<Vec<TCExpression>, CompilerError>>()?;
 
-
-                        let function_call = TCExpression::FunctionCall(name.clone(), converted_arguments.clone(), ty.clone());
-                        Ok(function_call) 
+                        let function_call = TCExpression::FunctionCall(
+                            name.clone(),
+                            converted_arguments.clone(),
+                            ty.clone(),
+                        );
+                        Ok(function_call)
                     } else {
                         Err(CompilerError::SemanticAnalysis(
                             SemanticAnalysisError::VariableUsedAsFunctionName,
@@ -265,7 +268,7 @@ impl TypeChecker {
                     Err(CompilerError::SemanticAnalysis(
                         SemanticAnalysisError::FunctionNotDeclared(name.clone()),
                     ))
-                }         
+                }
             }
             Expression::Var(name) => {
                 if let Some(existing) = self.symbol_table.get(name) {
@@ -275,7 +278,7 @@ impl TypeChecker {
                         ));
                     } else {
                         let ty = existing.get_type();
-                        return Ok(TCExpression::Var(name.clone(), ty))
+                        return Ok(TCExpression::Var(name.clone(), ty));
                     }
                 }
                 Err(CompilerError::SemanticAnalysis(
@@ -349,7 +352,8 @@ impl TypeChecker {
                 let condition = self.type_check_expression(condition)?;
                 let then_expression = self.type_check_expression(then_expression)?;
                 let else_expression = self.type_check_expression(else_expression)?;
-                let ty = Self::get_common_type(then_expression.get_type(), else_expression.get_type());
+                let ty =
+                    Self::get_common_type(then_expression.get_type(), else_expression.get_type());
                 Ok(TCExpression::Conditional(
                     Box::new(condition),
                     Box::new(then_expression),
@@ -363,8 +367,7 @@ impl TypeChecker {
                     return Err(CompilerError::SemanticAnalysis(
                         SemanticAnalysisError::InvalidCastInAssignment,
                     ));
-                    
-                }   
+                }
                 Ok(self.convert_to(ty.clone(), &self.type_check_expression(expr)?))
             }
         }
@@ -394,24 +397,33 @@ impl TypeChecker {
     fn type_check_statement(
         &mut self,
         statement: &LLStatement<Expression>,
-        containing_function_name : &str
+        containing_function_name: &str,
     ) -> Result<LLStatement<TCExpression>, CompilerError> {
         match statement {
             LLStatement::Expression(expression) => Ok(LLStatement::Expression(
                 self.type_check_expression(expression)?,
             )),
             LLStatement::Return(expression) => {
-                let return_type = self.symbol_table.get(containing_function_name).unwrap().get_type();
+                let return_type = self
+                    .symbol_table
+                    .get(containing_function_name)
+                    .unwrap()
+                    .get_type();
                 let expression = self.type_check_expression(expression)?;
                 let expression_type = expression.get_type();
                 let common_type = Self::get_common_type(return_type.clone(), expression_type);
-                Ok(LLStatement::Return(self.convert_to(common_type, &expression)))
+                Ok(LLStatement::Return(
+                    self.convert_to(common_type, &expression),
+                ))
             }
             LLStatement::If(condition, then_block, else_block) => {
                 let condition = self.type_check_expression(condition)?;
-                let then_block = self.type_check_statement(then_block.as_ref(), containing_function_name)?;
+                let then_block =
+                    self.type_check_statement(then_block.as_ref(), containing_function_name)?;
                 let else_block = if let Some(statement) = else_block {
-                    Some(Box::new(self.type_check_statement(statement, containing_function_name)?))
+                    Some(Box::new(
+                        self.type_check_statement(statement, containing_function_name)?,
+                    ))
                 } else {
                     None
                 };
@@ -459,7 +471,8 @@ impl TypeChecker {
             LLStatement::Compound(block_items) => {
                 let mut new_block_items = Vec::new();
                 for block_item in block_items {
-                    new_block_items.push(self.type_check_block_item(block_item, containing_function_name)?);
+                    new_block_items
+                        .push(self.type_check_block_item(block_item, containing_function_name)?);
                 }
                 Ok(LLStatement::Compound(new_block_items))
             }
@@ -472,12 +485,12 @@ impl TypeChecker {
     fn type_check_block_item(
         &mut self,
         block_item: &BlockItem<LLStatement<Expression>, Expression>,
-        containing_function_name : &str
+        containing_function_name: &str,
     ) -> Result<BlockItem<LLStatement<TCExpression>, TCExpression>, CompilerError> {
         match block_item {
-            BlockItem::Statement(statement) => {
-                Ok(BlockItem::Statement(self.type_check_statement(statement, containing_function_name)?))
-            }
+            BlockItem::Statement(statement) => Ok(BlockItem::Statement(
+                self.type_check_statement(statement, containing_function_name)?,
+            )),
             BlockItem::Declaration(declaration) => match declaration {
                 Declaration::Variable(variable_declaration) => {
                     Ok(BlockItem::Declaration(Declaration::Variable(

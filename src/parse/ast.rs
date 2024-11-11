@@ -170,5 +170,3 @@ impl Constant {
         }
     }
 }
-
-

@@ -17,7 +17,9 @@ use crate::{
     error::CompilerError,
     parse::{self, Constant, Type},
     validate::{
-        loop_labelling::LLStatement, type_checker::{self, TCExpression}, InitialValue, StaticAttr, StaticInit, Symbol, ValidateResult
+        loop_labelling::LLStatement,
+        type_checker::{self, TCExpression},
+        InitialValue, StaticAttr, StaticInit, Symbol, ValidateResult,
     },
 };
 use std::collections::HashMap;
@@ -33,7 +35,7 @@ impl Tacky {
         Tacky {
             counter: 0,
             labels: HashMap::new(),
-            validate_result
+            validate_result,
         }
     }
 }
@@ -45,9 +47,12 @@ impl Tacky {
         name
     }
 
-    fn make_tacky_var(&mut self, ty:Type) -> Value {
+    fn make_tacky_var(&mut self, ty: Type) -> Value {
         let name = self.make_name();
-        self.validate_result.symbols.insert(name.clone(), Symbol::Value(type_checker::symbol::Value::Local(ty)));
+        self.validate_result.symbols.insert(
+            name.clone(),
+            Symbol::Value(type_checker::symbol::Value::Local(ty)),
+        );
         Value::Var(name)
     }
 
@@ -94,7 +99,7 @@ impl Tacky {
                 });
                 Ok(result)
             }
-            TCExpression::Cast(ty, expr) =>{
+            TCExpression::Cast(ty, expr) => {
                 let expr_ty = expr.get_type();
                 let expr = self.emit_tacky_expr(expr, instructions)?;
                 if expr_ty == *ty {
@@ -102,14 +107,19 @@ impl Tacky {
                 } else {
                     let dst = self.make_tacky_var(ty.clone());
                     match ty {
-                        Type::Int => instructions.push(Instruction::SignExtend { src: expr, dst: dst.clone() }),
-                        Type::Long => instructions.push(Instruction::Truncate { src: expr, dst: dst.clone() }),
-                        _ => return Err(CompilerError::InvalidCast (expr_ty, ty.clone() ))
-
+                        Type::Int => instructions.push(Instruction::SignExtend {
+                            src: expr,
+                            dst: dst.clone(),
+                        }),
+                        Type::Long => instructions.push(Instruction::Truncate {
+                            src: expr,
+                            dst: dst.clone(),
+                        }),
+                        _ => return Err(CompilerError::InvalidCast(expr_ty, ty.clone())),
                     }
                     Ok(dst)
                 }
-            },
+            }
             e => self.emit_tacky_factor(e, instructions),
         }
     }
@@ -351,7 +361,7 @@ impl Tacky {
             return Ok(());
         }
         if d.storage_class != Some(parse::StorageClass::Extern) {
-            let value = value.unwrap_or(Value::Constant(Constant::Int(0)));  //TODO get real type
+            let value = value.unwrap_or(Value::Constant(Constant::Int(0))); //TODO get real type
             instructions.push(Instruction::Copy {
                 src: value,
                 dst: Value::Var(name),
@@ -586,7 +596,6 @@ impl Tacky {
     fn emit_tacky_function(
         &mut self,
         f: &parse::FunctionDeclaration<LLStatement<TCExpression>, TCExpression>,
-
     ) -> Result<Option<Function>, CompilerError> {
         let mut body = Vec::new();
         if let Some(body_stmt) = f.body.as_ref() {
@@ -598,8 +607,13 @@ impl Tacky {
 
             Ok(Some(Function {
                 name: f.name.clone(),
-                global: self.validate_result.symbols.get(&f.name).unwrap().is_global(),
-                params: f.parameters.iter().map(|(_, name)| name.clone()).collect(), 
+                global: self
+                    .validate_result
+                    .symbols
+                    .get(&f.name)
+                    .unwrap()
+                    .is_global(),
+                params: f.parameters.iter().map(|(_, name)| name.clone()).collect(),
                 body: Some(body),
             }))
         } else {
@@ -617,8 +631,8 @@ impl Tacky {
                     new_symbols.push(TopLevel::StaticVariable(StaticVariable {
                         identifier: name.clone(),
                         global: static_attr.global,
-                        init: i.clone(), 
-                        ty: i.get_type()
+                        init: i.clone(),
+                        ty: i.get_type(),
                     }));
                 }
                 InitialValue::Tentative => {
@@ -626,7 +640,7 @@ impl Tacky {
                         identifier: name.clone(),
                         global: static_attr.global,
                         init: StaticInit::IntInit(0), //TODO -> Get real type
-                        ty: Type::Int,//TODO -> Get real type
+                        ty: Type::Int,                //TODO -> Get real type
                     }));
                 }
                 _ => {}
@@ -635,11 +649,15 @@ impl Tacky {
         new_symbols
     }
 
-    pub fn emit_tacky(
-        &mut self,
-    ) -> Result<TackyResult, CompilerError> {
+    pub fn emit_tacky(&mut self) -> Result<TackyResult, CompilerError> {
         let mut top_level = Vec::new();
-        for decl in self.validate_result.program.declarations.clone().into_iter() {
+        for decl in self
+            .validate_result
+            .program
+            .declarations
+            .clone()
+            .into_iter()
+        {
             match decl {
                 parse::Declaration::Function(f) => {
                     let function = self.emit_tacky_function(&f)?;
@@ -668,7 +686,8 @@ impl Tacky {
         if let Some(Instruction::Return(_)) = last {
             return;
         }
-        instructions.push(Instruction::Return(Value::Constant(Constant::Int(0)))); //Return type doesnt really matter ?
+        instructions.push(Instruction::Return(Value::Constant(Constant::Int(0))));
+        //Return type doesnt really matter ?
     }
 
     fn statics(symbol_table: &HashMap<String, Symbol>) -> HashMap<String, StaticAttr> {

@@ -15,7 +15,7 @@ pub struct StaticVariable {
     pub identifier: String,
     pub global: bool,
     pub init: StaticInit,
-    pub ty: Type
+    pub ty: Type,
 }
 
 #[derive(Clone, Debug)]

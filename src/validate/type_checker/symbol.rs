@@ -52,9 +52,6 @@ impl From<StaticInit> for TCExpression {
     }
 }
 
-
-
-
 #[derive(PartialEq, Clone, Debug)]
 pub enum InitialValue {
     Tentative,
@@ -70,10 +67,10 @@ impl InitialValue {
         matches!(self, InitialValue::Tentative)
     }
 
-    pub fn get_type(&self, fallback:Type) -> Type {
+    pub fn get_type(&self, fallback: Type) -> Type {
         match self {
             InitialValue::Initial(s) => s.get_type(),
-            _ => fallback
+            _ => fallback,
         }
     }
 }
@@ -133,4 +130,3 @@ impl Symbol {
         matches!(self, Symbol::FunType(_, _, _))
     }
 }
-

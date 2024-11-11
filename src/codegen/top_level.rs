@@ -3,7 +3,12 @@ use std::{
     fmt::{Display, Formatter},
 };
 
-use crate::{error::CompilerError, tacky, validate::{StaticAttr, StaticInit}};
+use crate::{
+    error::CompilerError,
+    parse::Type,
+    tacky,
+    validate::{StaticAttr, StaticInit},
+};
 
 use super::*;
 
@@ -88,7 +93,7 @@ impl Function {
 pub struct StaticVariable {
     identfiier: String,
     global: bool,
-    alignment:i32,
+    alignment: i32,
     value: StaticInit,
 }
 
@@ -103,17 +108,17 @@ impl Display for StaticVariable {
             }
         }
         if self.value == StaticInit::IntInit(0) {
-            writeln!(f, "\t.balign 4")?;
+            writeln!(f, "\t.balign {}", self.alignment)?;
             writeln!(f, "\t.bss")?;
             if cfg!(target_os = "macos") {
                 writeln!(f, "_{}:", self.identfiier)?;
             } else {
                 writeln!(f, "{}:", self.identfiier)?;
             }
-            writeln!(f, "\t.zero 4")
+            writeln!(f, "\t.zero {}", self.alignment)
         } else {
             writeln!(f, "\t.data")?;
-            writeln!(f, "\t.balign 4")?;
+            writeln!(f, "\t.balign {}", self.alignment)?;
             if cfg!(target_os = "macos") {
                 writeln!(f, "_{}:", self.identfiier)?;
             } else {
@@ -128,11 +133,16 @@ impl Display for StaticVariable {
 impl TryFrom<tacky::StaticVariable> for StaticVariable {
     type Error = CompilerError;
     fn try_from(ast: tacky::StaticVariable) -> Result<Self, Self::Error> {
+        let alignment = match ast.ty {
+            Type::Int => 4,
+            Type::Long => 8,
+            _ => panic!("Unsupported type"),
+        };
         Ok(StaticVariable {
             identfiier: ast.identifier,
             global: ast.global,
-            alignment: 8, //TODO
-            value: ast.init, 
+            alignment,
+            value: ast.init,
         })
     }
 }

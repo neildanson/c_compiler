@@ -33,7 +33,7 @@ impl Display for Operand {
 impl From<tacky::Value> for Operand {
     fn from(value: tacky::Value) -> Self {
         match value {
-            tacky::Value::Constant(imm) => Operand::Immediate { imm : imm.i64() },
+            tacky::Value::Constant(imm) => Operand::Immediate { imm: imm.i64() },
             tacky::Value::Var(name) => Operand::Pseudo(name),
         }
     }

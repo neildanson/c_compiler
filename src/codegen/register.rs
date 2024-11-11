@@ -17,7 +17,7 @@ pub enum Reg {
     R9,
     R10,
     R11,
-    SP
+    SP,
 }
 
 impl Reg {
