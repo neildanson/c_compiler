@@ -38,7 +38,7 @@
                     "kind": "bin"
                 }
             },
-            "args": ["main.c", "--validate", "--verbose"],
+            "args": ["main.c", "--codegen", "--verbose", "--S"],
             "cwd": "${workspaceFolder}"
         },
         {

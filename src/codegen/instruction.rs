@@ -13,12 +13,21 @@ pub enum AssemblyType {
     QuadWord, //64 bit
 }
 
+impl Display for AssemblyType {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+        match self {
+            AssemblyType::LongWord => write!(f, "l"),
+            AssemblyType::QuadWord => write!(f, "q"),
+        }
+    }
+}
+
 impl Value {
     pub fn assembly_type(&self) -> AssemblyType {
         match self {
             Value::Constant(Constant::Int(_)) => AssemblyType::LongWord,
             Value::Constant(Constant::Long(_)) => AssemblyType::QuadWord,
-            _ => panic!("Unsupported assembly type for value {:?}", self),
+            _ => AssemblyType::LongWord,  //panic!("Unsupported assembly type for value {:?}", self),
         }
     }
 }
@@ -50,8 +59,8 @@ pub enum Instruction {
         src: Operand,
     },
     Cdq(AssemblyType),
-    AllocateStack(usize),
-    DeallocateStack(usize),
+    //AllocateStack(usize),
+    //DeallocateStack(usize),
     Ret,
     Cmp(AssemblyType, Operand, Operand),
     Jmp(String),
@@ -87,7 +96,7 @@ impl Display for Instruction {
                 src,
                 dst,
             } => {
-                write!(f, "\tmovl {}, {}", src, dst)
+                write!(f, "\tmov{} {}, {}", assembly_type, src, dst)
             }
             Instruction::Ret => {
                 writeln!(f, "\tmovq %rbp, %rsp")?;
@@ -100,22 +109,25 @@ impl Display for Instruction {
                 op,
                 dst,
             } => {
-                write!(f, "\t{} {}", op, dst)
+                write!(f, "\t{}{} {}", op,assembly_type, dst)
             }
 
-            Instruction::AllocateStack(size) => {
-                writeln!(f, "\t# Allocating stack of size {}", size)?;
-                //round size to newarest multiple of 16
-                writeln!(f, "\tsubq ${}, %rsp", size)
-            }
-            Instruction::DeallocateStack(size) => {
-                write!(f, "\taddq ${}, %rsp", size)
-            }
+            //Instruction::AllocateStack(size) => {
+            //    writeln!(f, "\t# Allocating stack of size {}", size)?;
+            //    //round size to newarest multiple of 16
+            //    writeln!(f, "\tsubq ${}, %rsp", size)
+            //}
+            //Instruction::DeallocateStack(size) => {
+            //    write!(f, "\taddq ${}, %rsp", size)
+            // }
             Instruction::Idiv { assembly_type, src } => {
-                write!(f, "\tidivl {}", src)
+                write!(f, "\tidiv{} {}", assembly_type, src)
             }
-            Instruction::Cdq(assembly_type) => {
+            Instruction::Cdq(AssemblyType::LongWord) => {
                 write!(f, "\tcdq")
+            }
+            Instruction::Cdq(AssemblyType::QuadWord) => {
+                write!(f, "\tcqo")
             }
             Instruction::Binary {
                 op,
@@ -123,10 +135,10 @@ impl Display for Instruction {
                 src2,
                 dst,
             } => {
-                write!(f, "\t{} {}, {}", op, src2, dst)
+                write!(f, "\t{}{} {}, {}", op, assembly_type, src2, dst)
             }
             Instruction::Cmp(assembly_type, src1, src2) => {
-                write!(f, "\tcmpl {}, {}", src1, src2)
+                write!(f, "\tcmp{} {}, {}",assembly_type, src1, src2)
             }
             Instruction::Jmp(target) => {
                 write!(f, "\tjmp {}", format_label(target))
@@ -177,7 +189,7 @@ fn convert_function_call(
     let register_args: Vec<_> = args.iter().take(6).collect();
     let stack_args: Vec<_> = args.iter().skip(6).collect();
 
-    let stack_padding = //if length stack args is odd, then pad
+    let stack_padding : usize = //if length stack args is odd, then pad
         if stack_args.len() % 2 == 1 {
             8
         } else {
@@ -187,13 +199,13 @@ fn convert_function_call(
 
     if stack_padding > 0 {
         instructions.push(Instruction::Push(Operand::Register(Reg::DI)));
-        instructions.push(Instruction::AllocateStack(stack_padding));
+        instructions.push(Instruction::Binary { op : BinaryOp::Sub, assembly_type : AssemblyType::QuadWord, src2 : Operand::Immediate { imm: stack_padding as i64 }, dst : Operand::Register(Reg::SP) });
     }
 
     for (i, arg) in register_args.iter().enumerate() {
         let assembly_arg = (*arg).clone().into();
         instructions.push(Instruction::Mov {
-            assembly_type: AssemblyType::QuadWord, //All arguments are 64 bit?
+            assembly_type: AssemblyType::LongWord, //All arguments are 64 bit?
             src: assembly_arg,
             dst: Operand::arg(i),
         });
@@ -201,7 +213,7 @@ fn convert_function_call(
 
     for arg in stack_args.iter().rev() {
         let assembly_arg = (*arg).clone().into();
-        if arg.assembly_type() == AssemblyType::QuadWord {
+        if arg.assembly_type() == AssemblyType::QuadWord { //TODO this doesnt really work well as we dont have the assembly type here whena variable
             instructions.push(Instruction::Push(assembly_arg));
         } else {
             match assembly_arg {
@@ -223,7 +235,10 @@ fn convert_function_call(
     instructions.push(Instruction::Call(name));
     let bytes_to_remove = 8 * stack_args.len() + stack_padding;
     if bytes_to_remove > 0 {
-        instructions.push(Instruction::DeallocateStack(bytes_to_remove));
+
+        instructions.push(
+            Instruction::Binary { op : BinaryOp::Add, assembly_type : AssemblyType::QuadWord, src2 : Operand::Immediate { imm: bytes_to_remove as i64}, dst : Operand::Register(Reg::SP) }
+        );
         instructions.push(Instruction::Pop(Reg::DI));
     }
     let assembly_type = AssemblyType::LongWord; //TODO: Check if this is correct

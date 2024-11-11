@@ -1,6 +1,6 @@
 int i = 100L;
 
-long sixsixsix(void) {
+int sixsixsix(void) {
     return 666L;
 }
 

@@ -19,14 +19,14 @@ pub enum BinaryOp {
 impl Display for BinaryOp {
     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
         match self {
-            BinaryOp::Add => write!(f, "addl"),
-            BinaryOp::Sub => write!(f, "subl"),
-            BinaryOp::Mult => write!(f, "imull"),
-            BinaryOp::ShiftLeft => write!(f, "shll"),
-            BinaryOp::ShiftRight => write!(f, "shrl"),
-            BinaryOp::BitwiseAnd => write!(f, "andl"),
-            BinaryOp::BitwiseOr => write!(f, "orl"),
-            BinaryOp::BitwiseXor => write!(f, "xorl"),
+            BinaryOp::Add => write!(f, "add"),
+            BinaryOp::Sub => write!(f, "sub"),
+            BinaryOp::Mult => write!(f, "imul"),
+            BinaryOp::ShiftLeft => write!(f, "shl"),
+            BinaryOp::ShiftRight => write!(f, "shr"),
+            BinaryOp::BitwiseAnd => write!(f, "and"),
+            BinaryOp::BitwiseOr => write!(f, "or"),
+            BinaryOp::BitwiseXor => write!(f, "xor"),
         }
     }
 }

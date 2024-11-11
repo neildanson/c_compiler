@@ -11,8 +11,8 @@ pub enum UnaryOp {
 impl Display for UnaryOp {
     fn fmt(&self, f: &mut Formatter) -> Result {
         match self {
-            UnaryOp::Neg => write!(f, "negl"),
-            UnaryOp::Complement => write!(f, "notl"),
+            UnaryOp::Neg => write!(f, "neg"),
+            UnaryOp::Complement => write!(f, "not"),
             //op => unimplemented!("UnaryOp Display not implemented for {:?}", op),
         }
     }

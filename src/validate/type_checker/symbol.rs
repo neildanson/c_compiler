@@ -1,3 +1,5 @@
+use std::fmt::{Display, Formatter};
+
 use crate::parse::*;
 
 use super::TCExpression;
@@ -21,6 +23,15 @@ impl StaticInit {
         match self {
             StaticInit::IntInit(val) => *val,
             _ => panic!("Invalid conversion"),
+        }
+    }
+}
+
+impl Display for StaticInit {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+        match self {
+            StaticInit::IntInit(val) => write!(f, "{}", val),
+            StaticInit::LongInit(val) => write!(f, "{}", val),
         }
     }
 }
