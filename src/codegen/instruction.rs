@@ -27,7 +27,10 @@ impl Value {
         match self {
             Value::Constant(Constant::Int(_)) => AssemblyType::LongWord,
             Value::Constant(Constant::Long(_)) => AssemblyType::QuadWord,
-            _ => AssemblyType::LongWord,  //panic!("Unsupported assembly type for value {:?}", self),
+            Value::Var(variable) => {
+                println!("Variable: {:?}", variable);
+                AssemblyType::LongWord
+            } //panic!("Unsupported assembly type for value {:?}", self),
         }
     }
 }
@@ -59,8 +62,6 @@ pub enum Instruction {
         src: Operand,
     },
     Cdq(AssemblyType),
-    //AllocateStack(usize),
-    //DeallocateStack(usize),
     Ret,
     Cmp(AssemblyType, Operand, Operand),
     Jmp(String),
@@ -109,17 +110,8 @@ impl Display for Instruction {
                 op,
                 dst,
             } => {
-                write!(f, "\t{}{} {}", op,assembly_type, dst)
+                write!(f, "\t{}{} {}", op, assembly_type, dst)
             }
-
-            //Instruction::AllocateStack(size) => {
-            //    writeln!(f, "\t# Allocating stack of size {}", size)?;
-            //    //round size to newarest multiple of 16
-            //    writeln!(f, "\tsubq ${}, %rsp", size)
-            //}
-            //Instruction::DeallocateStack(size) => {
-            //    write!(f, "\taddq ${}, %rsp", size)
-            // }
             Instruction::Idiv { assembly_type, src } => {
                 write!(f, "\tidiv{} {}", assembly_type, src)
             }
@@ -138,7 +130,7 @@ impl Display for Instruction {
                 write!(f, "\t{}{} {}, {}", op, assembly_type, src2, dst)
             }
             Instruction::Cmp(assembly_type, src1, src2) => {
-                write!(f, "\tcmp{} {}, {}",assembly_type, src1, src2)
+                write!(f, "\tcmp{} {}, {}", assembly_type, src1, src2)
             }
             Instruction::Jmp(target) => {
                 write!(f, "\tjmp {}", format_label(target))
@@ -199,7 +191,14 @@ fn convert_function_call(
 
     if stack_padding > 0 {
         instructions.push(Instruction::Push(Operand::Register(Reg::DI)));
-        instructions.push(Instruction::Binary { op : BinaryOp::Sub, assembly_type : AssemblyType::QuadWord, src2 : Operand::Immediate { imm: stack_padding as i64 }, dst : Operand::Register(Reg::SP) });
+        instructions.push(Instruction::Binary {
+            op: BinaryOp::Sub,
+            assembly_type: AssemblyType::QuadWord,
+            src2: Operand::Immediate {
+                imm: stack_padding as i64,
+            },
+            dst: Operand::Register(Reg::SP),
+        });
     }
 
     for (i, arg) in register_args.iter().enumerate() {
@@ -213,7 +212,8 @@ fn convert_function_call(
 
     for arg in stack_args.iter().rev() {
         let assembly_arg = (*arg).clone().into();
-        if arg.assembly_type() == AssemblyType::QuadWord { //TODO this doesnt really work well as we dont have the assembly type here whena variable
+        if arg.assembly_type() == AssemblyType::QuadWord {
+            //TODO this doesnt really work well as we dont have the assembly type here whena variable
             instructions.push(Instruction::Push(assembly_arg));
         } else {
             match assembly_arg {
@@ -235,10 +235,14 @@ fn convert_function_call(
     instructions.push(Instruction::Call(name));
     let bytes_to_remove = 8 * stack_args.len() + stack_padding;
     if bytes_to_remove > 0 {
-
-        instructions.push(
-            Instruction::Binary { op : BinaryOp::Add, assembly_type : AssemblyType::QuadWord, src2 : Operand::Immediate { imm: bytes_to_remove as i64}, dst : Operand::Register(Reg::SP) }
-        );
+        instructions.push(Instruction::Binary {
+            op: BinaryOp::Add,
+            assembly_type: AssemblyType::QuadWord,
+            src2: Operand::Immediate {
+                imm: bytes_to_remove as i64,
+            },
+            dst: Operand::Register(Reg::SP),
+        });
         instructions.push(Instruction::Pop(Reg::DI));
     }
     let assembly_type = AssemblyType::LongWord; //TODO: Check if this is correct

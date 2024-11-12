@@ -128,4 +128,109 @@ Copilot is pretty good at explaining why asm code segfaults. Use it.
 Chapter 11 notes
 
 * Lexer complete
-* Parser incomplete
+* Parser complete
+* Validate complete
+* Codegen incomplete 
+
+Program {
+    top_level: [
+        Function(
+            Function {
+                name: "sixsixsix",
+                global: true,
+                body: Some(
+                    [
+                        Binary {
+                            op: Sub,
+                            assembly_type: QuadWord,
+                            src2: Immediate {
+                                imm: 0,
+                            },
+                            dst: Register(
+                                SP,
+                            ),
+                        },
+                        Mov {
+                            assembly_type: LongWord, <-- Should be Quad
+                            src: Immediate {
+                                imm: 66666666666,
+                            },
+                            dst: Register(
+                                AX,
+                            ),
+                        },
+                        Ret,
+                    ],
+                ),
+            },
+        ),
+        Function(
+            Function {
+                name: "main",
+                global: true,
+                body: Some(
+                    [
+                        Binary {
+                            op: Sub,
+                            assembly_type: QuadWord,
+                            src2: Immediate {
+                                imm: 16,
+                            },
+                            dst: Register(
+                                SP,
+                            ),
+                        },
+                        Call(
+                            "sixsixsix",
+                        ),
+                        Mov {
+                            assembly_type: LongWord,
+                            src: Register(
+                                AX,
+                            ),
+                            dst: Stack(
+                                -4,
+                            ),
+                        },
+                        Movsx { <-- Shoould rewrite stack ops
+                            src: Stack(
+                                -4,
+                            ),
+                            dst: Stack(
+                                -8,
+                            ),
+                        },
+                        Mov {
+                            assembly_type: LongWord,
+                            src: Stack(
+                                -8,
+                            ),
+                            dst: Register(
+                                R10,
+                            ),
+                        },
+                        Mov {
+                            assembly_type: LongWord,
+                            src: Register(
+                                R10,
+                            ),
+                            dst: Stack(
+                                -12,
+                            ),
+                        },
+                        Mov {
+                            assembly_type: LongWord,
+                            src: Stack(
+                                -12,
+                            ),
+                            dst: Register(
+                                AX,
+                            ),
+                        },
+                        Ret,
+                    ],
+                ),
+            },
+        ),
+    ],
+}

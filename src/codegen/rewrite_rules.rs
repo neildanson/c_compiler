@@ -142,6 +142,20 @@ pub(crate) fn rewrite_pseudo_with_stack(
                     _ => src,
                 },
             }),
+            Instruction::Movsx { src, dst } => new_body.push(Instruction::Movsx {
+                src: match src {
+                    Operand::Pseudo(name) => {
+                        fixup_pseudo(name, &mut stack, false, static_variables)
+                    }
+                    _ => src,
+                },
+                dst: match dst {
+                    Operand::Pseudo(name) => {
+                        fixup_pseudo(name, &mut stack, false, static_variables)
+                    }
+                    _ => dst,
+                },
+            }),
             any_other => new_body.push(any_other),
         }
     }
@@ -154,21 +168,85 @@ pub(crate) fn fixup_stack_operations(body: Vec<Instruction>) -> Vec<Instruction>
     for instruction in body {
         match instruction.clone() {
             Instruction::Mov {
-                assembly_type,
+                assembly_type: AssemblyType::LongWord,
                 src,
                 dst,
             } => {
                 if let Operand::Stack(_) | Operand::Data(_) = src {
                     if let Operand::Stack(_) | Operand::Data(_) = dst {
                         new_body.push(Instruction::Mov {
-                            assembly_type: assembly_type.clone(),
+                            assembly_type: AssemblyType::LongWord,
                             src,
                             dst: Operand::Register(Reg::R10),
                         });
                         new_body.push(Instruction::Mov {
-                            assembly_type,
+                            assembly_type: AssemblyType::LongWord,
                             src: Operand::Register(Reg::R10),
                             dst,
+                        });
+                        continue;
+                    }
+                }
+                new_body.push(instruction.clone());
+            }
+            Instruction::Mov {
+                assembly_type: AssemblyType::QuadWord,
+                src,
+                dst,
+            } => {
+                if let Operand::Stack(_) | Operand::Data(_) = src {
+                    if let Operand::Stack(_) | Operand::Data(_) = dst {
+                        new_body.push(Instruction::Mov {
+                            assembly_type: AssemblyType::QuadWord,
+                            src,
+                            dst: Operand::Register(Reg::R10),
+                        });
+                        new_body.push(Instruction::Mov {
+                            assembly_type: AssemblyType::QuadWord,
+                            src: Operand::Register(Reg::R10),
+                            dst,
+                        });
+                        continue;
+                    }
+                }
+                if let Operand::Immediate { imm: _ } = src {
+                    if let Operand::Stack(_) = dst {
+                        new_body.push(Instruction::Mov {
+                            assembly_type: AssemblyType::QuadWord,
+                            src,
+                            dst: Operand::Register(Reg::R10),
+                        });
+                        new_body.push(Instruction::Mov {
+                            assembly_type: AssemblyType::QuadWord,
+                            src: Operand::Register(Reg::R10),
+                            dst,
+                        });
+                        continue;
+                    }
+                }
+                new_body.push(instruction.clone());
+            }
+            Instruction::Movsx {
+                //TODO this is wrong
+                src,
+                dst,
+            } => {
+                if let Operand::Immediate { imm: _ } = src {
+                    if let Operand::Stack(s) = dst {
+                        new_body.push(Instruction::Mov {
+                            assembly_type: AssemblyType::LongWord, //Should use type from imm
+                            src,
+                            dst: Operand::Register(Reg::R10),
+                        });
+
+                        new_body.push(Instruction::Movsx {
+                            src: Operand::Register(Reg::R10),
+                            dst: Operand::Register(Reg::R11),
+                        });
+                        new_body.push(Instruction::Mov {
+                            assembly_type: AssemblyType::QuadWord,
+                            src: Operand::Register(Reg::R11),
+                            dst: Operand::Stack(s),
                         });
                         continue;
                     }

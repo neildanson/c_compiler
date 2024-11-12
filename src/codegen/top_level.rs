@@ -83,7 +83,15 @@ impl Function {
         if let Some(body) = &self.body {
             let (mut body, stack_size) = rewrite_pseudo_with_stack(body.clone(), static_variables);
             let size = ((stack_size * 4) + 15) & !15;
-            body.insert(0, Instruction::Binary { op : BinaryOp::Sub, assembly_type : AssemblyType::QuadWord, src2 : Operand::Immediate { imm: size as i64}, dst : Operand::Register(Reg::SP) }); //* 4 as ints are 4 bytes */
+            body.insert(
+                0,
+                Instruction::Binary {
+                    op: BinaryOp::Sub,
+                    assembly_type: AssemblyType::QuadWord,
+                    src2: Operand::Immediate { imm: size as i64 },
+                    dst: Operand::Register(Reg::SP),
+                },
+            ); //* 4 as ints are 4 bytes */
             self.body = Some(fixup_stack_operations(body));
         }
     }
@@ -124,7 +132,11 @@ impl Display for StaticVariable {
             } else {
                 writeln!(f, "{}:", self.identfiier)?;
             }
-            writeln!(f, "\t.long {}", self.value)
+
+            match self.value {
+                StaticInit::IntInit(value) => writeln!(f, "\t.long {}", value),
+                StaticInit::LongInit(value) => writeln!(f, "\t.quad {}", value),
+            }
         }
     }
 }
