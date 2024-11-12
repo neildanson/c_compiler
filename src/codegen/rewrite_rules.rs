@@ -231,6 +231,37 @@ pub(crate) fn fixup_stack_operations(body: Vec<Instruction>) -> Vec<Instruction>
                 src,
                 dst,
             } => {
+                if let Operand::Stack(_) | Operand::Data(_) = src {
+                    if let Operand::Stack(_) | Operand::Data(_) = dst {
+                        new_body.push(Instruction::Mov {
+                            assembly_type: AssemblyType::QuadWord,
+                            src,
+                            dst: Operand::Register(Reg::R10),
+                        });
+                        new_body.push(Instruction::Mov {
+                            assembly_type: AssemblyType::QuadWord,
+                            src: Operand::Register(Reg::R10),
+                            dst,
+                        });
+                        continue;
+                    }
+                }
+                if let Operand::Immediate { imm: _ } = src {
+                    if let Operand::Stack(_) = dst {
+                        new_body.push(Instruction::Mov {
+                            assembly_type: AssemblyType::QuadWord,
+                            src,
+                            dst: Operand::Register(Reg::R10),
+                        });
+                        new_body.push(Instruction::Mov {
+                            assembly_type: AssemblyType::QuadWord,
+                            src: Operand::Register(Reg::R10),
+                            dst,
+                        });
+                        continue;
+                    }
+                }
+
                 if let Operand::Immediate { imm: _ } = src {
                     if let Operand::Stack(s) = dst {
                         new_body.push(Instruction::Mov {

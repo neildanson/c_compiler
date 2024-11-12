@@ -15,7 +15,7 @@ pub enum Operand {
 impl Display for Operand {
     fn fmt(&self, f: &mut Formatter) -> Result {
         match self {
-            Operand::Register(reg) => write!(f, "{:.4}", reg),
+            Operand::Register(reg) => write!(f, "{:.4}", reg), //TODO: Fix this
             Operand::Immediate { imm } => write!(f, "${}", imm),
             Operand::Stack(offset) => write!(f, "{}(%rbp)", offset),
             Operand::Data(data) => {
