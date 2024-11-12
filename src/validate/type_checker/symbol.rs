@@ -17,14 +17,6 @@ impl StaticInit {
             StaticInit::LongInit(_) => Type::Long,
         }
     }
-
-    //TODO: Remove this functionn
-    pub fn i32(&self) -> i32 {
-        match self {
-            StaticInit::IntInit(val) => *val,
-            _ => panic!("Invalid conversion"),
-        }
-    }
 }
 
 impl Display for StaticInit {

@@ -5,7 +5,7 @@ use std::{
 
 use crate::{
     error::CompilerError,
-    parse::Type,
+    parse::{Constant, Type},
     tacky,
     validate::{StaticAttr, StaticInit},
 };
@@ -88,7 +88,7 @@ impl Function {
                 Instruction::Binary {
                     op: BinaryOp::Sub,
                     assembly_type: AssemblyType::QuadWord,
-                    src2: Operand::Immediate { imm: size as i64 },
+                    src2: Operand::Immediate { imm: Constant::Long(size as i64)  },
                     dst: Operand::Register(Reg::SP),
                 },
             ); //* 4 as ints are 4 bytes */

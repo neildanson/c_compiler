@@ -1,3 +1,5 @@
+use std::fmt::{Display, Formatter};
+
 pub type Identifier = String;
 
 #[derive(Debug, PartialEq)]
@@ -154,19 +156,20 @@ pub enum Constant {
     Long(i64),
 }
 
+impl Display for Constant {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+        match self {
+            Constant::Int(val) => write!(f, "{}", val),
+            Constant::Long(val) => write!(f, "{}", val),
+        }
+    }
+}
+
 impl Constant {
     pub fn get_type(&self) -> Type {
         match self {
             Constant::Int(_) => Type::Int,
             Constant::Long(_) => Type::Long,
-        }
-    }
-
-    //TODO remove this function
-    pub fn i64(&self) -> i64 {
-        match self {
-            Constant::Int(val) => *val as i64,
-            Constant::Long(val) => *val,
         }
     }
 }

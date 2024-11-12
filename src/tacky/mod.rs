@@ -274,8 +274,8 @@ impl Tacky {
                     condition: v2,
                     target: false_label.clone(),
                 });
-                let one = Value::Constant(Constant::Int(1)); //TODO -> Get real type
-                let zero = Value::Constant(Constant::Int(0)); //TODO -> Get real type
+                let one = Value::Constant(Constant::Int(1)); 
+                let zero = Value::Constant(Constant::Int(0)); 
                 let dst = Value::Var(self.make_name());
                 instructions.push(Instruction::Copy {
                     src: one,
