@@ -61,8 +61,6 @@ impl TryFrom<tacky::Function> for Function {
                 body.append(&mut instructions);
             }
 
-            //TODO how to handle statics without a symbol_table?
-
             Ok(Function {
                 name: ast.name,
                 global: ast.global,

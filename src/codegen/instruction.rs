@@ -436,7 +436,7 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
             tacky::Instruction::SignExtend { src, dst } => {
                 let src = src.into();
                 let dst = dst.into();
-                Ok(vec![Instruction::Movsx { src, dst }]) //TODO
+                Ok(vec![Instruction::Movsx { src, dst }]) 
             }
             tacky::Instruction::Truncate { src, dst } => {
                 let src = src.into();
@@ -445,7 +445,7 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
                     assembly_type: AssemblyType::LongWord,
                     src,
                     dst,
-                }]) //TODO
+                }]) 
             }
         }
     }

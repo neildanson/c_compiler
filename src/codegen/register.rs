@@ -33,7 +33,7 @@ impl Reg {
                 Reg::R9 => "%r9b".to_string(),
                 Reg::R10 => "%r10b".to_string(),
                 Reg::R11 => "%r11b".to_string(),
-                Reg::SP => "%rsp".to_string(), //TODO
+                Reg::SP => "%rsp".to_string(),
             },
             RegisterSize::FourByte => match self {
                 Reg::AX => "%eax".to_string(),
@@ -45,7 +45,7 @@ impl Reg {
                 Reg::R9 => "%r9d".to_string(),
                 Reg::R10 => "%r10d".to_string(),
                 Reg::R11 => "%r11d".to_string(),
-                Reg::SP => "%rsp".to_string(), //TODO
+                Reg::SP => "%rsp".to_string(), 
             },
             RegisterSize::EightByte => match self {
                 Reg::AX => "%rax".to_string(),
@@ -57,7 +57,7 @@ impl Reg {
                 Reg::R9 => "%r9".to_string(),
                 Reg::R10 => "%r10".to_string(),
                 Reg::R11 => "%r11".to_string(),
-                Reg::SP => "%rsp".to_string(), //TODO
+                Reg::SP => "%rsp".to_string(), 
             },
         }
     }
@@ -77,7 +77,10 @@ impl Display for Reg {
                 })
             )
         } else {
-            panic!("Precision not set - expect format strings like {{:1}}, {{:4}}, or {{:8}}");
+            match self { 
+                Self::SP => write!(f, "%rsp"),
+                _ => panic!("Precision not set - expect format strings like {{:1}}, {{:4}}, or {{:8}}")
+            }
         }
     }
 }
