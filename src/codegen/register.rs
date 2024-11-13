@@ -1,4 +1,4 @@
-use std::fmt::{Display, Formatter};
+use super::AssemblyType;
 
 pub enum RegisterSize {
     OneByte,
@@ -21,9 +21,9 @@ pub enum Reg {
 }
 
 impl Reg {
-    pub fn asm(&self, size: RegisterSize) -> String {
-        match size {
-            RegisterSize::OneByte => match self {
+    pub fn asm(&self, assembly_type: Option<AssemblyType>) -> String {
+        match assembly_type {
+            None => match self {
                 Reg::AX => "%al".to_string(),
                 Reg::CX => "%cl".to_string(),
                 Reg::DX => "%dl".to_string(),
@@ -35,7 +35,7 @@ impl Reg {
                 Reg::R11 => "%r11b".to_string(),
                 Reg::SP => "%rsp".to_string(),
             },
-            RegisterSize::FourByte => match self {
+            Some(AssemblyType::LongWord) => match self {
                 Reg::AX => "%eax".to_string(),
                 Reg::CX => "%ecx".to_string(),
                 Reg::DX => "%edx".to_string(),
@@ -45,9 +45,9 @@ impl Reg {
                 Reg::R9 => "%r9d".to_string(),
                 Reg::R10 => "%r10d".to_string(),
                 Reg::R11 => "%r11d".to_string(),
-                Reg::SP => "%rsp".to_string(), 
+                Reg::SP => "%rsp".to_string(),
             },
-            RegisterSize::EightByte => match self {
+            Some(AssemblyType::QuadWord) => match self {
                 Reg::AX => "%rax".to_string(),
                 Reg::CX => "%rcx".to_string(),
                 Reg::DX => "%rdx".to_string(),
@@ -57,30 +57,8 @@ impl Reg {
                 Reg::R9 => "%r9".to_string(),
                 Reg::R10 => "%r10".to_string(),
                 Reg::R11 => "%r11".to_string(),
-                Reg::SP => "%rsp".to_string(), 
+                Reg::SP => "%rsp".to_string(),
             },
-        }
-    }
-}
-
-impl Display for Reg {
-    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
-        if let Some(precision) = f.precision() {
-            write!(
-                f,
-                "{}",
-                self.asm(match precision {
-                    1 => RegisterSize::OneByte,
-                    4 => RegisterSize::FourByte,
-                    8 => RegisterSize::EightByte,
-                    _ => panic!("Invalid precision"),
-                })
-            )
-        } else {
-            match self { 
-                Self::SP => write!(f, "%rsp"),
-                _ => panic!("Precision not set - expect format strings like {{:1}}, {{:4}}, or {{:8}}")
-            }
         }
     }
 }

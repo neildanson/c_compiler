@@ -150,7 +150,7 @@ pub enum Type {
     FunType(Vec<Type>, Box<Type>),
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Copy)]
 pub enum Constant {
     Int(i32),
     Long(i64),

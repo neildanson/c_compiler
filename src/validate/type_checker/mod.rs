@@ -34,7 +34,7 @@ impl TypeChecker {
         variable_declaration: &VariableDeclaration<Expression>,
     ) -> Result<VariableDeclaration<TCExpression>, CompilerError> {
         let mut initial_value = if let Some(Expression::Constant(i)) = &variable_declaration.init {
-            InitialValue::Initial(i.clone().into())
+            InitialValue::Initial((*i).into())
         } else if variable_declaration.init.is_none() {
             if variable_declaration.storage_class == Some(StorageClass::Extern) {
                 InitialValue::NoInitializer
@@ -59,8 +59,7 @@ impl TypeChecker {
             }
             if old_decl.get_type() != variable_declaration.var_type {
                 return Err(CompilerError::SemanticAnalysis(
-                    //TODO
-                    SemanticAnalysisError::ConflictingVariableLinkage(
+                    SemanticAnalysisError::ConflictingTypeDefinition(
                         variable_declaration.name.clone(),
                     ),
                 ));
@@ -158,7 +157,7 @@ impl TypeChecker {
             }
         } else if variable_declaration.storage_class == Some(StorageClass::Static) {
             let initial_value = if let Some(Expression::Constant(i)) = &variable_declaration.init {
-                InitialValue::Initial(i.clone().into())
+                InitialValue::Initial((*i).into())
             } else if variable_declaration.init.is_none() {
                 InitialValue::Tentative
             } else {
@@ -174,7 +173,7 @@ impl TypeChecker {
                 variable_declaration.name.clone(),
                 Symbol::Value(Value::Static(
                     StaticAttr {
-                        init: init,
+                        init,
                         global: false,
                     },
                     ty.clone(),
@@ -361,7 +360,7 @@ impl TypeChecker {
                     ty,
                 ))
             }
-            Expression::Constant(c) => Ok(TCExpression::Constant(c.clone())),
+            Expression::Constant(c) => Ok(TCExpression::Constant(*c)),
             Expression::Cast(ty, expr) => {
                 if let Expression::Assignment(_, _) = expr.as_ref() {
                     return Err(CompilerError::SemanticAnalysis(

@@ -169,7 +169,7 @@ impl Tacky {
         instructions: &mut Vec<Instruction>,
     ) -> Result<Value, CompilerError> {
         match f {
-            TCExpression::Constant(i) => Ok(Value::Constant(i.clone().into())),
+            TCExpression::Constant(i) => Ok(Value::Constant(*i)),
             TCExpression::Unary(op, inner, _) => self.emit_tacky_unaryop(op, inner, instructions),
             TCExpression::Var(v, _) => Ok(Value::Var(v.clone())),
             TCExpression::Conditional(cond, then, els, _) => {
@@ -274,8 +274,8 @@ impl Tacky {
                     condition: v2,
                     target: false_label.clone(),
                 });
-                let one = Value::Constant(Constant::Int(1)); 
-                let zero = Value::Constant(Constant::Int(0)); 
+                let one = Value::Constant(Constant::Int(1));
+                let zero = Value::Constant(Constant::Int(0));
                 let dst = Value::Var(self.make_name());
                 instructions.push(Instruction::Copy {
                     src: one,
@@ -309,8 +309,8 @@ impl Tacky {
                     condition: v2,
                     target: true_label.clone(),
                 });
-                let one = Value::Constant(Constant::Int(1)); //TODO -> Get real type
-                let zero = Value::Constant(Constant::Int(0)); //TODO -> Get real type
+                let one = Value::Constant(Constant::Int(1));
+                let zero = Value::Constant(Constant::Int(0));
                 let dst = Value::Var(self.make_name());
                 instructions.push(Instruction::Copy {
                     src: zero,
@@ -356,7 +356,6 @@ impl Tacky {
             .map(|e| self.emit_tacky_expr(e, instructions))
             .transpose()?;
 
-        //TODO Check if this is right? We have already moved to symbols. Fuck it.
         if d.storage_class == Some(parse::StorageClass::Static) {
             return Ok(());
         }
@@ -600,7 +599,7 @@ impl Tacky {
         let mut body = Vec::new();
         if let Some(body_stmt) = f.body.as_ref() {
             for block_item in body_stmt {
-                self.emit_tacky_block_item(&block_item, &mut body)?;
+                self.emit_tacky_block_item(block_item, &mut body)?;
             }
 
             Tacky::fixup_missing_return(&mut body);

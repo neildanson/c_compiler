@@ -1,28 +1,28 @@
 use crate::{parse::Constant, tacky};
-use std::fmt::{Display, Formatter, Result};
 
-use super::Reg;
+use super::{AssemblyType, Reg};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Operand {
     Register(Reg),
-    Immediate { imm : Constant },
+    Immediate { imm: Constant },
     Pseudo(String),
     Stack(i32),
     Data(String),
 }
 
-impl Display for Operand {
-    fn fmt(&self, f: &mut Formatter) -> Result {
+
+impl Operand {
+    pub fn asm(&self, assembly_type : AssemblyType) -> String {
         match self {
-            Operand::Register(reg) => write!(f, "{:.4}", reg), //TODO: Fix this
-            Operand::Immediate { imm } => write!(f, "${}", imm),
-            Operand::Stack(offset) => write!(f, "{}(%rbp)", offset),
+            Operand::Register(reg) => reg.asm(Some(assembly_type)),
+            Operand::Immediate { imm } => format!("${}", imm),
+            Operand::Stack(offset) => format!("{}(%rbp)", offset),
             Operand::Data(data) => {
                 if cfg!(target_os = "macos") {
-                    write!(f, "_{}(%rip)", data)
+                    format!("_{}(%rip)", data)
                 } else {
-                    write!(f, "{}(%rip)", data)
+                    format!("{}(%rip)", data)
                 }
             }
             op => unimplemented!("Operand Display not implemented for {:?}", op),

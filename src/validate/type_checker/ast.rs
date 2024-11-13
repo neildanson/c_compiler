@@ -54,7 +54,7 @@ impl TCExpression {
             Expression::Cast(ty, expr) => {
                 TCExpression::Cast(ty.clone(), Box::new(Self::with_type(expr, ty.clone())))
             }
-            Expression::Constant(c) => TCExpression::Constant(c.clone()),
+            Expression::Constant(c) => TCExpression::Constant(*c),
         }
     }
 

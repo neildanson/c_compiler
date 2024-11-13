@@ -288,12 +288,12 @@ pub(crate) fn fixup_stack_operations(body: Vec<Instruction>) -> Vec<Instruction>
                 if let Operand::Stack(_) | Operand::Data(_) = lhs {
                     if let Operand::Stack(_) | Operand::Data(_) = rhs {
                         new_body.push(Instruction::Mov {
-                            assembly_type: assembly_type.clone(),
+                            assembly_type,
                             src: lhs,
                             dst: Operand::Register(Reg::R10),
                         });
                         new_body.push(Instruction::Cmp(
-                            assembly_type.clone(),
+                            assembly_type,
                             Operand::Register(Reg::R10),
                             rhs,
                         ));
@@ -302,7 +302,7 @@ pub(crate) fn fixup_stack_operations(body: Vec<Instruction>) -> Vec<Instruction>
                 }
                 if let Operand::Immediate { imm: _ } = rhs {
                     new_body.push(Instruction::Mov {
-                        assembly_type: assembly_type.clone(),
+                        assembly_type,
                         src: rhs,
                         dst: Operand::Register(Reg::R10),
                     });
@@ -323,13 +323,13 @@ pub(crate) fn fixup_stack_operations(body: Vec<Instruction>) -> Vec<Instruction>
             } if op == BinaryOp::Mult => {
                 if let Operand::Stack(_) = dst {
                     new_body.push(Instruction::Mov {
-                        assembly_type: assembly_type.clone(),
+                        assembly_type,
                         src: dst.clone(),
                         dst: Operand::Register(Reg::R11),
                     });
                     new_body.push(Instruction::Binary {
                         op,
-                        assembly_type: assembly_type.clone(),
+                        assembly_type,
                         src2,
                         dst: Operand::Register(Reg::R11),
                     });
@@ -354,7 +354,7 @@ pub(crate) fn fixup_stack_operations(body: Vec<Instruction>) -> Vec<Instruction>
                         match op {
                             BinaryOp::Add | BinaryOp::Sub => {
                                 new_body.push(Instruction::Mov {
-                                    assembly_type: assembly_type.clone(),
+                                    assembly_type,
                                     src: src2,
                                     dst: Operand::Register(Reg::R10),
                                 });
@@ -376,7 +376,7 @@ pub(crate) fn fixup_stack_operations(body: Vec<Instruction>) -> Vec<Instruction>
             Instruction::Idiv { assembly_type, src } => {
                 if let Operand::Immediate { imm: _ } = src {
                     new_body.push(Instruction::Mov {
-                        assembly_type: assembly_type.clone(),
+                        assembly_type,
                         src,
                         dst: Operand::Register(Reg::R10),
                     });

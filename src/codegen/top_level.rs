@@ -86,7 +86,9 @@ impl Function {
                 Instruction::Binary {
                     op: BinaryOp::Sub,
                     assembly_type: AssemblyType::QuadWord,
-                    src2: Operand::Immediate { imm: Constant::Long(size as i64)  },
+                    src2: Operand::Immediate {
+                        imm: Constant::Long(size as i64),
+                    },
                     dst: Operand::Register(Reg::SP),
                 },
             ); //* 4 as ints are 4 bytes */
@@ -103,7 +105,6 @@ pub struct StaticVariable {
     value: StaticInit,
 }
 
-//TODO properly: Implement TryFrom for StaticVariable
 impl Display for StaticVariable {
     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
         if self.global {
@@ -139,7 +140,6 @@ impl Display for StaticVariable {
     }
 }
 
-//From?
 impl TryFrom<tacky::StaticVariable> for StaticVariable {
     type Error = CompilerError;
     fn try_from(ast: tacky::StaticVariable) -> Result<Self, Self::Error> {

@@ -7,7 +7,7 @@ use std::fmt::{Display, Formatter};
 
 use super::*;
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum AssemblyType {
     LongWord, //32 bit
     QuadWord, //64 bit
@@ -97,7 +97,7 @@ impl Display for Instruction {
                 src,
                 dst,
             } => {
-                write!(f, "\tmov{} {}, {}", assembly_type, src, dst)
+                write!(f, "\tmov{} {}, {}", assembly_type, src.asm(*assembly_type), dst.asm(*assembly_type))
             }
             Instruction::Ret => {
                 writeln!(f, "\tmovq %rbp, %rsp")?;
@@ -110,10 +110,10 @@ impl Display for Instruction {
                 op,
                 dst,
             } => {
-                write!(f, "\t{}{} {}", op, assembly_type, dst)
+                write!(f, "\t{}{} {}", op, assembly_type, dst.asm(*assembly_type))
             }
             Instruction::Idiv { assembly_type, src } => {
-                write!(f, "\tidiv{} {}", assembly_type, src)
+                write!(f, "\tidiv{} {}", assembly_type, src.asm(*assembly_type))
             }
             Instruction::Cdq(AssemblyType::LongWord) => {
                 write!(f, "\tcdq")
@@ -127,10 +127,10 @@ impl Display for Instruction {
                 src2,
                 dst,
             } => {
-                write!(f, "\t{}{} {}, {}", op, assembly_type, src2, dst)
+                write!(f, "\t{}{} {}, {}", op, assembly_type, src2.asm(*assembly_type), dst.asm(*assembly_type))
             }
             Instruction::Cmp(assembly_type, src1, src2) => {
-                write!(f, "\tcmp{} {}, {}", assembly_type, src1, src2)
+                write!(f, "\tcmp{} {}, {}", assembly_type, src1.asm(*assembly_type), src2.asm(*assembly_type))
             }
             Instruction::Jmp(target) => {
                 write!(f, "\tjmp {}", format_label(target))
@@ -140,8 +140,8 @@ impl Display for Instruction {
             }
             Instruction::SetCC(cc, dst) => {
                 let dst = match dst {
-                    Operand::Register(register) => format!("{:.1}", register),
-                    d => format!("{}", d),
+                    Operand::Register(register) => register.asm(None),
+                    d => d.asm(AssemblyType::LongWord), //TODO: Check if this is correct
                 };
 
                 write!(f, "\tset{} {}", cc, dst)
@@ -151,8 +151,10 @@ impl Display for Instruction {
             }
             Instruction::Push(operand) => {
                 let operand = match operand {
-                    Operand::Register(register) => format!("{:.8}", register),
-                    d => format!("{}", d),
+                    Operand::Register(register) => {
+                        register.asm(Some(AssemblyType::QuadWord))
+                    }
+                    d => d.asm(AssemblyType::QuadWord),
                 };
                 write!(f, "\tpushq {}", operand)
             }
@@ -164,10 +166,10 @@ impl Display for Instruction {
                 }
             }
             Instruction::Pop(register) => {
-                write!(f, "\tpopq {:.8}", register)
+                write!(f, "\tpopq {}", register.asm(Some(AssemblyType::QuadWord)))
             }
             Instruction::Movsx { src, dst } => {
-                write!(f, "\tmovsxl {}, {}", src, dst)
+                write!(f, "\tmovsxl {}, {}", src.asm(AssemblyType::LongWord), dst.asm(AssemblyType::QuadWord))
             }
         }
     }
@@ -280,10 +282,18 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
                 let src = src.into();
                 let dst: Operand = dst.into();
                 Ok(vec![
-                    Instruction::Cmp(AssemblyType::LongWord, Operand::Immediate { imm: Constant::Int(0) }, src),
+                    Instruction::Cmp(
+                        AssemblyType::LongWord,
+                        Operand::Immediate {
+                            imm: Constant::Int(0),
+                        },
+                        src,
+                    ),
                     Instruction::Mov {
                         assembly_type: AssemblyType::LongWord, //TODO: Check if this is correct
-                        src: Operand::Immediate { imm: Constant::Int(0) },
+                        src: Operand::Immediate {
+                            imm: Constant::Int(0),
+                        },
                         dst: dst.clone(),
                     },
                     Instruction::SetCC(ConditionCode::E, dst),
@@ -317,13 +327,13 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
                 let assembly_type = AssemblyType::LongWord; //TODO: Check if this is correct
                 Ok(vec![
                     Instruction::Mov {
-                        assembly_type: assembly_type.clone(),
+                        assembly_type,
                         src: src1,
                         dst: Operand::Register(Reg::AX),
                     },
-                    Instruction::Cdq(assembly_type.clone()),
+                    Instruction::Cdq(assembly_type),
                     Instruction::Idiv {
-                        assembly_type: assembly_type.clone(),
+                        assembly_type,
                         src: src2,
                     },
                     Instruction::Mov {
@@ -345,13 +355,13 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
                 let assembly_type = AssemblyType::LongWord; //TODO: Check if this is correct
                 Ok(vec![
                     Instruction::Mov {
-                        assembly_type: assembly_type.clone(),
+                        assembly_type,
                         src: src1,
                         dst: Operand::Register(Reg::AX),
                     },
-                    Instruction::Cdq(assembly_type.clone()),
+                    Instruction::Cdq(assembly_type),
                     Instruction::Idiv {
-                        assembly_type: assembly_type.clone(),
+                        assembly_type,
                         src: src2,
                     },
                     Instruction::Mov {
@@ -372,10 +382,12 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
                 let dst: Operand = dst.into();
                 let assembly_type = AssemblyType::LongWord; //TODO: Check if this is correct
                 Ok(vec![
-                    Instruction::Cmp(assembly_type.clone(), src2, src1),
+                    Instruction::Cmp(assembly_type, src2, src1),
                     Instruction::Mov {
                         assembly_type,
-                        src: Operand::Immediate { imm: Constant::Int(0) },
+                        src: Operand::Immediate {
+                            imm: Constant::Int(0),
+                        },
                         dst: dst.clone(),
                     },
                     Instruction::SetCC(cc, dst),
@@ -395,7 +407,7 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
                 let assembly_type = AssemblyType::LongWord; //TODO: Check if this is correct
                 Ok(vec![
                     Instruction::Mov {
-                        assembly_type: assembly_type.clone(),
+                        assembly_type,
                         src: src1,
                         dst: dst.clone(),
                     },
@@ -410,7 +422,9 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
             tacky::Instruction::JumpIfZero { condition, target } => Ok(vec![
                 Instruction::Cmp(
                     AssemblyType::LongWord,
-                    Operand::Immediate { imm: Constant::Int(0) },
+                    Operand::Immediate {
+                        imm: Constant::Int(0),
+                    },
                     condition.into(),
                 ),
                 Instruction::JmpCC(ConditionCode::E, target),
@@ -418,7 +432,9 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
             tacky::Instruction::JumpIfNotZero { condition, target } => Ok(vec![
                 Instruction::Cmp(
                     AssemblyType::LongWord,
-                    Operand::Immediate { imm: Constant::Int(0) },
+                    Operand::Immediate {
+                        imm: Constant::Int(0),
+                    },
                     condition.into(),
                 ),
                 Instruction::JmpCC(ConditionCode::NE, target),
@@ -436,7 +452,7 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
             tacky::Instruction::SignExtend { src, dst } => {
                 let src = src.into();
                 let dst = dst.into();
-                Ok(vec![Instruction::Movsx { src, dst }]) 
+                Ok(vec![Instruction::Movsx { src, dst }])
             }
             tacky::Instruction::Truncate { src, dst } => {
                 let src = src.into();
@@ -445,7 +461,7 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
                     assembly_type: AssemblyType::LongWord,
                     src,
                     dst,
-                }]) 
+                }])
             }
         }
     }

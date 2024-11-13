@@ -71,7 +71,9 @@ fn fixup_binary_pseudo_with_stack() {
 fn fixup_idiv_stack() {
     let body = vec![Instruction::Idiv {
         assembly_type: AssemblyType::LongWord,
-        src: Operand::Immediate { imm: Constant::Int(3) },
+        src: Operand::Immediate {
+            imm: Constant::Int(3),
+        },
     }];
     let new_body = fixup_stack_operations(body);
     assert_eq!(
@@ -79,7 +81,9 @@ fn fixup_idiv_stack() {
         vec![
             Instruction::Mov {
                 assembly_type: AssemblyType::LongWord,
-                src: Operand::Immediate { imm: Constant::Int(3) },
+                src: Operand::Immediate {
+                    imm: Constant::Int(3)
+                },
                 dst: Operand::Register(Reg::R10)
             },
             Instruction::Idiv {
@@ -95,7 +99,9 @@ fn fixup_mul_stack() {
     let body = vec![Instruction::Binary {
         op: BinaryOp::Mult,
         assembly_type: AssemblyType::LongWord,
-        src2: Operand::Immediate { imm: Constant::Int(3) },
+        src2: Operand::Immediate {
+            imm: Constant::Int(3),
+        },
         dst: Operand::Stack(4),
     }];
     let new_body = fixup_stack_operations(body);
@@ -110,7 +116,9 @@ fn fixup_mul_stack() {
             Instruction::Binary {
                 op: BinaryOp::Mult,
                 assembly_type: AssemblyType::LongWord,
-                src2: Operand::Immediate { imm: Constant::Int(3) },
+                src2: Operand::Immediate {
+                    imm: Constant::Int(3)
+                },
                 dst: Operand::Register(Reg::R11)
             },
             Instruction::Mov {
