@@ -150,6 +150,16 @@ pub enum Type {
     FunType(Vec<Type>, Box<Type>),
 }
 
+impl Type {
+    pub fn zero_constant(&self) -> Constant {
+        match self {
+            Type::Int => Constant::Int(0),
+            Type::Long => Constant::Long(0),
+            Type::FunType(_, _) => panic!("Function type has no zero constant"),
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq, Copy)]
 pub enum Constant {
     Int(i32),

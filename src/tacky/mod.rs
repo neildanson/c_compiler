@@ -19,7 +19,7 @@ use crate::{
     validate::{
         loop_labelling::LLStatement,
         type_checker::{self, TCExpression},
-        InitialValue, StaticAttr, StaticInit, Symbol, ValidateResult,
+        InitialValue, StaticAttr, Symbol, ValidateResult,
     },
 };
 use std::collections::HashMap;
@@ -360,7 +360,7 @@ impl Tacky {
             return Ok(());
         }
         if d.storage_class != Some(parse::StorageClass::Extern) {
-            let value = value.unwrap_or(Value::Constant(Constant::Int(0))); //TODO get real type
+            let value = value.unwrap_or(Value::Constant(d.var_type.zero_constant())); 
             instructions.push(Instruction::Copy {
                 src: value,
                 dst: Value::Var(name),
@@ -638,8 +638,8 @@ impl Tacky {
                     new_symbols.push(TopLevel::StaticVariable(StaticVariable {
                         identifier: name.clone(),
                         global: static_attr.global,
-                        init: StaticInit::IntInit(0), //TODO -> Get real type
-                        ty: Type::Int,                //TODO -> Get real type
+                        init: static_attr.ty.zero_constant().into(),
+                        ty: static_attr.ty.clone(), 
                     }));
                 }
                 _ => {}

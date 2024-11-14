@@ -97,6 +97,7 @@ impl TypeChecker {
                 StaticAttr {
                     init: init.clone(),
                     global,
+                    ty: ty.clone(),
                 },
                 ty.clone(),
             )),
@@ -150,6 +151,7 @@ impl TypeChecker {
                         StaticAttr {
                             init: InitialValue::NoInitializer,
                             global: true,
+                            ty: variable_declaration.var_type.clone(),
                         },
                         variable_declaration.var_type.clone(),
                     )),
@@ -175,6 +177,7 @@ impl TypeChecker {
                     StaticAttr {
                         init,
                         global: false,
+                        ty: ty.clone(),
                     },
                     ty.clone(),
                 )),

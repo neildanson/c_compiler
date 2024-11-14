@@ -88,6 +88,7 @@ pub struct FunAttr {
 pub struct StaticAttr {
     pub init: InitialValue,
     pub global: bool,
+    pub ty: Type,
 }
 
 #[derive(PartialEq, Debug, Clone)]

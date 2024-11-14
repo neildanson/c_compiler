@@ -541,16 +541,15 @@ fn parse_constant(constant: &str) -> Result<Constant> {
         constant
     };
 
-    let v = constant.parse::<i64>()?;
-    //TODO - prevent overflow
-    //if v >= i64::MAX {
-    //    return Err(CompilerError::Parse("Constant out of range".to_string()).into());
-    //}
+    let v = constant.parse::<u64>()?;
+    if v as i64 > i64::MAX {
+        return Err(CompilerError::Parse("Constant out of range".to_string()).into());
+    }
 
-    if !is_long && v <= i32::MAX.into() {
+    if !is_long && v as i32 <= i32::MAX - 1 {
         Ok(Constant::Int(v as i32))
     } else {
-        Ok(Constant::Long(v))
+        Ok(Constant::Long(v as i64))
     }
 }
 
