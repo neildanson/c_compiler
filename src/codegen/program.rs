@@ -1,5 +1,5 @@
-use super::{Function, StaticVariable, TopLevel};
-use crate::{error::CompilerError, tacky, validate::StaticAttr};
+use super::{AssemblyType, Function, StaticVariable, TopLevel};
+use crate::{error::CompilerError, tacky::{self}, validate::{Symbol, Value}};
 use std::{collections::HashMap, fmt::Display};
 
 #[derive(Debug, PartialEq)]
@@ -41,11 +41,32 @@ impl TryFrom<tacky::Program> for Program {
     }
 }
 
+#[derive(Debug)]
+pub enum AsmSymTabEntry {
+    ObjEntry(AssemblyType, bool), //Static
+    FunEntry(bool) //Defined
+}
+
+impl AsmSymTabEntry {
+    fn from_symbol(symbol:&Symbol) -> Self {
+        match symbol {
+            Symbol::FunType(a,_,_) => AsmSymTabEntry::FunEntry(a.defined),
+            Symbol::Value(Value::Static(a,ty)) => AsmSymTabEntry::ObjEntry(ty.into(), a.global),
+            Symbol::Value(Value::Local(ty)) => AsmSymTabEntry::ObjEntry(ty.into(), false)
+        }
+    }
+}
+
+
 impl Program {
-    pub fn fixup(&mut self, static_variables: &HashMap<String, StaticAttr>) {
+    pub fn fixup(&mut self, static_variables: &HashMap<String, Symbol>) {
+        let symtab : HashMap<String, AsmSymTabEntry> =
+        static_variables.iter().map(|(k,v)| {
+            (k.clone(), AsmSymTabEntry::from_symbol(v))
+        }).collect();
         for top_level in &mut self.top_level {
             match top_level {
-                TopLevel::Function(f) => f.fixup(static_variables),
+                TopLevel::Function(f) => f.fixup(&symtab),
                 TopLevel::StaticVariable(_) => {}
             }
         }

@@ -1,6 +1,6 @@
 use crate::{
     error::CompilerError,
-    parse::Constant,
+    parse::{Constant, Type},
     tacky::{self, Value},
 };
 use std::fmt::{Display, Formatter};
@@ -11,6 +11,16 @@ use super::*;
 pub enum AssemblyType {
     LongWord, //32 bit
     QuadWord, //64 bit
+}
+
+impl From<&Type> for AssemblyType {
+    fn from(ty: &Type) -> Self {
+        match ty {
+            Type::Int => AssemblyType::LongWord,
+            Type::Long => AssemblyType::QuadWord,
+            _ => panic!("Unsupported assembly type for type {:?}", ty),
+        }
+    }
 }
 
 impl Display for AssemblyType {

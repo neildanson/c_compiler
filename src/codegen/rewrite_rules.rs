@@ -1,18 +1,41 @@
 use std::collections::HashMap;
-
-use crate::validate::StaticAttr;
-
 use super::*;
 
 fn fixup_pseudo(
     name: String,
     stack: &mut HashMap<String, i32>,
     parameter: bool,
-    static_variables: &HashMap<String, StaticAttr>,
+    static_variables: &HashMap<String, AsmSymTabEntry>,
 ) -> Operand {
     if let Some(offset) = stack.get(&name) {
         Operand::Stack(*offset)
     } else {
+        
+        let symbol = static_variables.get(&name);
+        match (symbol, parameter) {
+            (Some(AsmSymTabEntry::ObjEntry(_, true)), _) => {
+                Operand::Data(name)
+            }
+            (Some(AsmSymTabEntry::ObjEntry(AssemblyType::LongWord, false)), _) => {
+                let offset = (stack.len() + 1) as i32 * 4;
+                stack.insert(name, -offset);
+                Operand::local(offset)
+            }
+            (Some(AsmSymTabEntry::ObjEntry(AssemblyType::QuadWord, false)), _) => {
+                let offset = (stack.len() + 1) as i32 * 8;
+                stack.insert(name, -offset);
+                Operand::local(offset)
+            }
+            //TODO Below seems bogus. Should only be parameters?
+            (_, _) => {
+                let offset = (stack.len() + 1) as i32 * 8;
+                stack.insert(name, -offset);
+                Operand::local(offset)
+            }
+            //_ => panic!("Symbol not found {} {:?}", name, symbol),
+        }
+
+        /* 
         if static_variables.get(&name).is_some() {
             return Operand::Data(name);
         }
@@ -25,13 +48,13 @@ fn fixup_pseudo(
             let offset = (stack.len() + 1) as i32 * 4;
             stack.insert(name, -offset);
             Operand::local(offset)
-        }
+        }*/
     }
 }
 
 pub(crate) fn rewrite_pseudo_with_stack(
     body: Vec<Instruction>,
-    static_variables: &HashMap<String, StaticAttr>,
+    static_variables: &HashMap<String, AsmSymTabEntry>,
 ) -> (Vec<Instruction>, usize) {
     let mut stack = HashMap::new();
     let mut new_body = Vec::new();

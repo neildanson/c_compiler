@@ -7,7 +7,7 @@ use crate::{
     error::CompilerError,
     parse::{Constant, Type},
     tacky,
-    validate::{StaticAttr, StaticInit},
+    validate::StaticInit,
 };
 
 use super::*;
@@ -77,9 +77,9 @@ impl TryFrom<tacky::Function> for Function {
 }
 
 impl Function {
-    pub fn fixup(&mut self, static_variables: &HashMap<String, StaticAttr>) {
+    pub fn fixup(&mut self, symbol_table: &HashMap<String, self::AsmSymTabEntry>) {
         if let Some(body) = &self.body {
-            let (mut body, stack_size) = rewrite_pseudo_with_stack(body.clone(), static_variables);
+            let (mut body, stack_size) = rewrite_pseudo_with_stack(body.clone(), symbol_table);
             let size = ((stack_size * 4) + 15) & !15;
             body.insert(
                 0,

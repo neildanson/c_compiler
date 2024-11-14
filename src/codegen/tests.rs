@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, hash::Hash};
 
 use crate::parse::Constant;
 
@@ -6,6 +6,11 @@ use super::*;
 
 #[test]
 fn test_replace_pseudo_with_stack() {
+
+    let mut symbol_table = HashMap::new();
+    symbol_table.insert("a".to_string(), AsmSymTabEntry::ObjEntry(AssemblyType::LongWord, false));
+    symbol_table.insert("b".to_string(), AsmSymTabEntry::ObjEntry(AssemblyType::LongWord, false));
+
     let body = vec![
         Instruction::Mov {
             assembly_type: AssemblyType::LongWord,
@@ -23,7 +28,7 @@ fn test_replace_pseudo_with_stack() {
             dst: Operand::Register(Reg::AX),
         },
     ];
-    let (new_body, stack_size) = rewrite_pseudo_with_stack(body, &HashMap::new());
+    let (new_body, stack_size) = rewrite_pseudo_with_stack(body, &symbol_table);
     assert_eq!(
         new_body,
         vec![
@@ -49,13 +54,18 @@ fn test_replace_pseudo_with_stack() {
 
 #[test]
 fn fixup_binary_pseudo_with_stack() {
+
+    let mut symbol_table = HashMap::new();
+    symbol_table.insert("a".to_string(), AsmSymTabEntry::ObjEntry(AssemblyType::LongWord, false));
+    symbol_table.insert("b".to_string(), AsmSymTabEntry::ObjEntry(AssemblyType::LongWord, false));
+
     let body = vec![Instruction::Binary {
         op: BinaryOp::Add,
         assembly_type: AssemblyType::LongWord,
         src2: Operand::Pseudo("a".to_string()),
         dst: Operand::Pseudo("b".to_string()),
     }];
-    let (new_body, _) = rewrite_pseudo_with_stack(body, &HashMap::new());
+    let (new_body, _) = rewrite_pseudo_with_stack(body, &symbol_table);
     assert_eq!(
         new_body,
         vec![Instruction::Binary {

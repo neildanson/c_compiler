@@ -675,7 +675,7 @@ impl Tacky {
         top_level.extend(Tacky::convert_static_variables_to_tacky(&static_variables));
         let result = TackyResult {
             program: Program { top_level },
-            statics: static_variables,
+            symbols: self.validate_result.symbols.clone(),
         };
         Ok(result)
     }
@@ -707,5 +707,5 @@ impl Tacky {
 #[derive(Debug)]
 pub struct TackyResult {
     pub program: Program,
-    pub statics: HashMap<String, StaticAttr>,
+    pub symbols: HashMap<String, Symbol>,
 }
