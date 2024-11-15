@@ -56,6 +56,15 @@ impl Tacky {
         Value::Var(name)
     }
 
+    fn emit_temp(&mut self, src: Value, instructions: &mut Vec<Instruction>) -> Value {
+        let dst = self.make_tacky_var(Type::Int); //TODO
+        instructions.push(Instruction::Copy {
+            src,
+            dst: dst.clone(),
+        });
+        dst
+    }
+
     fn make_label(&mut self, label: String) -> String {
         let name = format!(
             "{}{}",
@@ -85,13 +94,13 @@ impl Tacky {
 
                 e => self.emit_tacky_expr(e, instructions),
             },
-            TCExpression::FunctionCall(ident, params, _) => {
+            TCExpression::FunctionCall(ident, params, ty) => {
                 let mut args = Vec::new();
                 for p in params {
                     let arg = self.emit_tacky_expr(p, instructions)?;
                     args.push(arg);
                 }
-                let result = Value::Var(self.make_name("result"));
+                let result = self.make_tacky_var(ty.clone());
                 instructions.push(Instruction::FunCall {
                     name: ident.clone(),
                     args,
@@ -133,7 +142,7 @@ impl Tacky {
     ) -> Result<Value, CompilerError> {
         let cond = self.emit_tacky_expr(cond, instructions)?;
         let cond = self.emit_temp(cond, instructions);
-        let result = Value::Var(self.make_name("result"));
+        let result = self.make_tacky_var(Type::Int); //Result of conditional always an Int
 
         let else_label = self.make_label("e2_label".to_string());
         let end_label = self.make_label("end".to_string());
@@ -185,8 +194,8 @@ impl Tacky {
         inner: &TCExpression,
         instructions: &mut Vec<Instruction>,
     ) -> Result<Value, CompilerError> {
-        let dst_name = self.make_name("unary");
-        let dst = Value::Var(dst_name);
+       
+        let dst = self.make_tacky_var(Type::Int); //TODO
         match op {
             parse::UnaryOperator::PreIncrement => {
                 let src = self.emit_tacky_expr(inner, instructions)?;
@@ -241,16 +250,6 @@ impl Tacky {
         }
     }
 
-    fn emit_temp(&mut self, src: Value, instructions: &mut Vec<Instruction>) -> Value {
-        let name = self.make_name("tmp");
-        let dst = Value::Var(name.clone());
-        instructions.push(Instruction::Copy {
-            src,
-            dst: dst.clone(),
-        });
-        dst
-    }
-
     fn emit_tacky_binop(
         &mut self,
         op: &parse::BinaryOperator,
@@ -276,7 +275,7 @@ impl Tacky {
                 });
                 let one = Value::Constant(Constant::Int(1));
                 let zero = Value::Constant(Constant::Int(0));
-                let dst = Value::Var(self.make_name("binop"));
+                let dst = self.make_tacky_var(Type::Int);
                 instructions.push(Instruction::Copy {
                     src: one,
                     dst: dst.clone(),
@@ -311,7 +310,7 @@ impl Tacky {
                 });
                 let one = Value::Constant(Constant::Int(1));
                 let zero = Value::Constant(Constant::Int(0));
-                let dst = Value::Var(self.make_name("binop"));
+                let dst = self.make_tacky_var(Type::Int);
                 instructions.push(Instruction::Copy {
                     src: zero,
                     dst: dst.clone(),

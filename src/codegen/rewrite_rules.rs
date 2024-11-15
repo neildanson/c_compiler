@@ -25,12 +25,6 @@ fn fixup_pseudo(
                 stack.insert(name, -offset);
                 Operand::local(offset)
             }
-            (None, false) => {
-                //We dont have a symbol entry for this type. Probably _should_ do. BIG TODO
-                let offset = (stack.len() + 1) as i32 * 4;
-                stack.insert(name, -offset);
-                Operand::local(offset)
-            }
             //TODO Below seems bogus. Should only be parameters?
             (_, true) => {
                 let offset = (stack.len() + 1) as i32 * 8;

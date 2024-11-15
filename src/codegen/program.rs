@@ -59,9 +59,9 @@ impl AsmSymTabEntry {
 
 
 impl Program {
-    pub fn fixup(&mut self, static_variables: &HashMap<String, Symbol>) {
+    pub fn fixup(&mut self, symbols: &HashMap<String, Symbol>) {
         let symtab : HashMap<String, AsmSymTabEntry> =
-        static_variables.iter().map(|(k,v)| {
+        symbols.iter().map(|(k,v)| {
             (k.clone(), AsmSymTabEntry::from_symbol(v))
         }).collect();
         for top_level in &mut self.top_level {
