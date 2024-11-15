@@ -222,7 +222,7 @@ fn convert_function_call(
     for arg in stack_args.iter().rev() {
         let assembly_arg = (*arg).clone().into();
         if arg.assembly_type() == AssemblyType::QuadWord {
-            //o this doesnt really work well as we dont have the assembly type here whena variable
+            println!("Pushing quad word");
             instructions.push(Instruction::Push(assembly_arg));
         } else {
             match assembly_arg {
