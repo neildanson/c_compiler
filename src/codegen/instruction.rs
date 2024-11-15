@@ -384,10 +384,10 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
                 src2,
                 dst,
             } if let Ok(cc) = op.clone().try_into() => {
+                let assembly_type = src1.assembly_type(); 
                 let src1 = src1.into();
                 let src2 = src2.into();
                 let dst: Operand = dst.into();
-                let assembly_type = AssemblyType::LongWord; //TODO: Check if this is correct
                 Ok(vec![
                     Instruction::Cmp(assembly_type, src2, src1),
                     Instruction::Mov {
