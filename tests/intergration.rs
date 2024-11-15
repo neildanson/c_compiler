@@ -82,3 +82,8 @@ fn function_call_7_params() {
 fn function_call_8_params() {
     run_test("function_call_8_params");
 }
+
+#[test]
+fn fib() {
+    run_test("fib");
+}

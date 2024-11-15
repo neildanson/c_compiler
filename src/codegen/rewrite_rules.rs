@@ -5,13 +5,13 @@ fn fixup_pseudo(
     name: String,
     stack: &mut HashMap<String, i32>,
     parameter: bool,
-    static_variables: &HashMap<String, AsmSymTabEntry>,
+    symbols: &HashMap<String, AsmSymTabEntry>,
 ) -> Operand {
     if let Some(offset) = stack.get(&name) {
         Operand::Stack(*offset)
     } else {
         
-        let symbol = static_variables.get(&name);
+        let symbol = symbols.get(&name);
         match (symbol, parameter) {
             (Some(AsmSymTabEntry::ObjEntry(_, true)), _) => {
                 Operand::Data(name)
