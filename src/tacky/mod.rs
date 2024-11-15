@@ -611,7 +611,7 @@ impl Tacky {
                     .get(&f.name)
                     .unwrap()
                     .is_global(),
-                params: f.parameters.iter().map(|(_, name)| name.clone()).collect(),
+                params: f.parameters.iter().map(|(ty, name)| (ty.clone(), name.clone())).collect(),
                 body: Some(body),
             }))
         } else {
