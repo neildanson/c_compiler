@@ -51,7 +51,7 @@ impl AsmSymTabEntry {
     fn from_symbol(symbol:&Symbol) -> Self {
         match symbol {
             Symbol::FunType(a,_,_) => AsmSymTabEntry::FunEntry(a.defined),
-            Symbol::Value(Value::Static(a,ty)) => AsmSymTabEntry::ObjEntry(ty.into(), a.global),
+            Symbol::Value(Value::Static(_,ty)) => AsmSymTabEntry::ObjEntry(ty.into(), true), //always true?
             Symbol::Value(Value::Local(ty)) => AsmSymTabEntry::ObjEntry(ty.into(), false)
         }
     }
