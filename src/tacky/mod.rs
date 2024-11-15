@@ -51,9 +51,9 @@ impl Tacky {
         let name = self.make_name("tmp");
         self.validate_result.symbols.insert(
             name.clone(),
-            Symbol::Value(type_checker::symbol::Value::Local(ty)),
+            Symbol::Value(type_checker::symbol::Value::Local(ty.clone())),
         );
-        Value::Var(name)
+        Value::Var(name, ty)
     }
 
     fn emit_temp(&mut self, src: Value, instructions: &mut Vec<Instruction>) -> Value {
@@ -83,13 +83,13 @@ impl Tacky {
         match e {
             TCExpression::BinOp(op, e1, e2, _) => self.emit_tacky_binop(op, e1, e2, instructions),
             TCExpression::Assignment(lhs, rhs, _) => match lhs.as_ref() {
-                TCExpression::Var(v, _) => {
+                TCExpression::Var(v, ty) => {
                     let src = self.emit_tacky_expr(rhs, instructions)?;
                     instructions.push(Instruction::Copy {
                         src,
-                        dst: Value::Var(v.clone()),
+                        dst: Value::Var(v.clone(), ty.clone()),
                     });
-                    Ok(Value::Var(v.clone()))
+                    Ok(Value::Var(v.clone(), ty.clone()))
                 }
 
                 e => self.emit_tacky_expr(e, instructions),
@@ -180,7 +180,7 @@ impl Tacky {
         match f {
             TCExpression::Constant(i) => Ok(Value::Constant(*i)),
             TCExpression::Unary(op, inner, _) => self.emit_tacky_unaryop(op, inner, instructions),
-            TCExpression::Var(v, _) => Ok(Value::Var(v.clone())),
+            TCExpression::Var(v, ty) => Ok(Value::Var(v.clone(), ty.clone())),
             TCExpression::Conditional(cond, then, els, _) => {
                 self.emit_tacky_conditional(cond.as_ref(), then.as_ref(), els, instructions)
             }
@@ -362,7 +362,7 @@ impl Tacky {
             let value = value.unwrap_or(Value::Constant(d.var_type.zero_constant())); 
             instructions.push(Instruction::Copy {
                 src: value,
-                dst: Value::Var(name),
+                dst: Value::Var(name, d.var_type.clone()),
             });
         }
         Ok(())

@@ -34,7 +34,7 @@ impl From<tacky::Value> for Operand {
     fn from(value: tacky::Value) -> Self {
         match value {
             tacky::Value::Constant(imm) => Operand::Immediate { imm },
-            tacky::Value::Var(name) => Operand::Pseudo(name),
+            tacky::Value::Var(name, _) => Operand::Pseudo(name), //TOOD: Fix this
         }
     }
 }
