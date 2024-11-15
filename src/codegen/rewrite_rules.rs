@@ -10,7 +10,6 @@ fn fixup_pseudo(
     if let Some(offset) = stack.get(&name) {
         Operand::Stack(*offset)
     } else {
-        
         let symbol = symbols.get(&name);
         match (symbol, parameter) {
             (Some(AsmSymTabEntry::ObjEntry(_, true)), _) => {
@@ -26,29 +25,20 @@ fn fixup_pseudo(
                 stack.insert(name, -offset);
                 Operand::local(offset)
             }
+            (None, false) => {
+                //We dont have a symbol entry for this type. Probably _should_ do. BIG TODO
+                let offset = (stack.len() + 1) as i32 * 4;
+                stack.insert(name, -offset);
+                Operand::local(offset)
+            }
             //TODO Below seems bogus. Should only be parameters?
-            (_, _) => {
+            (_, true) => {
                 let offset = (stack.len() + 1) as i32 * 8;
                 stack.insert(name, -offset);
                 Operand::local(offset)
             }
-            //_ => panic!("Symbol not found {} {:?}", name, symbol),
+            _ => panic!("Symbol not found {} {:?}", name, symbol),
         }
-
-        /* 
-        if static_variables.get(&name).is_some() {
-            return Operand::Data(name);
-        }
-
-        if parameter {
-            let offset = (stack.len() + 1) as i32 * 8;
-            stack.insert(name, -offset);
-            Operand::local(offset)
-        } else {
-            let offset = (stack.len() + 1) as i32 * 4;
-            stack.insert(name, -offset);
-            Operand::local(offset)
-        }*/
     }
 }
 

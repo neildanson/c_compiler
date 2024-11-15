@@ -41,14 +41,14 @@ impl Tacky {
 }
 
 impl Tacky {
-    fn make_name(&mut self) -> String {
-        let name = format!("tacky{}", self.counter);
+    fn make_name(&mut self,name:&str) -> String {
+        let name = format!("tacky_{}_{}", name, self.counter);
         self.counter += 1;
         name
     }
 
     fn make_tacky_var(&mut self, ty: Type) -> Value {
-        let name = self.make_name();
+        let name = self.make_name("tmp");
         self.validate_result.symbols.insert(
             name.clone(),
             Symbol::Value(type_checker::symbol::Value::Local(ty)),
@@ -91,7 +91,7 @@ impl Tacky {
                     let arg = self.emit_tacky_expr(p, instructions)?;
                     args.push(arg);
                 }
-                let result = Value::Var(self.make_name());
+                let result = Value::Var(self.make_name("result"));
                 instructions.push(Instruction::FunCall {
                     name: ident.clone(),
                     args,
@@ -133,7 +133,7 @@ impl Tacky {
     ) -> Result<Value, CompilerError> {
         let cond = self.emit_tacky_expr(cond, instructions)?;
         let cond = self.emit_temp(cond, instructions);
-        let result = Value::Var(self.make_name());
+        let result = Value::Var(self.make_name("result"));
 
         let else_label = self.make_label("e2_label".to_string());
         let end_label = self.make_label("end".to_string());
@@ -185,7 +185,7 @@ impl Tacky {
         inner: &TCExpression,
         instructions: &mut Vec<Instruction>,
     ) -> Result<Value, CompilerError> {
-        let dst_name = self.make_name();
+        let dst_name = self.make_name("unary");
         let dst = Value::Var(dst_name);
         match op {
             parse::UnaryOperator::PreIncrement => {
@@ -242,7 +242,7 @@ impl Tacky {
     }
 
     fn emit_temp(&mut self, src: Value, instructions: &mut Vec<Instruction>) -> Value {
-        let name = self.make_name();
+        let name = self.make_name("tmp");
         let dst = Value::Var(name.clone());
         instructions.push(Instruction::Copy {
             src,
@@ -276,7 +276,7 @@ impl Tacky {
                 });
                 let one = Value::Constant(Constant::Int(1));
                 let zero = Value::Constant(Constant::Int(0));
-                let dst = Value::Var(self.make_name());
+                let dst = Value::Var(self.make_name("binop"));
                 instructions.push(Instruction::Copy {
                     src: one,
                     dst: dst.clone(),
@@ -311,7 +311,7 @@ impl Tacky {
                 });
                 let one = Value::Constant(Constant::Int(1));
                 let zero = Value::Constant(Constant::Int(0));
-                let dst = Value::Var(self.make_name());
+                let dst = Value::Var(self.make_name("binop"));
                 instructions.push(Instruction::Copy {
                     src: zero,
                     dst: dst.clone(),
