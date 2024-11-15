@@ -38,6 +38,7 @@ impl Value {
             Value::Constant(Constant::Int(_)) => AssemblyType::LongWord,
             Value::Constant(Constant::Long(_)) => AssemblyType::QuadWord,
             Value::Var(variable) => {
+                //Need to know typr of variable
                 println!("Variable: {:?}", variable);
                 AssemblyType::LongWord
             } //panic!("Unsupported assembly type for value {:?}", self),
