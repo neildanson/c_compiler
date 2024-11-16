@@ -228,6 +228,7 @@ impl TypeChecker {
         if expression_ty == ty.clone() {
             return expression.clone();
         }
+        println!("Converting {:?} to {:?}", expression_ty, ty);
         TCExpression::Cast(ty.clone(), Box::new(expression.clone()))
     }
 
@@ -411,11 +412,11 @@ impl TypeChecker {
                     .get(containing_function_name)
                     .unwrap()
                     .get_type();
+
+
                 let expression = self.type_check_expression(expression)?;
-                let expression_type = expression.get_type();
-                let common_type = Self::get_common_type(return_type.clone(), expression_type);
                 Ok(LLStatement::Return(
-                    self.convert_to(common_type, &expression),
+                    self.convert_to(return_type, &expression),
                 ))
             }
             LLStatement::If(condition, then_block, else_block) => {

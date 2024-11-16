@@ -116,11 +116,11 @@ impl Tacky {
                 } else {
                     let dst = self.make_tacky_var(ty.clone());
                     match ty {
-                        Type::Int => instructions.push(Instruction::SignExtend {
+                        Type::Int => instructions.push(Instruction::Truncate {
                             src: expr,
                             dst: dst.clone(),
                         }),
-                        Type::Long => instructions.push(Instruction::Truncate {
+                        Type::Long => instructions.push(Instruction::SignExtend {
                             src: expr,
                             dst: dst.clone(),
                         }),

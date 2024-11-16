@@ -213,7 +213,7 @@ fn convert_function_call(
     for (i, arg) in register_args.iter().enumerate() {
         let assembly_arg = (*arg).clone().into();
         instructions.push(Instruction::Mov {
-            assembly_type: AssemblyType::LongWord, //All arguments are 64 bit?
+            assembly_type: arg.assembly_type(), 
             src: assembly_arg,
             dst: Operand::arg(i),
         });
