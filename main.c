@@ -3,8 +3,8 @@ int return_truncated_long(long l) {
 }
 
 int main(void) {
-    long result = return_truncated_long(4294967298l);
-    if (result != 2l) {
+    int result = return_truncated_long(4294967298l);
+    if (result != 2) {
         return 1;
     }
 
