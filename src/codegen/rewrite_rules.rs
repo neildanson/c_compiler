@@ -17,6 +17,20 @@ fn valid_stack_location(stack_pos: i32, ty: &AssemblyType) -> i32 {
     }
 }
 
+fn fixup_large_operand(operand : Operand, instructions : &mut Vec<Instruction>) -> Operand {
+    match operand {
+        Operand::Immediate { imm } if imm > i32::MAX as i64 => {
+            instructions.push(Instruction::Mov {
+                assembly_type: AssemblyType::QuadWord,
+                src: Operand::Immediate { imm },
+                dst: Operand::Register(Reg::R10),
+            });
+            Operand::Register(Reg::R10)
+        }
+        _ => operand
+    }
+}
+
 fn fixup_pseudo(
     name: String,
     stack: &mut HashMap<String, i32>,
@@ -222,6 +236,7 @@ pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
                     continue;
                 }
                 new_body.push(instruction.clone());
+                
             }
             Instruction::Mov {
                 assembly_type: AssemblyType::QuadWord,
@@ -366,7 +381,8 @@ pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
                     continue;
                 }
 
-                if let Operand::Immediate { imm: _ } = lhs {
+                
+                if let Operand::Immediate { imm: _ } = lhs {                    
                     new_body.push(Instruction::Mov {
                         assembly_type,
                         src: lhs,
@@ -374,8 +390,8 @@ pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
                     });
                     new_body.push(Instruction::Cmp(
                         assembly_type,
-                        rhs,
                         Operand::Register(Reg::R10),
+                        rhs,
                     ));
                     continue;
                 }
@@ -418,6 +434,8 @@ pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
                 src2,
                 dst,
             } if op == BinaryOp::Mult => {
+                let src2 = fixup_large_operand(src2, &mut new_body);
+
                 if let Operand::Stack(_) = dst {
                     new_body.push(Instruction::Mov {
                         assembly_type,
@@ -437,23 +455,7 @@ pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
                     });
                     continue;
                 }
-                if let Operand::Immediate { imm: _ } = src2
-                    && assembly_type == AssemblyType::QuadWord
-                {
-                    //Nightly
-                    new_body.push(Instruction::Mov {
-                        assembly_type,
-                        src: src2,
-                        dst: Operand::Register(Reg::R10),
-                    });
-                    new_body.push(Instruction::Binary {
-                        assembly_type,
-                        op,
-                        src2: Operand::Register(Reg::R10),
-                        dst: dst.clone(),
-                    });
-                    continue;
-                }
+                
                 new_body.push(instruction.clone());
             }
             Instruction::Binary {
@@ -520,17 +522,8 @@ pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
                 new_body.push(instruction.clone());
             }
             Instruction::Push(operand) => {
-                if let Operand::Immediate { imm } = operand
-                && imm > i32::MAX as i64 {
-                    new_body.push(Instruction::Mov {
-                        assembly_type: AssemblyType::QuadWord,
-                        src: operand,
-                        dst: Operand::Register(Reg::R10),
-                    });
-                    new_body.push(Instruction::Push(Operand::Register(Reg::R10)));
-                    continue;
-                }
-                new_body.push(instruction.clone());
+                let operand = fixup_large_operand(operand, &mut new_body);
+                new_body.push(Instruction::Push(operand));
             }
             _ => {
                 new_body.push(instruction.clone())
