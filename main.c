@@ -1,12 +1,17 @@
-long add(int a, int b) {
-    return (long) a + (long) b;
+/* Make sure stack arguments are deallocated correctly after returning from a function call; also test passing variables as stack arguments */
+
+#ifdef SUPPRESS_WARNINGS
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif
+
+int lots_of_args(int a, int b, int c, int d, int e, int f, int g, int h, int i, int j, int k, int l, int m, int n, int o) {
+    return l + o;
 }
 
 int main(void) {
-    long a = add(2147483645, 2147483645);
-    /* Test returning a long from a function call */
-    if (a == 4294967290l) {
-        return 1;
+    int ret = 0;
+    for (int i = 0; i < 10000000; i = i + 1) {
+        ret = lots_of_args(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, ret, 13, 14, 15);
     }
-    return 0;
+    return ret == 150000000;
 }
