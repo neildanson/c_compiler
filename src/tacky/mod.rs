@@ -57,7 +57,7 @@ impl Tacky {
     }
 
     fn emit_temp(&mut self, src: Value, instructions: &mut Vec<Instruction>) -> Value {
-        let dst = self.make_tacky_var(Type::Int); //TODO
+        let dst = self.make_tacky_var(src.parse_type()); 
         instructions.push(Instruction::Copy {
             src,
             dst: dst.clone(),

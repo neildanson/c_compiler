@@ -49,6 +49,13 @@ impl Value {
             Value::Var(_, ty) => ty.into(),
         }
     }
+    pub fn parse_type(&self) -> Type {
+        match self {
+            Value::Constant(Constant::Int(_)) => Type::Int,
+            Value::Constant(Constant::Long(_)) => Type::Long,
+            Value::Var(_, ty) => ty.clone(),
+        }
+    }
 }
 
 #[derive(Debug, PartialEq, Clone)]
