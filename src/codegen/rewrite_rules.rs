@@ -446,11 +446,12 @@ pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
                         src: src2,
                         dst: Operand::Register(Reg::R10),
                     });
-                    new_body.push(Instruction::Cmp(
+                    new_body.push(Instruction::Binary {
                         assembly_type,
-                        dst.clone(),
-                        Operand::Register(Reg::R10),
-                    ));
+                        op,
+                        src2 : Operand::Register(Reg::R10),
+                        dst : dst.clone(),
+                    });
                     continue;
                 }
                 new_body.push(instruction.clone());
@@ -489,11 +490,12 @@ pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
                                 src: src2,
                                 dst: Operand::Register(Reg::R10),
                             });
-                            new_body.push(Instruction::Cmp(
+                            new_body.push(Instruction::Binary {
                                 assembly_type,
-                                dst.clone(),
-                                Operand::Register(Reg::R10),
-                            ));
+                                op,
+                                src2 : Operand::Register(Reg::R10),
+                                dst : dst.clone(),
+                            });
                             continue;
                         }
                     }
