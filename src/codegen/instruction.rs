@@ -337,10 +337,10 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
                 src2,
                 dst,
             } => {
+                let assembly_type = src1.assembly_type(); //TODO: Check if this is correct
                 let src1 = src1.into();
                 let src2 = src2.into();
                 let dst = dst.into();
-                let assembly_type = AssemblyType::LongWord; //TODO: Check if this is correct
                 Ok(vec![
                     Instruction::Mov {
                         assembly_type,
@@ -365,10 +365,10 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
                 src2,
                 dst,
             } => {
+                let assembly_type = src1.assembly_type(); //TODO: Check if this is correct
                 let src1 = src1.into();
                 let src2 = src2.into();
                 let dst = dst.into();
-                let assembly_type = AssemblyType::LongWord; //TODO: Check if this is correct
                 Ok(vec![
                     Instruction::Mov {
                         assembly_type,
@@ -416,11 +416,11 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
                 src2,
                 dst,
             } => {
+                let assembly_type = src1.assembly_type(); //TODO: Check if this is correct
                 let src1 = src1.into();
                 let src2 = src2.into();
                 let dst: Operand = dst.into();
                 let op = op.try_into()?;
-                let assembly_type = AssemblyType::LongWord; //TODO: Check if this is correct
                 Ok(vec![
                     Instruction::Mov {
                         assembly_type,

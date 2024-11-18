@@ -1,18 +1,14 @@
-/* Test out different, equivalent ways to declare the same identifier  */
+/* Test initializing and updating a long global variable */
+static long foo = 4294967290l;
 
-int main(void) {
-    /* Several different ways to declare local long variables */
-
-    /* make sure we can use long type specifier in for loop initializer
-     * i is 2^40 so this loop should have 41 iterations
-    */
-   int sum = 0;
-    for (long i = 1099511627776l; i > 0; i = i / 2) {
-        sum = sum + 1;
-    }
-
-    if (sum != 41) {
-        return 5;
+int main(void)
+{
+    if (foo + 5l == 4294967295l)
+    {
+        // assign a constant that can't fit in 32 bits; tests assembly rewrite rule
+        foo = 1152921504606846988l;
+        if (foo == 1152921504606846988l)
+            return 1;
     }
     return 0;
 }
