@@ -50,7 +50,7 @@ impl Operand {
         if offset < ARG_REGISTERS.len() {
             Operand::Register(ARG_REGISTERS[offset].clone())
         } else {
-            Operand::Stack(((offset - ARG_REGISTERS.len() + 2) * 8) as i32) // 8 bytes per argument
+            Operand::Stack(((offset - ARG_REGISTERS.len() + 2) * AssemblyType::QuadWord.size()) as i32) // 8 bytes per argument
         }
     }
 }

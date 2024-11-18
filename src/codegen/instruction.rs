@@ -13,6 +13,15 @@ pub enum AssemblyType {
     QuadWord, //64 bit
 }
 
+impl AssemblyType {
+    pub fn size(&self) -> usize {
+        match self {
+            AssemblyType::LongWord => 4,
+            AssemblyType::QuadWord => 8,
+        }
+    }
+}
+
 impl From<&Type> for AssemblyType {
     fn from(ty: &Type) -> Self {
         match ty {

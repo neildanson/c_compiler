@@ -11,23 +11,20 @@ fn fixup_pseudo(
         Operand::Stack(*offset)
     } else {
         let symbol = symbols.get(&name);
+        //TODO do this bit better as it's O(n)
+        let stack_pos = stack.iter().map(|(_k, v)| -v).max().unwrap_or(0);
+
         match (symbol, parameter) {
             (Some(AsmSymTabEntry::ObjEntry(_, true)), _) => {
                 Operand::Data(name)
             }
-            (Some(AsmSymTabEntry::ObjEntry(AssemblyType::LongWord, false)), _) => {
-                let offset = (stack.len() + 1) as i32 * 4;
+            (Some(AsmSymTabEntry::ObjEntry(ty, false)), _) => {
+                let offset = stack_pos + (ty.size() as i32);
                 stack.insert(name, -offset);
                 Operand::local(offset)
             }
-            (Some(AsmSymTabEntry::ObjEntry(AssemblyType::QuadWord, false)), _) => {
-                let offset = (stack.len() + 1) as i32 * 8;
-                stack.insert(name, -offset);
-                Operand::local(offset)
-            }
-            //TODO Below seems bogus. Should only be parameters?
             (_, true) => {
-                let offset = (stack.len() + 1) as i32 * 8;
+                let offset = stack_pos + (AssemblyType::QuadWord.size() as i32);
                 stack.insert(name, -offset);
                 Operand::local(offset)
             }
@@ -166,8 +163,8 @@ pub(crate) fn rewrite_pseudo_with_stack(
             any_other => new_body.push(any_other),
         }
     }
-
-    (new_body, stack.len())
+    let stack_pos : i32 = stack.iter().map(|(_k, v)| -v).max().unwrap_or(0);
+    (new_body, stack_pos.abs() as usize)
 }
 
 pub(crate) fn fixup_stack_operations(body: Vec<Instruction>) -> Vec<Instruction> {
