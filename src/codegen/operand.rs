@@ -1,11 +1,11 @@
-use crate::{parse::Constant, tacky};
+use crate::tacky;
 
 use super::{AssemblyType, Reg};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Operand {
     Register(Reg),
-    Immediate { imm: Constant },
+    Immediate { imm: i64 },
     Pseudo(String),
     Stack(i32),
     Data(String),
@@ -32,7 +32,7 @@ impl Operand {
 impl From<tacky::Value> for Operand {
     fn from(value: tacky::Value) -> Self {
         match value {
-            tacky::Value::Constant(imm) => Operand::Immediate { imm },
+            tacky::Value::Constant(imm) => Operand::Immediate { imm: imm.as_i64() },
             tacky::Value::Var(name, _) => Operand::Pseudo(name), //TODO: Fix this
         }
     }

@@ -1,6 +1,22 @@
 use super::*;
 use std::collections::HashMap;
 
+fn valid_stack_location(stack_pos: i32, ty: &AssemblyType) -> i32 {
+    match ty {
+        AssemblyType::LongWord => stack_pos,
+        AssemblyType::QuadWord => {
+            if stack_pos % 8 == 0 {
+                println!("Stack is aligned at {}", stack_pos);
+                stack_pos
+            } else {
+                let x = stack_pos + 8 - (stack_pos % 8);
+                println!("Adjusting stack to {} from {}", x, stack_pos);
+                x
+            }
+        }
+    }
+}
+
 fn fixup_pseudo(
     name: String,
     stack: &mut HashMap<String, i32>,
@@ -18,11 +34,13 @@ fn fixup_pseudo(
             (Some(AsmSymTabEntry::ObjEntry(_, true)), _) => Operand::Data(name),
             (Some(AsmSymTabEntry::ObjEntry(ty, false)), _) => {
                 let offset = stack_pos + (ty.size() as i32);
+                let offset = valid_stack_location(offset, ty);
                 stack.insert(name, -offset);
                 Operand::local(offset)
             }
             (_, true) => {
                 let offset = stack_pos + (AssemblyType::QuadWord.size() as i32);
+                let offset = valid_stack_location(offset, &AssemblyType::QuadWord);
                 stack.insert(name, -offset);
                 Operand::local(offset)
             }
@@ -165,7 +183,7 @@ pub(crate) fn rewrite_pseudo_with_stack(
     (new_body, stack_pos.abs() as usize)
 }
 
-pub(crate) fn fixup_stack_operations(body: Vec<Instruction>) -> Vec<Instruction> {
+pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
     let mut new_body = Vec::new();
     for instruction in body {
         match instruction.clone() {
@@ -174,20 +192,34 @@ pub(crate) fn fixup_stack_operations(body: Vec<Instruction>) -> Vec<Instruction>
                 src,
                 dst,
             } => {
+                let assembly_type = AssemblyType::LongWord;
                 if let Operand::Stack(_) | Operand::Data(_) = src {
                     if let Operand::Stack(_) | Operand::Data(_) = dst {
                         new_body.push(Instruction::Mov {
-                            assembly_type: AssemblyType::LongWord,
+                            assembly_type,
                             src,
                             dst: Operand::Register(Reg::R10),
                         });
                         new_body.push(Instruction::Mov {
-                            assembly_type: AssemblyType::LongWord,
+                            assembly_type,
                             src: Operand::Register(Reg::R10),
                             dst,
                         });
                         continue;
                     }
+                }
+                if let Operand::Immediate { imm } = src
+                    && imm > i32::MAX as i64
+                {
+                    let src = Operand::Immediate {
+                        imm: imm as i32 as i64,
+                    };
+                    new_body.push(Instruction::Mov {
+                        assembly_type,
+                        src,
+                        dst,
+                    });
+                    continue;
                 }
                 new_body.push(instruction.clone());
             }
@@ -227,21 +259,40 @@ pub(crate) fn fixup_stack_operations(body: Vec<Instruction>) -> Vec<Instruction>
                 }
                 new_body.push(instruction.clone());
             }
-            Instruction::Movsx {
-                //TODO this is wrong
-                src,
-                dst,
-            } => {
+            Instruction::Movsx { src, dst } => {
+                if let Operand::Immediate { imm: _ } = src {
+                    new_body.push(Instruction::Mov {
+                        assembly_type: AssemblyType::LongWord, //Should use type from imm
+                        src,
+                        dst: Operand::Register(Reg::R10),
+                    });
+
+                    new_body.push(Instruction::Movsx {
+                        src: Operand::Register(Reg::R10),
+                        dst: Operand::Register(Reg::R11),
+                    });
+                    new_body.push(Instruction::Mov {
+                        assembly_type: AssemblyType::QuadWord,
+                        src: Operand::Register(Reg::R11),
+                        dst,
+                    });
+                    continue;
+                }
+
                 if let Operand::Stack(_) | Operand::Data(_) = src {
                     if let Operand::Stack(_) | Operand::Data(_) = dst {
                         new_body.push(Instruction::Mov {
-                            assembly_type: AssemblyType::QuadWord,
+                            assembly_type: AssemblyType::LongWord,
                             src,
                             dst: Operand::Register(Reg::R10),
                         });
+                        new_body.push(Instruction::Movsx {
+                            src: Operand::Register(Reg::R10),
+                            dst: Operand::Register(Reg::R11),
+                        });
                         new_body.push(Instruction::Mov {
                             assembly_type: AssemblyType::QuadWord,
-                            src: Operand::Register(Reg::R10),
+                            src: Operand::Register(Reg::R11),
                             dst,
                         });
                         continue;
@@ -386,7 +437,10 @@ pub(crate) fn fixup_stack_operations(body: Vec<Instruction>) -> Vec<Instruction>
                     });
                     continue;
                 }
-                if let Operand::Immediate { imm: _ } = src2 && assembly_type == AssemblyType::QuadWord { //Nightly
+                if let Operand::Immediate { imm: _ } = src2
+                    && assembly_type == AssemblyType::QuadWord
+                {
+                    //Nightly
                     new_body.push(Instruction::Mov {
                         assembly_type,
                         src: src2,
@@ -425,8 +479,11 @@ pub(crate) fn fixup_stack_operations(body: Vec<Instruction>) -> Vec<Instruction>
                                 continue;
                             }
                         }
-                        
-                        if let Operand::Immediate { imm: _ } = src2 && assembly_type == AssemblyType::QuadWord { //Nightly
+
+                        if let Operand::Immediate { imm: _ } = src2
+                            && assembly_type == AssemblyType::QuadWord
+                        {
+                            //Nightly
                             new_body.push(Instruction::Mov {
                                 assembly_type,
                                 src: src2,
@@ -439,12 +496,9 @@ pub(crate) fn fixup_stack_operations(body: Vec<Instruction>) -> Vec<Instruction>
                             ));
                             continue;
                         }
-                         
                     }
                     _ => continue,
                 }
-
-                
 
                 new_body.push(instruction.clone());
             }
@@ -463,7 +517,7 @@ pub(crate) fn fixup_stack_operations(body: Vec<Instruction>) -> Vec<Instruction>
                 }
                 new_body.push(instruction.clone());
             }
-            _ => new_body.push(instruction),
+            _ => new_body.push(instruction.clone()),
         }
     }
     new_body

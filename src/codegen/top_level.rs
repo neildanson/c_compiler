@@ -3,12 +3,7 @@ use std::{
     fmt::{Display, Formatter},
 };
 
-use crate::{
-    error::CompilerError,
-    parse::{Constant, Type},
-    tacky,
-    validate::StaticInit,
-};
+use crate::{error::CompilerError, parse::Type, tacky, validate::StaticInit};
 
 use super::*;
 
@@ -80,7 +75,7 @@ impl Function {
     pub fn fixup(&mut self, symbol_table: &HashMap<String, self::AsmSymTabEntry>) {
         if let Some(body) = &self.body {
             let (body, stack_size) = rewrite_pseudo_with_stack(body.clone(), symbol_table);
-            let mut body = fixup_stack_operations(body);
+            let mut body = fixup_stack_operations(&body);
             let size = ((stack_size * 4) + 15) & !15;
 
             body.insert(
@@ -88,9 +83,7 @@ impl Function {
                 Instruction::Binary {
                     op: BinaryOp::Sub,
                     assembly_type: AssemblyType::QuadWord,
-                    src2: Operand::Immediate {
-                        imm: Constant::Long(size as i64),
-                    },
+                    src2: Operand::Immediate { imm: size as i64 },
                     dst: Operand::Register(Reg::SP),
                 },
             ); //* 4 as ints are 4 bytes */

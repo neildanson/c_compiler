@@ -182,4 +182,11 @@ impl Constant {
             Constant::Long(_) => Type::Long,
         }
     }
+
+    pub fn as_i64(&self) -> i64 {
+        match self {
+            Constant::Int(val) => *val as i64,
+            Constant::Long(val) => *val,
+        }
+    }
 }
