@@ -6,12 +6,9 @@ fn valid_stack_location(stack_pos: i32, ty: &AssemblyType) -> i32 {
         AssemblyType::LongWord => stack_pos,
         AssemblyType::QuadWord => {
             if stack_pos % 8 == 0 {
-                println!("Stack is aligned at {}", stack_pos);
                 stack_pos
             } else {
-                let x = stack_pos + 8 - (stack_pos % 8);
-                println!("Adjusting stack to {} from {}", x, stack_pos);
-                x
+                stack_pos + 8 - (stack_pos % 8)
             }
         }
     }
@@ -466,6 +463,7 @@ pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
             } => {
                 match op {
                     BinaryOp::Add | BinaryOp::Sub => {
+                        let src2 = fixup_large_operand(src2, &mut new_body);
                         if let Operand::Stack(_) | Operand::Data(_) = dst {
                             if let Operand::Stack(_) | Operand::Data(_) = src2 {
                                 new_body.push(Instruction::Mov {
@@ -482,7 +480,14 @@ pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
                                 continue;
                             }
                         }
+                        new_body.push(Instruction::Binary {
+                            op,
+                            assembly_type,
+                            src2,
+                            dst,
+                        });
 
+                        /*
                         if let Operand::Immediate { imm: _ } = src2
                             && assembly_type == AssemblyType::QuadWord
                         {
@@ -499,12 +504,10 @@ pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
                                 dst: dst.clone(),
                             });
                             continue;
-                        }
+                        }*/
                     }
                     _ => continue,
                 }
-
-                new_body.push(instruction.clone());
             }
             Instruction::Idiv { assembly_type, src } => {
                 if let Operand::Immediate { imm: _ } = src {

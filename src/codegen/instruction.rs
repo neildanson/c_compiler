@@ -317,12 +317,13 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
                 src,
                 dst,
             } => {
+                let assembly_type = src.assembly_type();
                 let src = src.into();
                 let dst: Operand = dst.into();
                 Ok(vec![
                     Instruction::Cmp(AssemblyType::LongWord, Operand::Immediate { imm: 0 }, src),
                     Instruction::Mov {
-                        assembly_type: AssemblyType::LongWord, //TODO: Check if this is correct
+                        assembly_type: assembly_type,
                         src: Operand::Immediate { imm: 0 },
                         dst: dst.clone(),
                     },
@@ -330,16 +331,17 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
                 ])
             }
             tacky::Instruction::Unary { op, src, dst } => {
+                let assembly_type = dst.assembly_type();
                 let src = src.into();
                 let dst: Operand = dst.into();
                 Ok(vec![
                     Instruction::Mov {
-                        assembly_type: AssemblyType::LongWord, //TODO: Check if this is correct
+                        assembly_type,
                         src,
                         dst: dst.clone(),
                     },
                     Instruction::Unary {
-                        assembly_type: AssemblyType::LongWord,
+                        assembly_type,
                         op: op.into(),
                         dst,
                     },

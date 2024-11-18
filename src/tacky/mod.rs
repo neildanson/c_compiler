@@ -194,7 +194,7 @@ impl Tacky {
         inner: &TCExpression,
         instructions: &mut Vec<Instruction>,
     ) -> Result<Value, CompilerError> {
-        let dst = self.make_tacky_var(Type::Int); //TODO
+        let dst = self.make_tacky_var(inner.get_type()); 
         match op {
             parse::UnaryOperator::PreIncrement => {
                 let src = self.emit_tacky_expr(inner, instructions)?;
