@@ -519,7 +519,22 @@ pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
                 }
                 new_body.push(instruction.clone());
             }
-            _ => new_body.push(instruction.clone()),
+            Instruction::Push(operand) => {
+                if let Operand::Immediate { imm } = operand
+                && imm > i32::MAX as i64 {
+                    new_body.push(Instruction::Mov {
+                        assembly_type: AssemblyType::QuadWord,
+                        src: operand,
+                        dst: Operand::Register(Reg::R10),
+                    });
+                    new_body.push(Instruction::Push(Operand::Register(Reg::R10)));
+                    continue;
+                }
+                new_body.push(instruction.clone());
+            }
+            _ => {
+                new_body.push(instruction.clone())
+            },
         }
     }
     new_body
