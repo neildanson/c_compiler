@@ -28,7 +28,7 @@ fn fixup_pseudo(
     } else {
         let symbol = symbols.get(&name);
         //TODO do this bit better as it's O(n)
-        let stack_pos = stack.iter().map(|(_k, v)| -v).max().unwrap_or(0);
+        let stack_pos = stack.values().map(|v| -v).max().unwrap_or(0);
 
         match (symbol, parameter) {
             (Some(AsmSymTabEntry::ObjEntry(_, true)), _) => Operand::Data(name),
@@ -179,8 +179,8 @@ pub(crate) fn rewrite_pseudo_with_stack(
             any_other => new_body.push(any_other),
         }
     }
-    let stack_pos: i32 = stack.iter().map(|(_k, v)| -v).max().unwrap_or(0);
-    (new_body, stack_pos.abs() as usize)
+    let stack_pos: i32 = stack.values().map(|v| -v).max().unwrap_or(0);
+    (new_body, stack_pos.unsigned_abs() as usize)
 }
 
 pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
@@ -449,8 +449,8 @@ pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
                     new_body.push(Instruction::Binary {
                         assembly_type,
                         op,
-                        src2 : Operand::Register(Reg::R10),
-                        dst : dst.clone(),
+                        src2: Operand::Register(Reg::R10),
+                        dst: dst.clone(),
                     });
                     continue;
                 }
@@ -493,8 +493,8 @@ pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
                             new_body.push(Instruction::Binary {
                                 assembly_type,
                                 op,
-                                src2 : Operand::Register(Reg::R10),
-                                dst : dst.clone(),
+                                src2: Operand::Register(Reg::R10),
+                                dst: dst.clone(),
                             });
                             continue;
                         }

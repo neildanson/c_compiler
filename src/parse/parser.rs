@@ -542,11 +542,11 @@ fn parse_constant(constant: &str) -> Result<Constant> {
     };
 
     let v = constant.parse::<u64>()?;
-    if v as i64 > i64::MAX {
+    if v > i64::MAX as u64 {
         return Err(CompilerError::Parse("Constant out of range".to_string()).into());
     }
 
-    if !is_long && v as i32 <= i32::MAX - 1 {
+    if !is_long && (v as i32) < i32::MAX {
         Ok(Constant::Int(v as i32))
     } else {
         Ok(Constant::Long(v as i64))
