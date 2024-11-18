@@ -79,8 +79,10 @@ impl TryFrom<tacky::Function> for Function {
 impl Function {
     pub fn fixup(&mut self, symbol_table: &HashMap<String, self::AsmSymTabEntry>) {
         if let Some(body) = &self.body {
-            let (mut body, stack_size) = rewrite_pseudo_with_stack(body.clone(), symbol_table);
+            let (body, stack_size) = rewrite_pseudo_with_stack(body.clone(), symbol_table);
+            let mut body = fixup_stack_operations(body);
             let size = ((stack_size * 4) + 15) & !15;
+
             body.insert(
                 0,
                 Instruction::Binary {
@@ -92,7 +94,7 @@ impl Function {
                     dst: Operand::Register(Reg::SP),
                 },
             ); //* 4 as ints are 4 bytes */
-            self.body = Some(fixup_stack_operations(body));
+            self.body = Some(body);
         }
     }
 }

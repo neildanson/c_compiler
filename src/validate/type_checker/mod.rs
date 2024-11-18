@@ -228,7 +228,6 @@ impl TypeChecker {
         if expression_ty == ty.clone() {
             return expression.clone();
         }
-        println!("Converting {:?} to {:?}", expression_ty, ty);
         TCExpression::Cast(ty.clone(), Box::new(expression.clone()))
     }
 

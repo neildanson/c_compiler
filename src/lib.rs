@@ -1,4 +1,5 @@
 #![feature(if_let_guard)]
+#![feature(let_chains)]
 pub mod codegen;
 pub mod error;
 pub mod lex;
