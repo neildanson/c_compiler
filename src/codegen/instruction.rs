@@ -456,7 +456,7 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
                 Instruction::JmpCC(ConditionCode::NE, target),
             ]),
             tacky::Instruction::Copy { src, dst } => Ok(vec![Instruction::Mov {
-                assembly_type: AssemblyType::LongWord, //TODO: Check if this is correct
+                assembly_type: dst.assembly_type(),
                 src: src.into(),
                 dst: dst.into(),
             }]),
