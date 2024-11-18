@@ -6,10 +6,15 @@ use super::*;
 
 #[test]
 fn test_replace_pseudo_with_stack() {
-
     let mut symbol_table = HashMap::new();
-    symbol_table.insert("a".to_string(), AsmSymTabEntry::ObjEntry(AssemblyType::LongWord, false));
-    symbol_table.insert("b".to_string(), AsmSymTabEntry::ObjEntry(AssemblyType::LongWord, false));
+    symbol_table.insert(
+        "a".to_string(),
+        AsmSymTabEntry::ObjEntry(AssemblyType::LongWord, false),
+    );
+    symbol_table.insert(
+        "b".to_string(),
+        AsmSymTabEntry::ObjEntry(AssemblyType::LongWord, false),
+    );
 
     let body = vec![
         Instruction::Mov {
@@ -54,10 +59,15 @@ fn test_replace_pseudo_with_stack() {
 
 #[test]
 fn fixup_binary_pseudo_with_stack() {
-
     let mut symbol_table = HashMap::new();
-    symbol_table.insert("a".to_string(), AsmSymTabEntry::ObjEntry(AssemblyType::LongWord, false));
-    symbol_table.insert("b".to_string(), AsmSymTabEntry::ObjEntry(AssemblyType::LongWord, false));
+    symbol_table.insert(
+        "a".to_string(),
+        AsmSymTabEntry::ObjEntry(AssemblyType::LongWord, false),
+    );
+    symbol_table.insert(
+        "b".to_string(),
+        AsmSymTabEntry::ObjEntry(AssemblyType::LongWord, false),
+    );
 
     let body = vec![Instruction::Binary {
         op: BinaryOp::Add,

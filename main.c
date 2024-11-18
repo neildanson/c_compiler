@@ -1,14 +1,23 @@
-/* Test initializing and updating a long global variable */
-static long foo = 4294967290l;
+long sign_extend(int i, long expected) {
+    long extended = (long) i;
+    return (extended == expected);
+}
 
-int main(void)
-{
-    if (foo + 5l == 4294967295l)
-    {
-        // assign a constant that can't fit in 32 bits; tests assembly rewrite rule
-        foo = 1152921504606846988l;
-        if (foo == 1152921504606846988l)
-            return 1;
+
+int main(void) {
+    /* Converting a positive or negative int to a long preserves its value */
+    if (!sign_extend(10, 10l)) {
+        return 1;
+    }
+
+    if (!sign_extend(-10, -10l)) {
+        return 2;
+    }
+
+    /* sign-extend a constant to make sure we've implemented rewrite rule for movsx correctly */
+    long l = (long) 100;
+    if (l != 100l) {
+        return 3;
     }
     return 0;
 }

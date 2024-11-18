@@ -46,7 +46,7 @@ impl Value {
         match self {
             Value::Constant(Constant::Int(_)) => AssemblyType::LongWord,
             Value::Constant(Constant::Long(_)) => AssemblyType::QuadWord,
-            Value::Var(_, ty) => ty.into()
+            Value::Var(_, ty) => ty.into(),
         }
     }
 }
@@ -113,7 +113,13 @@ impl Display for Instruction {
                 src,
                 dst,
             } => {
-                write!(f, "\tmov{} {}, {}", assembly_type, src.asm(*assembly_type), dst.asm(*assembly_type))
+                write!(
+                    f,
+                    "\tmov{} {}, {}",
+                    assembly_type,
+                    src.asm(*assembly_type),
+                    dst.asm(*assembly_type)
+                )
             }
             Instruction::Ret => {
                 writeln!(f, "\tmovq %rbp, %rsp")?;
@@ -143,10 +149,23 @@ impl Display for Instruction {
                 src2,
                 dst,
             } => {
-                write!(f, "\t{}{} {}, {}", op, assembly_type, src2.asm(*assembly_type), dst.asm(*assembly_type))
+                write!(
+                    f,
+                    "\t{}{} {}, {}",
+                    op,
+                    assembly_type,
+                    src2.asm(*assembly_type),
+                    dst.asm(*assembly_type)
+                )
             }
             Instruction::Cmp(assembly_type, src1, src2) => {
-                write!(f, "\tcmp{} {}, {}", assembly_type, src1.asm(*assembly_type), src2.asm(*assembly_type))
+                write!(
+                    f,
+                    "\tcmp{} {}, {}",
+                    assembly_type,
+                    src1.asm(*assembly_type),
+                    src2.asm(*assembly_type)
+                )
             }
             Instruction::Jmp(target) => {
                 write!(f, "\tjmp {}", format_label(target))
@@ -167,9 +186,7 @@ impl Display for Instruction {
             }
             Instruction::Push(operand) => {
                 let operand = match operand {
-                    Operand::Register(register) => {
-                        register.asm(Some(AssemblyType::QuadWord))
-                    }
+                    Operand::Register(register) => register.asm(Some(AssemblyType::QuadWord)),
                     d => d.asm(AssemblyType::QuadWord),
                 };
                 write!(f, "\tpushq {}", operand)
@@ -185,7 +202,12 @@ impl Display for Instruction {
                 write!(f, "\tpopq {}", register.asm(Some(AssemblyType::QuadWord)))
             }
             Instruction::Movsx { src, dst } => {
-                write!(f, "\tmovsxl {}, {}", src.asm(AssemblyType::LongWord), dst.asm(AssemblyType::QuadWord))
+                write!(
+                    f,
+                    "\tmovsxl {}, {}",
+                    src.asm(AssemblyType::LongWord),
+                    dst.asm(AssemblyType::QuadWord)
+                )
             }
         }
     }
@@ -222,7 +244,7 @@ fn convert_function_call(
     for (i, arg) in register_args.iter().enumerate() {
         let assembly_arg = (*arg).clone().into();
         instructions.push(Instruction::Mov {
-            assembly_type: arg.assembly_type(), 
+            assembly_type: arg.assembly_type(),
             src: assembly_arg,
             dst: Operand::arg(i),
         });
@@ -393,7 +415,7 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
                 src2,
                 dst,
             } if let Ok(cc) = op.clone().try_into() => {
-                let assembly_type = src1.assembly_type(); 
+                let assembly_type = src1.assembly_type();
                 let src1 = src1.into();
                 let src2 = src2.into();
                 let dst: Operand = dst.into();

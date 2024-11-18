@@ -108,7 +108,7 @@ impl Display for SemanticAnalysisError {
             }
             SemanticAnalysisError::InvalidCastInAssignment => {
                 write!(f, "Invalid cast in assignment")
-            },
+            }
             SemanticAnalysisError::ConflictingTypeDefinition(s) => {
                 write!(f, "Conflicting type definitions for {}", s)
             }

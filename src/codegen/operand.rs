@@ -11,9 +11,8 @@ pub enum Operand {
     Data(String),
 }
 
-
 impl Operand {
-    pub fn asm(&self, assembly_type : AssemblyType) -> String {
+    pub fn asm(&self, assembly_type: AssemblyType) -> String {
         match self {
             Operand::Register(reg) => reg.asm(Some(assembly_type)),
             Operand::Immediate { imm } => format!("${}", imm),
@@ -50,7 +49,9 @@ impl Operand {
         if offset < ARG_REGISTERS.len() {
             Operand::Register(ARG_REGISTERS[offset].clone())
         } else {
-            Operand::Stack(((offset - ARG_REGISTERS.len() + 2) * AssemblyType::QuadWord.size()) as i32) // 8 bytes per argument
+            Operand::Stack(
+                ((offset - ARG_REGISTERS.len() + 2) * AssemblyType::QuadWord.size()) as i32,
+            ) // 8 bytes per argument
         }
     }
 }

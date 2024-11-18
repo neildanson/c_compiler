@@ -413,7 +413,6 @@ impl TypeChecker {
                     .unwrap()
                     .get_type();
 
-
                 let expression = self.type_check_expression(expression)?;
                 Ok(LLStatement::Return(
                     self.convert_to(return_type, &expression),

@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use super::*;
+use std::collections::HashMap;
 
 fn fixup_pseudo(
     name: String,
@@ -15,9 +15,7 @@ fn fixup_pseudo(
         let stack_pos = stack.iter().map(|(_k, v)| -v).max().unwrap_or(0);
 
         match (symbol, parameter) {
-            (Some(AsmSymTabEntry::ObjEntry(_, true)), _) => {
-                Operand::Data(name)
-            }
+            (Some(AsmSymTabEntry::ObjEntry(_, true)), _) => Operand::Data(name),
             (Some(AsmSymTabEntry::ObjEntry(ty, false)), _) => {
                 let offset = stack_pos + (ty.size() as i32);
                 stack.insert(name, -offset);
@@ -163,7 +161,7 @@ pub(crate) fn rewrite_pseudo_with_stack(
             any_other => new_body.push(any_other),
         }
     }
-    let stack_pos : i32 = stack.iter().map(|(_k, v)| -v).max().unwrap_or(0);
+    let stack_pos: i32 = stack.iter().map(|(_k, v)| -v).max().unwrap_or(0);
     (new_body, stack_pos.abs() as usize)
 }
 
@@ -214,19 +212,17 @@ pub(crate) fn fixup_stack_operations(body: Vec<Instruction>) -> Vec<Instruction>
                     }
                 }
                 if let Operand::Immediate { imm: _ } = src {
-                    if let Operand::Stack(_) = dst {
-                        new_body.push(Instruction::Mov {
-                            assembly_type: AssemblyType::QuadWord,
-                            src,
-                            dst: Operand::Register(Reg::R10),
-                        });
-                        new_body.push(Instruction::Mov {
-                            assembly_type: AssemblyType::QuadWord,
-                            src: Operand::Register(Reg::R10),
-                            dst,
-                        });
-                        continue;
-                    }
+                    new_body.push(Instruction::Mov {
+                        assembly_type: AssemblyType::QuadWord,
+                        src,
+                        dst: Operand::Register(Reg::R10),
+                    });
+                    new_body.push(Instruction::Mov {
+                        assembly_type: AssemblyType::QuadWord,
+                        src: Operand::Register(Reg::R10),
+                        dst,
+                    });
+                    continue;
                 }
                 new_body.push(instruction.clone());
             }
@@ -251,19 +247,17 @@ pub(crate) fn fixup_stack_operations(body: Vec<Instruction>) -> Vec<Instruction>
                     }
                 }
                 if let Operand::Immediate { imm: _ } = src {
-                    if let Operand::Stack(_) = dst {
-                        new_body.push(Instruction::Mov {
-                            assembly_type: AssemblyType::QuadWord,
-                            src,
-                            dst: Operand::Register(Reg::R10),
-                        });
-                        new_body.push(Instruction::Mov {
-                            assembly_type: AssemblyType::QuadWord,
-                            src: Operand::Register(Reg::R10),
-                            dst,
-                        });
-                        continue;
-                    }
+                    new_body.push(Instruction::Mov {
+                        assembly_type: AssemblyType::QuadWord,
+                        src,
+                        dst: Operand::Register(Reg::R10),
+                    });
+                    new_body.push(Instruction::Mov {
+                        assembly_type: AssemblyType::QuadWord,
+                        src: Operand::Register(Reg::R10),
+                        dst,
+                    });
+                    continue;
                 }
 
                 if let Operand::Immediate { imm: _ } = src {
@@ -285,6 +279,52 @@ pub(crate) fn fixup_stack_operations(body: Vec<Instruction>) -> Vec<Instruction>
                         });
                         continue;
                     }
+                }
+                new_body.push(instruction.clone());
+            }
+            Instruction::Cmp(AssemblyType::QuadWord, lhs, rhs) => {
+                let assembly_type = AssemblyType::QuadWord;
+                if let Operand::Stack(_) | Operand::Data(_) = lhs {
+                    if let Operand::Stack(_) | Operand::Data(_) = rhs {
+                        new_body.push(Instruction::Mov {
+                            assembly_type,
+                            src: lhs,
+                            dst: Operand::Register(Reg::R10),
+                        });
+                        new_body.push(Instruction::Cmp(
+                            assembly_type,
+                            Operand::Register(Reg::R10),
+                            rhs,
+                        ));
+                        continue;
+                    }
+                }
+                if let Operand::Immediate { imm: _ } = rhs {
+                    new_body.push(Instruction::Mov {
+                        assembly_type,
+                        src: rhs,
+                        dst: Operand::Register(Reg::R10),
+                    });
+                    new_body.push(Instruction::Cmp(
+                        assembly_type,
+                        lhs,
+                        Operand::Register(Reg::R10),
+                    ));
+                    continue;
+                }
+
+                if let Operand::Immediate { imm: _ } = lhs {
+                    new_body.push(Instruction::Mov {
+                        assembly_type,
+                        src: lhs,
+                        dst: Operand::Register(Reg::R10),
+                    });
+                    new_body.push(Instruction::Cmp(
+                        assembly_type,
+                        rhs,
+                        Operand::Register(Reg::R10),
+                    ));
+                    continue;
                 }
                 new_body.push(instruction.clone());
             }

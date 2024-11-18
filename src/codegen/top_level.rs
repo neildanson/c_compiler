@@ -49,7 +49,7 @@ impl TryFrom<tacky::Function> for Function {
                 body.insert(
                     0,
                     Instruction::Mov {
-                        assembly_type: (&ty).into(), 
+                        assembly_type: (&ty).into(),
                         src: Operand::arg(i),
                         dst: Operand::Pseudo(parameter),
                     },

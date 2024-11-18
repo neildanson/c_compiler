@@ -41,7 +41,7 @@ impl Tacky {
 }
 
 impl Tacky {
-    fn make_name(&mut self,name:&str) -> String {
+    fn make_name(&mut self, name: &str) -> String {
         let name = format!("tacky_{}_{}", name, self.counter);
         self.counter += 1;
         name
@@ -194,7 +194,6 @@ impl Tacky {
         inner: &TCExpression,
         instructions: &mut Vec<Instruction>,
     ) -> Result<Value, CompilerError> {
-       
         let dst = self.make_tacky_var(Type::Int); //TODO
         match op {
             parse::UnaryOperator::PreIncrement => {
@@ -359,7 +358,7 @@ impl Tacky {
             return Ok(());
         }
         if d.storage_class != Some(parse::StorageClass::Extern) {
-            let value = value.unwrap_or(Value::Constant(d.var_type.zero_constant())); 
+            let value = value.unwrap_or(Value::Constant(d.var_type.zero_constant()));
             instructions.push(Instruction::Copy {
                 src: value,
                 dst: Value::Var(name, d.var_type.clone()),
@@ -611,7 +610,11 @@ impl Tacky {
                     .get(&f.name)
                     .unwrap()
                     .is_global(),
-                params: f.parameters.iter().map(|(ty, name)| (ty.clone(), name.clone())).collect(),
+                params: f
+                    .parameters
+                    .iter()
+                    .map(|(ty, name)| (ty.clone(), name.clone()))
+                    .collect(),
                 body: Some(body),
             }))
         } else {
@@ -638,7 +641,7 @@ impl Tacky {
                         identifier: name.clone(),
                         global: static_attr.global,
                         init: static_attr.ty.zero_constant().into(),
-                        ty: static_attr.ty.clone(), 
+                        ty: static_attr.ty.clone(),
                     }));
                 }
                 _ => {}
