@@ -290,20 +290,17 @@ impl TypeChecker {
             Expression::BinOp(op, left, right) => {
                 let left = self.type_check_expression(left)?;
                 let right = self.type_check_expression(right)?;
+                let common_type = Self::get_common_type(left.get_type(), right.get_type());
                 match op {
                     BinaryOperator::And | BinaryOperator::Or => Ok(TCExpression::BinOp(
                         op.clone(),
                         Box::new(left),
                         Box::new(right),
-                        Type::Int,
+                        common_type,
                     )),
                     _ => {
-                        let ty1 = left.get_type();
-                        let ty2 = right.get_type();
-
-                        let ty = Self::get_common_type(ty1, ty2);
-                        let left = self.convert_to(ty.clone(), &left);
-                        let right = self.convert_to(ty.clone(), &right);
+                        let left = self.convert_to(common_type.clone(), &left);
+                        let right = self.convert_to(common_type.clone(), &right);
                         match op {
                             BinaryOperator::Add
                             | BinaryOperator::Sub
@@ -313,13 +310,13 @@ impl TypeChecker {
                                 op.clone(),
                                 Box::new(left),
                                 Box::new(right),
-                                ty,
+                                common_type,
                             )),
                             _ => Ok(TCExpression::BinOp(
                                 op.clone(),
                                 Box::new(left),
                                 Box::new(right),
-                                Type::Int,
+                                common_type,
                             )),
                         }
                     }
@@ -327,10 +324,11 @@ impl TypeChecker {
             }
             Expression::Unary(UnaryOperator::Not, expression) => {
                 let expression = self.type_check_expression(expression)?;
+                let ty = expression.get_type();
                 Ok(TCExpression::Unary(
                     UnaryOperator::Not,
                     Box::new(expression),
-                    Type::Int,
+                    ty,
                 ))
             }
             Expression::Unary(op, expression) => {

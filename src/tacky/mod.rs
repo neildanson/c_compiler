@@ -142,7 +142,7 @@ impl Tacky {
     ) -> Result<Value, CompilerError> {
         let cond = self.emit_tacky_expr(cond, instructions)?;
         let cond = self.emit_temp(cond, instructions);
-        let result = self.make_tacky_var(Type::Int); //Result of conditional always an Int
+        let result = self.make_tacky_var(then.get_type()); 
 
         let else_label = self.make_label("e2_label".to_string());
         let end_label = self.make_label("end".to_string());
