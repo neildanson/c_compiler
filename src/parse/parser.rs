@@ -2,6 +2,13 @@ use super::ast::*;
 use crate::{error::CompilerError, lex::Token};
 use anyhow::Result;
 
+
+type ParameterListResult<'a> = (Vec<(Type, Identifier)>, &'a [Token]);
+type DeclarationResult<'a> = (Declaration<Statement<Expression>, Expression>, &'a [Token]);
+type FunctionBodyResult<'a> = (Vec<BlockItem<Statement<Expression>, Expression>>, &'a [Token]);
+type FunctionDeclarationResult<'a> = (FunctionDeclaration<Statement<Expression>, Expression>, &'a [Token]);
+type BlockItemResult<'a> = (BlockItem<Statement<Expression>, Expression>, &'a [Token]);
+
 fn precedence(tok: &Token) -> u16 {
     match tok {
         Token::ShiftLeft | Token::ShiftRight => 1,
@@ -84,7 +91,7 @@ fn parse_nth_parameter(tokens: &[Token]) -> Result<(Identifier, Type, &[Token])>
     }
 }
 
-fn parse_parameter_list(tokens: &[Token]) -> Result<(Vec<(Type, Identifier)>, &[Token])> {
+fn parse_parameter_list(tokens: &[Token]) -> Result<ParameterListResult> {
     let (parameters, rest) = match tokens {
         [Token::Void, rest @ ..] => (Vec::new(), rest),
         [ty, Token::Identifier(name), rest @ ..] => {
@@ -494,7 +501,7 @@ fn parse_variable_declaration(
 
 fn parse_declaration(
     tokens: &[Token],
-) -> Result<(Declaration<Statement<Expression>, Expression>, &[Token])> {
+) -> Result<DeclarationResult> {
     let declaration = parse_variable_declaration(tokens);
     if let Ok((declaration, rest)) = declaration {
         return Ok((Declaration::Variable(declaration), rest));
@@ -520,7 +527,7 @@ fn parse_declaration(
 
 fn parse_block_item(
     tokens: &[Token],
-) -> Result<(BlockItem<Statement<Expression>, Expression>, &[Token])> {
+) -> Result<BlockItemResult> {
     let declaration = parse_declaration(tokens);
     if let Ok((declaration, rest)) = declaration {
         return Ok((BlockItem::Declaration(declaration), rest));
@@ -555,7 +562,7 @@ fn parse_constant(constant: &str) -> Result<Constant> {
 
 fn parse_function_body(
     tokens: &[Token],
-) -> Result<(Vec<BlockItem<Statement<Expression>, Expression>>, &[Token])> {
+) -> Result<FunctionBodyResult> {
     let mut statements = Vec::new();
     let rest = tokens;
     let mut error = None;
@@ -583,10 +590,7 @@ fn parse_function_body(
 
 fn parse_function_declaration(
     tokens: &[Token],
-) -> Result<(
-    FunctionDeclaration<Statement<Expression>, Expression>,
-    &[Token],
-)> {
+) -> Result<FunctionDeclarationResult> {
     let (fun_type, storage_class, rest) = parse_type_and_storage(tokens)?;
     let (function, rest) = match rest {
         [Token::Identifier(name), Token::LParen, rest @ ..] => {
