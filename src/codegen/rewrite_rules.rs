@@ -14,7 +14,7 @@ fn valid_stack_location(stack_pos: i32, ty: &AssemblyType) -> i32 {
     }
 }
 
-fn fixup_large_operand(operand : Operand, reg : Reg, instructions : &mut Vec<Instruction>) -> Operand {
+fn fixup_large_operand(operand: Operand, reg: Reg, instructions: &mut Vec<Instruction>) -> Operand {
     match operand {
         Operand::Immediate { imm } if imm > i32::MAX as i64 => {
             instructions.push(Instruction::Mov {
@@ -24,7 +24,7 @@ fn fixup_large_operand(operand : Operand, reg : Reg, instructions : &mut Vec<Ins
             });
             Operand::Register(reg)
         }
-        _ => operand
+        _ => operand,
     }
 }
 
@@ -233,7 +233,6 @@ pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
                     continue;
                 }
                 new_body.push(instruction.clone());
-                
             }
             Instruction::Mov {
                 assembly_type: AssemblyType::QuadWord,
@@ -379,13 +378,7 @@ pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
                     continue;
                 }
 
-                                  
-                new_body.push(Instruction::Cmp(
-                    assembly_type,
-                    lhs,
-                    rhs,
-                ));
-                
+                new_body.push(Instruction::Cmp(assembly_type, lhs, rhs));
             }
             Instruction::Cmp(assembly_type, lhs, rhs) => {
                 if let Operand::Stack(_) | Operand::Data(_) = lhs {
@@ -445,7 +438,7 @@ pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
                     });
                     continue;
                 }
-                
+
                 new_body.push(instruction.clone());
             }
             Instruction::Binary {
@@ -521,9 +514,7 @@ pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
                 let operand = fixup_large_operand(operand, Reg::R10, &mut new_body);
                 new_body.push(Instruction::Push(operand));
             }
-            _ => {
-                new_body.push(instruction.clone())
-            },
+            _ => new_body.push(instruction.clone()),
         }
     }
     new_body

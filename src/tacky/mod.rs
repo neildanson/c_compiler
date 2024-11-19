@@ -57,7 +57,7 @@ impl Tacky {
     }
 
     fn emit_temp(&mut self, src: Value, instructions: &mut Vec<Instruction>) -> Value {
-        let dst = self.make_tacky_var(src.parse_type()); 
+        let dst = self.make_tacky_var(src.parse_type());
         instructions.push(Instruction::Copy {
             src,
             dst: dst.clone(),
@@ -142,7 +142,7 @@ impl Tacky {
     ) -> Result<Value, CompilerError> {
         let cond = self.emit_tacky_expr(cond, instructions)?;
         let cond = self.emit_temp(cond, instructions);
-        let result = self.make_tacky_var(then.get_type()); 
+        let result = self.make_tacky_var(then.get_type());
 
         let else_label = self.make_label("e2_label".to_string());
         let end_label = self.make_label("end".to_string());
@@ -194,7 +194,7 @@ impl Tacky {
         inner: &TCExpression,
         instructions: &mut Vec<Instruction>,
     ) -> Result<Value, CompilerError> {
-        let dst = self.make_tacky_var(inner.get_type()); 
+        let dst = self.make_tacky_var(inner.get_type());
         match op {
             parse::UnaryOperator::PreIncrement => {
                 let src = self.emit_tacky_expr(inner, instructions)?;

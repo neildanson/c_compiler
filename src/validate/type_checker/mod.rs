@@ -354,7 +354,7 @@ impl TypeChecker {
                 let else_expression = self.type_check_expression(else_expression)?;
                 let ty =
                     Self::get_common_type(then_expression.get_type(), else_expression.get_type());
-                    
+
                 Ok(TCExpression::Conditional(
                     Box::new(condition),
                     Box::new(self.convert_to(ty.clone(), &then_expression)),

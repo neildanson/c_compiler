@@ -329,7 +329,7 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
                 let src = src.into();
                 let dst: Operand = dst.into();
                 Ok(vec![
-                    Instruction::Cmp(assembly_type, Operand::Immediate { imm: 0 }, src), 
+                    Instruction::Cmp(assembly_type, Operand::Immediate { imm: 0 }, src),
                     Instruction::Mov {
                         assembly_type,
                         src: Operand::Immediate { imm: 0 },
