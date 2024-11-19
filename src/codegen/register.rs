@@ -6,7 +6,7 @@ pub enum RegisterSize {
     EightByte,
 }
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Reg {
     AX,
     CX,

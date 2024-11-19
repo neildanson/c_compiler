@@ -307,7 +307,8 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
     fn try_from(instruction: tacky::Instruction) -> Result<Self, Self::Error> {
         match instruction {
             tacky::Instruction::Return(value) => {
-                let assembly_type = value.assembly_type(); //TODO: Check if this is correct
+                //This should use correct type
+                let assembly_type = value.assembly_type(); //TODO: This is incorrect
                 let src = value.into();
                 let dst = Operand::Register(Reg::AX);
                 Ok(vec![

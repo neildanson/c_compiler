@@ -14,15 +14,15 @@ fn valid_stack_location(stack_pos: i32, ty: &AssemblyType) -> i32 {
     }
 }
 
-fn fixup_large_operand(operand : Operand, instructions : &mut Vec<Instruction>) -> Operand {
+fn fixup_large_operand(operand : Operand, reg : Reg, instructions : &mut Vec<Instruction>) -> Operand {
     match operand {
         Operand::Immediate { imm } if imm > i32::MAX as i64 => {
             instructions.push(Instruction::Mov {
                 assembly_type: AssemblyType::QuadWord,
                 src: Operand::Immediate { imm },
-                dst: Operand::Register(Reg::R10),
+                dst: Operand::Register(reg),
             });
-            Operand::Register(Reg::R10)
+            Operand::Register(reg)
         }
         _ => operand
     }
@@ -364,6 +364,7 @@ pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
                         continue;
                     }
                 }
+                let lhs = fixup_large_operand(lhs, Reg::R11, &mut new_body);
                 if let Operand::Immediate { imm: _ } = rhs {
                     new_body.push(Instruction::Mov {
                         assembly_type,
@@ -378,21 +379,13 @@ pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
                     continue;
                 }
 
+                                  
+                new_body.push(Instruction::Cmp(
+                    assembly_type,
+                    lhs,
+                    rhs,
+                ));
                 
-                if let Operand::Immediate { imm: _ } = lhs {                    
-                    new_body.push(Instruction::Mov {
-                        assembly_type,
-                        src: lhs,
-                        dst: Operand::Register(Reg::R10),
-                    });
-                    new_body.push(Instruction::Cmp(
-                        assembly_type,
-                        Operand::Register(Reg::R10),
-                        rhs,
-                    ));
-                    continue;
-                }
-                new_body.push(instruction.clone());
             }
             Instruction::Cmp(assembly_type, lhs, rhs) => {
                 if let Operand::Stack(_) | Operand::Data(_) = lhs {
@@ -431,7 +424,7 @@ pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
                 src2,
                 dst,
             } if op == BinaryOp::Mult => {
-                let src2 = fixup_large_operand(src2, &mut new_body);
+                let src2 = fixup_large_operand(src2, Reg::R10, &mut new_body);
 
                 if let Operand::Stack(_) = dst {
                     new_body.push(Instruction::Mov {
@@ -463,7 +456,7 @@ pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
             } => {
                 match op {
                     BinaryOp::Add | BinaryOp::Sub => {
-                        let src2 = fixup_large_operand(src2, &mut new_body);
+                        let src2 = fixup_large_operand(src2, Reg::R11, &mut new_body);
                         if let Operand::Stack(_) | Operand::Data(_) = dst {
                             if let Operand::Stack(_) | Operand::Data(_) = src2 {
                                 new_body.push(Instruction::Mov {
@@ -525,7 +518,7 @@ pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
                 new_body.push(instruction.clone());
             }
             Instruction::Push(operand) => {
-                let operand = fixup_large_operand(operand, &mut new_body);
+                let operand = fixup_large_operand(operand, Reg::R10, &mut new_body);
                 new_body.push(Instruction::Push(operand));
             }
             _ => {
