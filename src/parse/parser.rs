@@ -546,7 +546,7 @@ fn parse_constant(constant: &str) -> Result<Constant> {
         return Err(CompilerError::Parse("Constant out of range".to_string()).into());
     }
 
-    if !is_long && (v as i32) < i32::MAX {
+    if !is_long && v < (i32::MAX as u64) {
         Ok(Constant::Int(v as i32))
     } else {
         Ok(Constant::Long(v as i64))
