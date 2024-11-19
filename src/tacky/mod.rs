@@ -18,7 +18,7 @@ use crate::{
     parse::{self, Constant, Type},
     validate::{
         loop_labelling::LLStatement,
-        type_checker::{self, TCExpression},
+        type_checker::{self, Expression as TCExpression,},
         InitialValue, StaticAttr, Symbol, ValidateResult,
     },
 };

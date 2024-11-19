@@ -1,8 +1,8 @@
 use std::fmt::{Display, Formatter};
 
-use crate::parse::*;
+use crate::parse::{Constant, Type};
 
-use super::TCExpression;
+use super::Expression;
 
 #[derive(PartialEq, Clone, Debug)]
 pub enum StaticInit {
@@ -46,11 +46,11 @@ impl From<StaticInit> for Constant {
     }
 }
 
-impl From<StaticInit> for TCExpression {
+impl From<StaticInit> for Expression {
     fn from(value: StaticInit) -> Self {
         match value {
-            StaticInit::IntInit(val) => TCExpression::Constant(Constant::Int(val)),
-            StaticInit::LongInit(val) => TCExpression::Constant(Constant::Long(val)),
+            StaticInit::IntInit(val) => Expression::Constant(Constant::Int(val)),
+            StaticInit::LongInit(val) => Expression::Constant(Constant::Long(val)),
         }
     }
 }

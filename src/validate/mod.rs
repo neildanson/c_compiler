@@ -12,6 +12,6 @@ use crate::parse::Program;
 
 #[derive(Debug)]
 pub struct ValidateResult {
-    pub program: Program<LLStatement<TCExpression>, TCExpression>,
+    pub program: Program<LLStatement<Expression>, Expression>,
     pub symbols: HashMap<String, Symbol>,
 }

@@ -3,7 +3,7 @@ use crate::parse::ast::*;
 use global_counter::primitive::exact::CounterI32;
 use std::collections::HashMap;
 
-type ParseStatement = Statement<Expression>;
+type ParseStatement = Statement<crate::parse::Expression>;
 
 #[derive(Debug)]
 pub(crate) struct MapEntry {

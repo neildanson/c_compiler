@@ -2,8 +2,8 @@ pub mod ast;
 pub mod symbol;
 
 use super::loop_labelling::LLStatement;
-use crate::{error::*, parse::*};
-pub use ast::TCExpression;
+use crate::{error::*, parse::{BinaryOperator, Declaration, ForInit, FunctionDeclaration, StorageClass, Type, UnaryOperator, VariableDeclaration}};
+pub use ast::Expression;
 use std::collections::HashMap;
 pub use symbol::*;
 
@@ -31,9 +31,9 @@ impl TypeChecker {
 
     pub fn type_check_file_scope_variable_declaration(
         &mut self,
-        variable_declaration: &VariableDeclaration<Expression>,
-    ) -> Result<VariableDeclaration<TCExpression>, CompilerError> {
-        let mut initial_value = if let Some(Expression::Constant(i)) = &variable_declaration.init {
+        variable_declaration: &VariableDeclaration<crate::parse::Expression>,
+    ) -> Result<VariableDeclaration<Expression>, CompilerError> {
+        let mut initial_value = if let Some(crate::parse::Expression::Constant(i)) = &variable_declaration.init {
             InitialValue::Initial((*i).into())
         } else if variable_declaration.init.is_none() {
             if variable_declaration.storage_class == Some(StorageClass::Extern) {
@@ -120,8 +120,8 @@ impl TypeChecker {
 
     fn type_check_local_variable_declaration(
         &mut self,
-        variable_declaration: &VariableDeclaration<Expression>,
-    ) -> Result<VariableDeclaration<TCExpression>, CompilerError> {
+        variable_declaration: &VariableDeclaration<crate::parse::Expression>,
+    ) -> Result<VariableDeclaration<Expression>, CompilerError> {
         if variable_declaration.storage_class == Some(StorageClass::Extern) {
             if variable_declaration.init.is_some() {
                 return Err(CompilerError::SemanticAnalysis(
@@ -158,7 +158,7 @@ impl TypeChecker {
                 );
             }
         } else if variable_declaration.storage_class == Some(StorageClass::Static) {
-            let initial_value = if let Some(Expression::Constant(i)) = &variable_declaration.init {
+            let initial_value = if let Some(crate::parse::Expression::Constant(i)) = &variable_declaration.init {
                 InitialValue::Initial((*i).into())
             } else if variable_declaration.init.is_none() {
                 InitialValue::Tentative
@@ -223,20 +223,20 @@ impl TypeChecker {
         }
     }
 
-    fn convert_to(&self, ty: Type, expression: &TCExpression) -> TCExpression {
+    fn convert_to(&self, ty: Type, expression: &Expression) -> Expression {
         let expression_ty = expression.get_type();
         if expression_ty == ty.clone() {
             return expression.clone();
         }
-        TCExpression::Cast(ty.clone(), Box::new(expression.clone()))
+        Expression::Cast(ty.clone(), Box::new(expression.clone()))
     }
 
     fn type_check_expression(
         &self,
-        expression: &Expression,
-    ) -> Result<TCExpression, CompilerError> {
+        expression: &crate::parse::Expression,
+    ) -> Result<Expression, CompilerError> {
         match expression {
-            Expression::FunctionCall(name, arguments) => {
+            crate::parse::Expression::FunctionCall(name, arguments) => {
                 if let Some(symbol) = self.symbol_table.get(name) {
                     if let Symbol::FunType(_, expected_args, ty) = symbol {
                         if expected_args.len() != arguments.len() {
@@ -253,9 +253,9 @@ impl TypeChecker {
                                 let converted = self.convert_to(ty, &arg);
                                 Ok(converted)
                             })
-                            .collect::<Result<Vec<TCExpression>, CompilerError>>()?;
+                            .collect::<Result<Vec<Expression>, CompilerError>>()?;
 
-                        let function_call = TCExpression::FunctionCall(
+                        let function_call = Expression::FunctionCall(
                             name.clone(),
                             converted_arguments.clone(),
                             ty.clone(),
@@ -272,7 +272,7 @@ impl TypeChecker {
                     ))
                 }
             }
-            Expression::Var(name) => {
+            crate::parse::Expression::Var(name) => {
                 if let Some(existing) = self.symbol_table.get(name) {
                     if existing.is_function() {
                         return Err(CompilerError::SemanticAnalysis(
@@ -280,19 +280,19 @@ impl TypeChecker {
                         ));
                     } else {
                         let ty = existing.get_type();
-                        return Ok(TCExpression::Var(name.clone(), ty));
+                        return Ok(Expression::Var(name.clone(), ty));
                     }
                 }
                 Err(CompilerError::SemanticAnalysis(
                     SemanticAnalysisError::VariableNotDeclared(name.clone()),
                 ))
             }
-            Expression::BinOp(op, left, right) => {
+            crate::parse::Expression::BinOp(op, left, right) => {
                 let left = self.type_check_expression(left)?;
                 let right = self.type_check_expression(right)?;
                 let common_type = Self::get_common_type(left.get_type(), right.get_type());
                 match op {
-                    BinaryOperator::And | BinaryOperator::Or => Ok(TCExpression::BinOp(
+                    BinaryOperator::And | BinaryOperator::Or => Ok(Expression::BinOp(
                         op.clone(),
                         Box::new(left),
                         Box::new(right),
@@ -306,13 +306,13 @@ impl TypeChecker {
                             | BinaryOperator::Sub
                             | BinaryOperator::Mul
                             | BinaryOperator::Div
-                            | BinaryOperator::Mod => Ok(TCExpression::BinOp(
+                            | BinaryOperator::Mod => Ok(Expression::BinOp(
                                 op.clone(),
                                 Box::new(left),
                                 Box::new(right),
                                 common_type,
                             )),
-                            _ => Ok(TCExpression::BinOp(
+                            _ => Ok(Expression::BinOp(
                                 op.clone(),
                                 Box::new(left),
                                 Box::new(right),
@@ -322,49 +322,49 @@ impl TypeChecker {
                     }
                 }
             }
-            Expression::Unary(UnaryOperator::Not, expression) => {
+            crate::parse::Expression::Unary(UnaryOperator::Not, expression) => {
                 let expression = self.type_check_expression(expression)?;
                 let ty = expression.get_type();
-                Ok(TCExpression::Unary(
+                Ok(Expression::Unary(
                     UnaryOperator::Not,
                     Box::new(expression),
                     ty,
                 ))
             }
-            Expression::Unary(op, expression) => {
+            crate::parse::Expression::Unary(op, expression) => {
                 let expression = self.type_check_expression(expression)?;
                 let ty = expression.get_type();
-                Ok(TCExpression::Unary(op.clone(), Box::new(expression), ty))
+                Ok(Expression::Unary(op.clone(), Box::new(expression), ty))
             }
-            Expression::Assignment(left, right) => {
+            crate::parse::Expression::Assignment(left, right) => {
                 let left = self.type_check_expression(left)?;
                 let right = self.type_check_expression(right)?;
                 let ty = left.get_type();
                 let converted_right = self.convert_to(ty.clone(), &right);
 
-                Ok(TCExpression::Assignment(
+                Ok(Expression::Assignment(
                     Box::new(left),
                     Box::new(converted_right),
                     ty,
                 ))
             }
-            Expression::Conditional(condition, then_expression, else_expression) => {
+            crate::parse::Expression::Conditional(condition, then_expression, else_expression) => {
                 let condition = self.type_check_expression(condition)?;
                 let then_expression = self.type_check_expression(then_expression)?;
                 let else_expression = self.type_check_expression(else_expression)?;
                 let ty =
                     Self::get_common_type(then_expression.get_type(), else_expression.get_type());
 
-                Ok(TCExpression::Conditional(
+                Ok(Expression::Conditional(
                     Box::new(condition),
                     Box::new(self.convert_to(ty.clone(), &then_expression)),
                     Box::new(self.convert_to(ty.clone(), &else_expression)),
                     ty,
                 ))
             }
-            Expression::Constant(c) => Ok(TCExpression::Constant(*c)),
-            Expression::Cast(ty, expr) => {
-                if let Expression::Assignment(_, _) = expr.as_ref() {
+            crate::parse::Expression::Constant(c) => Ok(Expression::Constant(*c)),
+            crate::parse::Expression::Cast(ty, expr) => {
+                if let crate::parse::Expression::Assignment(_, _) = expr.as_ref() {
                     return Err(CompilerError::SemanticAnalysis(
                         SemanticAnalysisError::InvalidCastInAssignment,
                     ));
@@ -376,8 +376,8 @@ impl TypeChecker {
 
     fn type_check_for_init(
         &mut self,
-        for_init: &ForInit<Expression>,
-    ) -> Result<ForInit<TCExpression>, CompilerError> {
+        for_init: &ForInit<crate::parse::Expression>,
+    ) -> Result<ForInit<Expression>, CompilerError> {
         match for_init {
             ForInit::InitExpression(Some(expression)) => Ok(ForInit::InitExpression(Some(
                 self.type_check_expression(expression)?,
@@ -397,9 +397,9 @@ impl TypeChecker {
 
     fn type_check_statement(
         &mut self,
-        statement: &LLStatement<Expression>,
+        statement: &LLStatement<crate::parse::Expression>,
         containing_function_name: &str,
-    ) -> Result<LLStatement<TCExpression>, CompilerError> {
+    ) -> Result<LLStatement<Expression>, CompilerError> {
         match statement {
             LLStatement::Expression(expression) => Ok(LLStatement::Expression(
                 self.type_check_expression(expression)?,
@@ -484,21 +484,21 @@ impl TypeChecker {
 
     fn type_check_block_item(
         &mut self,
-        block_item: &BlockItem<LLStatement<Expression>, Expression>,
+        block_item: &crate::parse::BlockItem<LLStatement<crate::parse::Expression>, crate::parse::Expression>,
         containing_function_name: &str,
-    ) -> Result<BlockItem<LLStatement<TCExpression>, TCExpression>, CompilerError> {
+    ) -> Result<crate::parse::BlockItem<LLStatement<Expression>, Expression>, CompilerError> {
         match block_item {
-            BlockItem::Statement(statement) => Ok(BlockItem::Statement(
+            crate::parse::BlockItem::Statement(statement) => Ok(crate::parse::BlockItem::Statement(
                 self.type_check_statement(statement, containing_function_name)?,
             )),
-            BlockItem::Declaration(declaration) => match declaration {
-                Declaration::Variable(variable_declaration) => {
-                    Ok(BlockItem::Declaration(Declaration::Variable(
+            crate::parse::BlockItem::Declaration(declaration) => match declaration {
+                crate::parse::Declaration::Variable(variable_declaration) => {
+                    Ok(crate::parse::BlockItem::Declaration(Declaration::Variable(
                         self.type_check_local_variable_declaration(variable_declaration)?,
                     )))
                 }
-                Declaration::Function(function_declaration) => {
-                    Ok(BlockItem::Declaration(Declaration::Function(
+                crate::parse::Declaration::Function(function_declaration) => {
+                    Ok(crate::parse::BlockItem::Declaration(Declaration::Function(
                         self.type_check_function_declaration(function_declaration, false)?,
                     )))
                 }
@@ -508,9 +508,9 @@ impl TypeChecker {
 
     pub fn type_check_function_declaration(
         &mut self,
-        function_declaration: &FunctionDeclaration<LLStatement<Expression>, Expression>,
+        function_declaration: &FunctionDeclaration<LLStatement<crate::parse::Expression>, crate::parse::Expression>,
         top_level: bool,
-    ) -> Result<FunctionDeclaration<LLStatement<TCExpression>, TCExpression>, CompilerError> {
+    ) -> Result<FunctionDeclaration<LLStatement<Expression>, Expression>, CompilerError> {
         let new_parameters: Vec<_> = function_declaration
             .parameters
             .iter()
