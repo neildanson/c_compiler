@@ -1,6 +1,6 @@
 use std::{error::Error, fmt::Display};
 
-use crate::ast::Type;
+use crate::{ast::Type, substring::Substring};
 
 #[derive(Debug)]
 pub enum CodeGenError {
@@ -19,23 +19,23 @@ impl Display for CodeGenError {
 
 #[derive(Debug)]
 pub enum SemanticAnalysisError {
-    VariableAlreadyDeclared(String),
-    VariableNotDeclared(String),
+    VariableAlreadyDeclared(Substring),
+    VariableNotDeclared(Substring),
     InvalidLValue,
     NotImplemented,
     InvalidBreak,
     InvalidContinue,
     InvalidBlockItem,
-    FunctionNotDeclared(String),
-    FunctionAlreadyDeclared(String),
+    FunctionNotDeclared(Substring),
+    FunctionAlreadyDeclared(Substring),
     NestedFunction,
     IncompatibleFunctionDeclarations,
     VariableUsedAsFunctionName,
-    StaticFunctionDeclarationFollowsNonStatic(String),
-    FunctionRedclaredAsVariable(String),
-    ConflictingVariableLinkage(String),
-    ConflictingFileScopeVariableDefinitions(String),
-    NonStaticFunctionDeclarationInBlock(String),
+    StaticFunctionDeclarationFollowsNonStatic(Substring),
+    FunctionRedclaredAsVariable(Substring),
+    ConflictingVariableLinkage(Substring),
+    ConflictingFileScopeVariableDefinitions(Substring),
+    NonStaticFunctionDeclarationInBlock(Substring),
     InvalidInitializerForFileScopeVariable,
     ExternVariableCannotHaveInitializer,
     NonConstantInitializerForLocalStaticVariable,
@@ -43,7 +43,7 @@ pub enum SemanticAnalysisError {
     IncompatibleTypesInAssignment,
     IncompatibleTypesInConditional,
     InvalidCastInAssignment,
-    ConflictingTypeDefinition(String),
+    ConflictingTypeDefinition(Substring),
 }
 
 impl Display for SemanticAnalysisError {

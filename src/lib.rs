@@ -7,6 +7,7 @@ pub mod parse;
 pub mod validate;
 pub mod tacky;
 pub mod codegen;
+pub mod substring;
 
 use crate::lex::*;
 use crate::parse::parse_program;

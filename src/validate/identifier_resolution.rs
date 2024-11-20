@@ -2,6 +2,7 @@ use crate::ast::*;
 use crate::error::*;
 use crate::parse::Expression;
 use crate::parse::Statement;
+use crate::substring::Substring;
 use global_counter::primitive::exact::CounterI32;
 use std::collections::HashMap;
 
@@ -36,8 +37,8 @@ impl Clone for MapEntry {
     }
 }
 
-impl From<String> for MapEntry {
-    fn from(name: String) -> Self {
+impl From<Substring> for MapEntry {
+    fn from(name: Substring) -> Self {
         MapEntry {
             unique_name: name,
             from_current_scope: true,
@@ -66,13 +67,13 @@ impl Clone for IdentifierResolution {
 }
 
 impl IdentifierResolution {
-    fn make_unique_name(&mut self, name: String) -> String {
+    fn make_unique_name(&mut self, name: Substring) -> Substring {
         let count = COUNTER.inc();
-        let unique_name = format!("{}__{}", name, count);
+        let unique_name : Substring = format!("{}__{}", name, count).into();
 
         self.identifier_map.insert(name, unique_name.clone().into());
 
-        unique_name
+        unique_name.into()
     }
 
     fn resolve_expression(&mut self, expr: &Expression) -> Result<Expression, CompilerError> {

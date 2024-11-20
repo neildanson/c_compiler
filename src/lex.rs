@@ -1,15 +1,15 @@
 use anyhow::Result;
 use regex::Regex;
 
-use crate::error::CompilerError;
+use crate::{error::CompilerError, substring::Substring};
 
 #[derive(Debug, PartialEq)]
 pub enum Token {
-    Comment(String),
-    PreProcessorDirective(String), //#[a-zA-Z_]\w*\b
-    Identifier(String),            //[a-zA-Z_]\w*\b
-    Constant(String),              //[0-9]+\b
-    LongConstant(String),          //[0-9]+[lL]\b
+    Comment(Substring),
+    PreProcessorDirective(Substring), //#[a-zA-Z_]\w*\b
+    Identifier(Substring),            //[a-zA-Z_]\w*\b
+    Constant(Substring),              //[0-9]+\b
+    LongConstant(Substring),          //[0-9]+[lL]\b
     Int,                           //int\b
     Long,                          //long\b
     Void,                          //void\b
@@ -68,11 +68,11 @@ impl Default for Tokenizer {
 
 struct TokenMapper {
     regex: Regex,
-    token: Box<dyn Fn(String) -> Token>,
+    token: Box<dyn Fn(Substring) -> Token>,
 }
 
 impl TokenMapper {
-    fn new(regex: &str, token: Box<dyn Fn(String) -> Token>) -> Self {
+    fn new(regex: &str, token: Box<dyn Fn(Substring) -> Token>) -> Self {
         TokenMapper {
             regex: Regex::new(regex).unwrap(),
             token,
@@ -82,7 +82,7 @@ impl TokenMapper {
     fn map<'a>(&self, input: &'a str) -> Option<(Token, &'a str)> {
         if let Some(mat) = self.regex.find(input) {
             let s = mat.as_str();
-            Some(((self.token)(s.to_string()), &input[s.len()..]))
+            Some(((self.token)(s.into()), &input[s.len()..]))
         } else {
             None
         }
@@ -193,12 +193,12 @@ mod tests {
             tokens,
             vec![
                 Token::Int,
-                Token::Identifier("main".to_string()),
+                Token::Identifier("main".into()),
                 Token::LParen,
                 Token::RParen,
                 Token::LBrace,
                 Token::Return,
-                Token::Constant("42".to_string()),
+                Token::Constant("42".into()),
                 Token::SemiColon,
                 Token::RBrace
             ]
@@ -211,7 +211,7 @@ mod tests {
         let tokens = tokenizer.tokenize("--42").unwrap();
         assert_eq!(
             tokens,
-            vec![Token::DoubleMinus, Token::Constant("42".to_string())]
+            vec![Token::DoubleMinus, Token::Constant("42".into())]
         );
     }
 
@@ -221,7 +221,7 @@ mod tests {
         let tokens = tokenizer.tokenize("~42").unwrap();
         assert_eq!(
             tokens,
-            vec![Token::Tilde, Token::Constant("42".to_string())]
+            vec![Token::Tilde, Token::Constant("42".into())]
         );
     }
 
@@ -229,7 +229,7 @@ mod tests {
     fn test_plus() {
         let tokenizer = Tokenizer::new();
         let tokens = tokenizer.tokenize("+42").unwrap();
-        assert_eq!(tokens, vec![Token::Plus, Token::Constant("42".to_string())]);
+        assert_eq!(tokens, vec![Token::Plus, Token::Constant("42".into())]);
     }
 
     #[test]
@@ -238,7 +238,7 @@ mod tests {
         let tokens = tokenizer.tokenize("-42").unwrap();
         assert_eq!(
             tokens,
-            vec![Token::Minus, Token::Constant("42".to_string())]
+            vec![Token::Minus, Token::Constant("42".into())]
         );
     }
 
@@ -248,7 +248,7 @@ mod tests {
         let tokens = tokenizer.tokenize("*42").unwrap();
         assert_eq!(
             tokens,
-            vec![Token::Asterisk, Token::Constant("42".to_string())]
+            vec![Token::Asterisk, Token::Constant("42".into())]
         );
     }
 }

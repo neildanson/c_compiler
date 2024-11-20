@@ -1,6 +1,8 @@
 use std::fmt::{Display, Formatter};
 
-pub type Identifier = String;
+use crate::substring::Substring;
+
+pub type Identifier = Substring;
 
 #[derive(Debug, PartialEq)]
 pub struct Program<S: Clone, E: Clone> {

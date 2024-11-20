@@ -1,3 +1,5 @@
+use crate::substring::Substring;
+
 use super::*;
 use std::collections::HashMap;
 
@@ -29,10 +31,10 @@ fn fixup_large_operand(operand: Operand, reg: Reg, instructions: &mut Vec<Instru
 }
 
 fn fixup_pseudo(
-    name: String,
+    name: Substring,
     stack: &mut HashMap<String, i32>,
     parameter: bool,
-    symbols: &HashMap<String, AsmSymTabEntry>,
+    symbols: &HashMap<Substring, AsmSymTabEntry>,
 ) -> Operand {
     if let Some(offset) = stack.get(&name) {
         Operand::Stack(*offset)
@@ -62,7 +64,7 @@ fn fixup_pseudo(
 
 pub(crate) fn rewrite_pseudo_with_stack(
     body: Vec<Instruction>,
-    static_variables: &HashMap<String, AsmSymTabEntry>,
+    static_variables: &HashMap<Substring, AsmSymTabEntry>,
 ) -> (Vec<Instruction>, usize) {
     let mut stack = HashMap::new();
     let mut new_body = Vec::new();

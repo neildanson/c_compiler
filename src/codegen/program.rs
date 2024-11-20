@@ -1,8 +1,6 @@
 use super::{AssemblyType, Function, StaticVariable, TopLevel};
 use crate::{
-    error::CompilerError,
-    tacky::{self},
-    validate::{type_checker::Value, Symbol},
+    error::CompilerError, substring::Substring, tacky::{self}, validate::{type_checker::Value, Symbol}
 };
 use std::{collections::HashMap, fmt::Display};
 
@@ -62,8 +60,8 @@ impl AsmSymTabEntry {
 }
 
 impl Program {
-    pub fn fixup(&mut self, symbols: &HashMap<String, Symbol>) {
-        let symtab: HashMap<String, AsmSymTabEntry> = symbols
+    pub fn fixup(&mut self, symbols: &HashMap<Substring, Symbol>) {
+        let symtab: HashMap<Substring, AsmSymTabEntry> = symbols
             .iter()
             .map(|(k, v)| (k.clone(), AsmSymTabEntry::from_symbol(v)))
             .collect();

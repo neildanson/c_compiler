@@ -17,13 +17,11 @@ use crate::{
     ast::{
         BinaryOperator, BlockItem, Constant, Declaration, ForInit, FunctionDeclaration,
         StorageClass, Type, UnaryOperator, VariableDeclaration,
-    },
-    error::CompilerError,
-    validate::{
+    }, error::CompilerError, substring::Substring, validate::{
         loop_labelling::Statement,
         type_checker::{self, Expression},
         InitialValue, StaticAttr, Symbol, ValidateResult,
-    },
+    }
 };
 use std::collections::HashMap;
 
@@ -44,10 +42,10 @@ impl Tacky {
 }
 
 impl Tacky {
-    fn make_name(&mut self, name: &str) -> String {
+    fn make_name(&mut self, name: &str) -> Substring {
         let name = format!("tacky_{}_{}", name, self.counter);
         self.counter += 1;
-        name
+        name.into()
     }
 
     fn make_tacky_var(&mut self, ty: Type) -> Value {
@@ -105,7 +103,7 @@ impl Tacky {
                 }
                 let result = self.make_tacky_var(ty.clone());
                 instructions.push(Instruction::FunCall {
-                    name: ident.clone(),
+                    name: ident.to_string(),
                     args,
                     dst: result.clone(),
                 });
@@ -606,7 +604,7 @@ impl Tacky {
             Tacky::fixup_missing_return(&mut body);
 
             Ok(Some(Function {
-                name: f.name.clone(),
+                name: f.name.to_string(),
                 global: self
                     .validate_result
                     .symbols
@@ -616,7 +614,7 @@ impl Tacky {
                 params: f
                     .parameters
                     .iter()
-                    .map(|(ty, name)| (ty.clone(), name.clone()))
+                    .map(|(ty, name)| (ty.clone(), name.to_string()))
                     .collect(),
                 body: Some(body),
             }))
@@ -626,14 +624,14 @@ impl Tacky {
     }
 
     fn convert_static_variables_to_tacky(
-        static_variables: &HashMap<String, StaticAttr>,
+        static_variables: &HashMap<Substring, StaticAttr>,
     ) -> Vec<TopLevel> {
         let mut new_symbols = Vec::new();
         for (name, static_attr) in static_variables {
             match &static_attr.init {
                 InitialValue::Initial(i) => {
                     new_symbols.push(TopLevel::StaticVariable(StaticVariable {
-                        identifier: name.clone(),
+                        identifier: name.to_string(),
                         global: static_attr.global,
                         init: i.clone(),
                         ty: i.get_type(),
@@ -641,7 +639,7 @@ impl Tacky {
                 }
                 InitialValue::Tentative => {
                     new_symbols.push(TopLevel::StaticVariable(StaticVariable {
-                        identifier: name.clone(),
+                        identifier: name.to_string(),
                         global: static_attr.global,
                         init: static_attr.ty.zero_constant().into(),
                         ty: static_attr.ty.clone(),
@@ -694,7 +692,7 @@ impl Tacky {
         //Return type doesnt really matter ?
     }
 
-    fn statics(symbol_table: &HashMap<String, Symbol>) -> HashMap<String, StaticAttr> {
+    fn statics(symbol_table: &HashMap<Substring, Symbol>) -> HashMap<Substring, StaticAttr> {
         symbol_table
             .iter()
             .filter_map(|(name, symbol)| {
@@ -712,5 +710,5 @@ impl Tacky {
 #[derive(Debug)]
 pub struct TackyResult {
     pub program: Program,
-    pub symbols: HashMap<String, Symbol>,
+    pub symbols: HashMap<Substring, Symbol>,
 }

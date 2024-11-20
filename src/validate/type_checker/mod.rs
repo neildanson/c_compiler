@@ -11,12 +11,13 @@ use crate::{
     error::*,
 };
 pub use ast::Expression;
+use clap::Id;
 use std::collections::HashMap;
 pub use symbol::*;
 
 #[derive(Default)]
 pub(crate) struct TypeChecker {
-    pub symbol_table: HashMap<String, Symbol>,
+    pub symbol_table: HashMap<Identifier, Symbol>,
 }
 
 impl TypeChecker {
@@ -407,7 +408,7 @@ impl TypeChecker {
     fn type_check_statement(
         &mut self,
         statement: &Statement<crate::parse::Expression>,
-        containing_function_name: &str,
+        containing_function_name: &Identifier,
     ) -> Result<Statement<Expression>, CompilerError> {
         match statement {
             Statement::Expression(expression) => Ok(Statement::Expression(
@@ -492,7 +493,7 @@ impl TypeChecker {
     fn type_check_block_item(
         &mut self,
         block_item: &BlockItem<Statement<crate::parse::Expression>, crate::parse::Expression>,
-        containing_function_name: &str,
+        containing_function_name: &Identifier,
     ) -> Result<BlockItem<Statement<Expression>, Expression>, CompilerError> {
         match block_item {
             BlockItem::Statement(statement) => Ok(BlockItem::Statement(

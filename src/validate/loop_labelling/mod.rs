@@ -1,6 +1,6 @@
 pub mod ast;
-use crate::ast::*;
 use crate::error::*;
+use crate::ast::*;
 pub use ast::Statement;
 
 #[derive(Default)]
@@ -17,15 +17,9 @@ impl LoopLabelling {
 
     fn label_block(
         &mut self,
-        blocks: &[BlockItem<
-            crate::parse::Statement<crate::parse::Expression>,
-            crate::parse::Expression,
-        >],
+        blocks: &[BlockItem<crate::parse::Statement<crate::parse::Expression>, crate::parse::Expression>],
         current_label: Option<String>,
-    ) -> Result<
-        Vec<BlockItem<Statement<crate::parse::Expression>, crate::parse::Expression>>,
-        CompilerError,
-    > {
+    ) -> Result<Vec<BlockItem<Statement<crate::parse::Expression>, crate::parse::Expression>>, CompilerError> {
         let mut new_block = Vec::new();
         for item in blocks {
             match item {
@@ -49,7 +43,7 @@ impl LoopLabelling {
         match stmt {
             crate::parse::Statement::Break => {
                 if let Some(label) = current_label {
-                    Ok(Statement::Break(label))
+                    Ok(Statement::Break(label.into()))
                 } else {
                     Err(CompilerError::SemanticAnalysis(
                         SemanticAnalysisError::InvalidBreak,
@@ -58,7 +52,7 @@ impl LoopLabelling {
             }
             crate::parse::Statement::Continue => {
                 if let Some(label) = current_label {
-                    Ok(Statement::Continue(label))
+                    Ok(Statement::Continue(label.into()))
                 } else {
                     Err(CompilerError::SemanticAnalysis(
                         SemanticAnalysisError::InvalidContinue,
@@ -68,13 +62,13 @@ impl LoopLabelling {
             crate::parse::Statement::While(condition, body) => {
                 let label = self.make_label();
                 let body = self.label_statement(*body, Some(label.clone()))?;
-                let new_stmt = Statement::While(condition.clone(), Box::new(body), label);
+                let new_stmt = Statement::While(condition.clone(), Box::new(body), label.into());
                 Ok(new_stmt)
             }
             crate::parse::Statement::DoWhile(body, condition) => {
                 let label = self.make_label();
                 let body = self.label_statement(*body, Some(label.clone()))?;
-                let new_stmt = Statement::DoWhile(Box::new(body), condition.clone(), label);
+                let new_stmt = Statement::DoWhile(Box::new(body), condition.clone(), label.into());
                 Ok(new_stmt)
             }
             crate::parse::Statement::For(init, condition, post, body) => {
@@ -85,7 +79,7 @@ impl LoopLabelling {
                     condition.clone(),
                     post.clone(),
                     Box::new(body),
-                    label,
+                    label.into(),
                 );
                 Ok(new_stmt)
             }
@@ -107,14 +101,8 @@ impl LoopLabelling {
 
     pub fn label_function(
         &mut self,
-        function: FunctionDeclaration<
-            crate::parse::Statement<crate::parse::Expression>,
-            crate::parse::Expression,
-        >,
-    ) -> Result<
-        FunctionDeclaration<Statement<crate::parse::Expression>, crate::parse::Expression>,
-        CompilerError,
-    > {
+        function: FunctionDeclaration<crate::parse::Statement<crate::parse::Expression>, crate::parse::Expression>,
+    ) -> Result<FunctionDeclaration<Statement<crate::parse::Expression>, crate::parse::Expression>, CompilerError> {
         match function.body {
             Some(body) => {
                 let new_body = self.label_block(&body, None)?;

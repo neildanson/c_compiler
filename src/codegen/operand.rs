@@ -33,7 +33,7 @@ impl From<tacky::Value> for Operand {
     fn from(value: tacky::Value) -> Self {
         match value {
             tacky::Value::Constant(imm) => Operand::Immediate { imm: imm.as_i64() },
-            tacky::Value::Var(name, _) => Operand::Pseudo(name),
+            tacky::Value::Var(name, _) => Operand::Pseudo(name.to_string()),
         }
     }
 }

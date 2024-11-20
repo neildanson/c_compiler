@@ -3,7 +3,7 @@ use std::{
     fmt::{Display, Formatter},
 };
 
-use crate::{ast::Type, error::CompilerError, tacky, validate::type_checker::StaticInit};
+use crate::{ast::Type, error::CompilerError, substring::Substring, tacky, validate::type_checker::StaticInit};
 
 use super::*;
 
@@ -72,7 +72,7 @@ impl TryFrom<tacky::Function> for Function {
 }
 
 impl Function {
-    pub fn fixup(&mut self, symbol_table: &HashMap<String, self::AsmSymTabEntry>) {
+    pub fn fixup(&mut self, symbol_table: &HashMap<Substring, self::AsmSymTabEntry>) {
         if let Some(body) = &self.body {
             let (body, stack_size) = rewrite_pseudo_with_stack(body.clone(), symbol_table);
             let mut body = fixup_stack_operations(&body);

@@ -1,7 +1,7 @@
-use crate::ast::{Constant, Type};
+use crate::{ast::{Constant, Type}, substring::Substring};
 
 #[derive(Clone, Debug)]
 pub enum Value {
     Constant(Constant),
-    Var(String, Type),
+    Var(Substring, Type),
 }

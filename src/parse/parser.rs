@@ -689,7 +689,7 @@ mod tests {
         assert_eq!(
             function,
             FunctionDeclaration::new(
-                "main".to_string(),
+                "main".into(),
                 vec![],
                 Some(vec![BlockItem::Statement(Statement::Return(
                     Expression::Constant(Constant::Int(42))
@@ -717,7 +717,7 @@ int main(void) {
         assert_eq!(
             function,
             FunctionDeclaration::new(
-                "main".to_string(),
+                "main".into(),
                 vec![],
                 Some(vec![BlockItem::Statement(Statement::Return(
                     Expression::Constant(Constant::Int(100))
@@ -739,7 +739,7 @@ int main(void) {
         assert_eq!(
             function,
             FunctionDeclaration::new(
-                "main".to_string(),
+                "main".into(),
                 vec![],
                 Some(vec![BlockItem::Statement(Statement::Return(
                     Expression::BinOp(
