@@ -1,7 +1,7 @@
 pub mod ast;
 pub mod symbol;
 
-use super::loop_labelling::LLStatement;
+use super::loop_labelling::Statement;
 use crate::{error::*, parse::{BinaryOperator, Declaration, ForInit, FunctionDeclaration, StorageClass, Type, UnaryOperator, VariableDeclaration}};
 pub use ast::Expression;
 use std::collections::HashMap;
@@ -397,14 +397,14 @@ impl TypeChecker {
 
     fn type_check_statement(
         &mut self,
-        statement: &LLStatement<crate::parse::Expression>,
+        statement: &Statement<crate::parse::Expression>,
         containing_function_name: &str,
-    ) -> Result<LLStatement<Expression>, CompilerError> {
+    ) -> Result<Statement<Expression>, CompilerError> {
         match statement {
-            LLStatement::Expression(expression) => Ok(LLStatement::Expression(
+            Statement::Expression(expression) => Ok(Statement::Expression(
                 self.type_check_expression(expression)?,
             )),
-            LLStatement::Return(expression) => {
+            Statement::Return(expression) => {
                 let return_type = self
                     .symbol_table
                     .get(containing_function_name)
@@ -412,11 +412,11 @@ impl TypeChecker {
                     .get_type();
 
                 let expression = self.type_check_expression(expression)?;
-                Ok(LLStatement::Return(
+                Ok(Statement::Return(
                     self.convert_to(return_type, &expression),
                 ))
             }
-            LLStatement::If(condition, then_block, else_block) => {
+            Statement::If(condition, then_block, else_block) => {
                 let condition = self.type_check_expression(condition)?;
                 let then_block =
                     self.type_check_statement(then_block.as_ref(), containing_function_name)?;
@@ -427,27 +427,27 @@ impl TypeChecker {
                 } else {
                     None
                 };
-                Ok(LLStatement::If(condition, Box::new(then_block), else_block))
+                Ok(Statement::If(condition, Box::new(then_block), else_block))
             }
-            LLStatement::While(condition, block, loop_label) => {
+            Statement::While(condition, block, loop_label) => {
                 let condition = self.type_check_expression(condition)?;
                 let block = self.type_check_statement(block, containing_function_name)?;
-                Ok(LLStatement::While(
+                Ok(Statement::While(
                     condition,
                     Box::new(block),
                     loop_label.clone(),
                 ))
             }
-            LLStatement::DoWhile(body, condition, loop_label) => {
+            Statement::DoWhile(body, condition, loop_label) => {
                 let body = self.type_check_statement(body, containing_function_name)?;
                 let condition = self.type_check_expression(condition)?;
-                Ok(LLStatement::DoWhile(
+                Ok(Statement::DoWhile(
                     Box::new(body),
                     condition,
                     loop_label.clone(),
                 ))
             }
-            LLStatement::For(for_init, condition, post, block, loop_label) => {
+            Statement::For(for_init, condition, post, block, loop_label) => {
                 let for_init = self.type_check_for_init(for_init)?;
                 let condition = if let Some(condition) = condition {
                     Some(self.type_check_expression(condition)?)
@@ -460,7 +460,7 @@ impl TypeChecker {
                     None
                 };
                 let block = self.type_check_statement(block, containing_function_name)?;
-                Ok(LLStatement::For(
+                Ok(Statement::For(
                     for_init,
                     condition,
                     post,
@@ -468,25 +468,25 @@ impl TypeChecker {
                     loop_label.clone(),
                 ))
             }
-            LLStatement::Compound(block_items) => {
+            Statement::Compound(block_items) => {
                 let mut new_block_items = Vec::new();
                 for block_item in block_items {
                     new_block_items
                         .push(self.type_check_block_item(block_item, containing_function_name)?);
                 }
-                Ok(LLStatement::Compound(new_block_items))
+                Ok(Statement::Compound(new_block_items))
             }
-            LLStatement::Null => Ok(LLStatement::Null),
-            LLStatement::Continue(loop_label) => Ok(LLStatement::Continue(loop_label.clone())),
-            LLStatement::Break(loop_label) => Ok(LLStatement::Break(loop_label.clone())),
+            Statement::Null => Ok(Statement::Null),
+            Statement::Continue(loop_label) => Ok(Statement::Continue(loop_label.clone())),
+            Statement::Break(loop_label) => Ok(Statement::Break(loop_label.clone())),
         }
     }
 
     fn type_check_block_item(
         &mut self,
-        block_item: &crate::parse::BlockItem<LLStatement<crate::parse::Expression>, crate::parse::Expression>,
+        block_item: &crate::parse::BlockItem<Statement<crate::parse::Expression>, crate::parse::Expression>,
         containing_function_name: &str,
-    ) -> Result<crate::parse::BlockItem<LLStatement<Expression>, Expression>, CompilerError> {
+    ) -> Result<crate::parse::BlockItem<Statement<Expression>, Expression>, CompilerError> {
         match block_item {
             crate::parse::BlockItem::Statement(statement) => Ok(crate::parse::BlockItem::Statement(
                 self.type_check_statement(statement, containing_function_name)?,
@@ -508,9 +508,9 @@ impl TypeChecker {
 
     pub fn type_check_function_declaration(
         &mut self,
-        function_declaration: &FunctionDeclaration<LLStatement<crate::parse::Expression>, crate::parse::Expression>,
+        function_declaration: &FunctionDeclaration<Statement<crate::parse::Expression>, crate::parse::Expression>,
         top_level: bool,
-    ) -> Result<FunctionDeclaration<LLStatement<Expression>, Expression>, CompilerError> {
+    ) -> Result<FunctionDeclaration<Statement<Expression>, Expression>, CompilerError> {
         let new_parameters: Vec<_> = function_declaration
             .parameters
             .iter()

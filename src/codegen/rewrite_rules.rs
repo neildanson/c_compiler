@@ -472,25 +472,6 @@ pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
                             src2,
                             dst,
                         });
-
-                        /*
-                        if let Operand::Immediate { imm: _ } = src2
-                            && assembly_type == AssemblyType::QuadWord
-                        {
-                            //Nightly
-                            new_body.push(Instruction::Mov {
-                                assembly_type,
-                                src: src2,
-                                dst: Operand::Register(Reg::R10),
-                            });
-                            new_body.push(Instruction::Binary {
-                                assembly_type,
-                                op,
-                                src2: Operand::Register(Reg::R10),
-                                dst: dst.clone(),
-                            });
-                            continue;
-                        }*/
                     }
                     _ => continue,
                 }

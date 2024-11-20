@@ -3,29 +3,29 @@ use crate::parse::ast::*;
 type LoopIdentifier = Identifier;
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum LLStatement<E: Clone> {
+pub enum Statement<E: Clone> {
     Return(E),
     Expression(E),
-    If(E, Box<LLStatement<E>>, Option<Box<LLStatement<E>>>),
-    Compound(Vec<BlockItem<LLStatement<E>, E>>),
+    If(E, Box<Statement<E>>, Option<Box<Statement<E>>>),
+    Compound(Vec<BlockItem<Statement<E>, E>>),
     Null,
     Break(LoopIdentifier),
     Continue(LoopIdentifier),
-    While(E, Box<LLStatement<E>>, LoopIdentifier),
-    DoWhile(Box<LLStatement<E>>, E, LoopIdentifier),
+    While(E, Box<Statement<E>>, LoopIdentifier),
+    DoWhile(Box<Statement<E>>, E, LoopIdentifier),
     For(
         ForInit<E>,
         Option<E>,
         Option<E>,
-        Box<LLStatement<E>>,
+        Box<Statement<E>>,
         LoopIdentifier,
     ),
 }
 
-impl From<BlockItem<Statement<Expression>, Expression>>
-    for BlockItem<LLStatement<Expression>, Expression>
+impl From<BlockItem<crate::parse::ast::Statement<Expression>, Expression>>
+    for BlockItem<Statement<Expression>, Expression>
 {
-    fn from(item: BlockItem<Statement<Expression>, Expression>) -> Self {
+    fn from(item: BlockItem<crate::parse::ast::Statement<Expression>, Expression>) -> Self {
         match item {
             BlockItem::Declaration(decl) => BlockItem::Declaration(decl.into()),
             BlockItem::Statement(stmt) => BlockItem::Statement(stmt.into()),
@@ -33,10 +33,10 @@ impl From<BlockItem<Statement<Expression>, Expression>>
     }
 }
 
-impl From<FunctionDeclaration<Statement<Expression>, Expression>>
-    for FunctionDeclaration<LLStatement<Expression>, Expression>
+impl From<FunctionDeclaration<crate::parse::ast::Statement<Expression>, Expression>>
+    for FunctionDeclaration<Statement<Expression>, Expression>
 {
-    fn from(function: FunctionDeclaration<Statement<Expression>, Expression>) -> Self {
+    fn from(function: FunctionDeclaration<crate::parse::ast::Statement<Expression>, Expression>) -> Self {
         let body = match function.body {
             Some(body) => {
                 let body = body.into_iter().map(|item| (item).into()).collect();
@@ -54,10 +54,10 @@ impl From<FunctionDeclaration<Statement<Expression>, Expression>>
     }
 }
 
-impl From<Declaration<Statement<Expression>, Expression>>
-    for Declaration<LLStatement<Expression>, Expression>
+impl From<Declaration<crate::parse::ast::Statement<Expression>, Expression>>
+    for Declaration<Statement<Expression>, Expression>
 {
-    fn from(decl: Declaration<Statement<Expression>, Expression>) -> Self {
+    fn from(decl: Declaration<crate::parse::ast::Statement<Expression>, Expression>) -> Self {
         match decl {
             Declaration::Variable(variable) => Declaration::Variable(variable.clone()),
             Declaration::Function(function) => {
@@ -68,32 +68,32 @@ impl From<Declaration<Statement<Expression>, Expression>>
     }
 }
 
-impl From<Statement<Expression>> for LLStatement<Expression> {
-    fn from(stmt: Statement<Expression>) -> Self {
+impl From<crate::parse::ast::Statement<Expression>> for Statement<Expression> {
+    fn from(stmt: crate::parse::ast::Statement<Expression>) -> Self {
         match stmt {
-            Statement::Return(e) => LLStatement::Return(e.clone()),
-            Statement::Expression(e) => LLStatement::Expression(e.clone()),
-            Statement::If(cond, then, els) => {
+            crate::parse::ast::Statement::Return(e) => Statement::Return(e.clone()),
+            crate::parse::ast::Statement::Expression(e) => Statement::Expression(e.clone()),
+            crate::parse::ast::Statement::If(cond, then, els) => {
                 let then = Box::new(then.as_ref().clone().into());
                 let els = els.map(|els| Box::new(els.as_ref().clone().into()));
-                LLStatement::If(cond.clone(), then, els)
+                Statement::If(cond.clone(), then, els)
             }
-            Statement::Compound(block) => {
-                let new_block: Vec<BlockItem<LLStatement<Expression>, Expression>> = block
+            crate::parse::ast::Statement::Compound(block) => {
+                let new_block: Vec<BlockItem<Statement<Expression>, Expression>> = block
                     .into_iter()
                     .map(|item| match item {
                         BlockItem::Declaration(decl) => BlockItem::Declaration(decl.clone().into()),
                         BlockItem::Statement(stmt) => BlockItem::Statement(stmt.into()),
                     })
                     .collect();
-                LLStatement::Compound(new_block)
+                Statement::Compound(new_block)
             }
-            Statement::Null => LLStatement::Null,
-            Statement::Break
-            | Statement::Continue
-            | Statement::While(_, _)
-            | Statement::DoWhile(_, _)
-            | Statement::For(_, _, _, _) => panic!("Invalid statement conversion"),
+            crate::parse::ast::Statement::Null => Statement::Null,
+            crate::parse::ast::Statement::Break
+            | crate::parse::ast::Statement::Continue
+            | crate::parse::ast::Statement::While(_, _)
+            | crate::parse::ast::Statement::DoWhile(_, _)
+            | crate::parse::ast::Statement::For(_, _, _, _) => panic!("Invalid statement conversion"),
         }
     }
 }
