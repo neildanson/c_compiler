@@ -1,6 +1,7 @@
 pub mod ast;
 pub mod symbol;
 
+use super::error::SemanticAnalysisError;
 use super::loop_labelling::Statement;
 use crate::ast::*;
 use crate::{

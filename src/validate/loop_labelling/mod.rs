@@ -1,7 +1,9 @@
 pub mod ast;
 use crate::ast::*;
-use crate::error::*;
+use crate::error::CompilerError;
 pub use ast::Statement;
+
+use super::error::SemanticAnalysisError;
 
 #[derive(Default)]
 pub(crate) struct LoopLabelling {

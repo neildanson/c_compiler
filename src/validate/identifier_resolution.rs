@@ -5,6 +5,8 @@ use crate::parse::Statement;
 use global_counter::primitive::exact::CounterI32;
 use std::collections::HashMap;
 
+use super::error::SemanticAnalysisError;
+
 #[derive(Debug)]
 pub(crate) struct MapEntry {
     unique_name: Identifier,
@@ -204,7 +206,7 @@ impl IdentifierResolution {
             && self.identifier_map[&param].from_current_scope
         {
             return Err(CompilerError::SemanticAnalysis(
-                crate::error::SemanticAnalysisError::VariableAlreadyDeclared(param.clone()),
+                SemanticAnalysisError::VariableAlreadyDeclared(param.clone()),
             ));
         }
         let unique_name = self.make_unique_name(param);
