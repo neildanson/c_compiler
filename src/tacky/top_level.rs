@@ -1,4 +1,4 @@
-use crate::{parse::Type, validate::StaticInit};
+use crate::{ast::Type, validate::type_checker::StaticInit};
 
 use super::Instruction;
 

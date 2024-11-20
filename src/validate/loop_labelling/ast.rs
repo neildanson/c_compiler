@@ -1,4 +1,5 @@
-use crate::parse::ast::*;
+use crate::ast::*;
+use crate::parse::Expression;
 
 type LoopIdentifier = Identifier;
 
@@ -22,10 +23,10 @@ pub enum Statement<E: Clone> {
     ),
 }
 
-impl From<BlockItem<crate::parse::ast::Statement<Expression>, Expression>>
+impl From<BlockItem<crate::parse::Statement<Expression>, Expression>>
     for BlockItem<Statement<Expression>, Expression>
 {
-    fn from(item: BlockItem<crate::parse::ast::Statement<Expression>, Expression>) -> Self {
+    fn from(item: BlockItem<crate::parse::Statement<Expression>, Expression>) -> Self {
         match item {
             BlockItem::Declaration(decl) => BlockItem::Declaration(decl.into()),
             BlockItem::Statement(stmt) => BlockItem::Statement(stmt.into()),
@@ -33,10 +34,12 @@ impl From<BlockItem<crate::parse::ast::Statement<Expression>, Expression>>
     }
 }
 
-impl From<FunctionDeclaration<crate::parse::ast::Statement<Expression>, Expression>>
+impl From<FunctionDeclaration<crate::parse::Statement<Expression>, Expression>>
     for FunctionDeclaration<Statement<Expression>, Expression>
 {
-    fn from(function: FunctionDeclaration<crate::parse::ast::Statement<Expression>, Expression>) -> Self {
+    fn from(
+        function: FunctionDeclaration<crate::parse::Statement<Expression>, Expression>,
+    ) -> Self {
         let body = match function.body {
             Some(body) => {
                 let body = body.into_iter().map(|item| (item).into()).collect();
@@ -54,10 +57,10 @@ impl From<FunctionDeclaration<crate::parse::ast::Statement<Expression>, Expressi
     }
 }
 
-impl From<Declaration<crate::parse::ast::Statement<Expression>, Expression>>
+impl From<Declaration<crate::parse::Statement<Expression>, Expression>>
     for Declaration<Statement<Expression>, Expression>
 {
-    fn from(decl: Declaration<crate::parse::ast::Statement<Expression>, Expression>) -> Self {
+    fn from(decl: Declaration<crate::parse::Statement<Expression>, Expression>) -> Self {
         match decl {
             Declaration::Variable(variable) => Declaration::Variable(variable.clone()),
             Declaration::Function(function) => {
@@ -68,17 +71,17 @@ impl From<Declaration<crate::parse::ast::Statement<Expression>, Expression>>
     }
 }
 
-impl From<crate::parse::ast::Statement<Expression>> for Statement<Expression> {
-    fn from(stmt: crate::parse::ast::Statement<Expression>) -> Self {
+impl From<crate::parse::Statement<Expression>> for Statement<Expression> {
+    fn from(stmt: crate::parse::Statement<Expression>) -> Self {
         match stmt {
-            crate::parse::ast::Statement::Return(e) => Statement::Return(e.clone()),
-            crate::parse::ast::Statement::Expression(e) => Statement::Expression(e.clone()),
-            crate::parse::ast::Statement::If(cond, then, els) => {
+            crate::parse::Statement::Return(e) => Statement::Return(e.clone()),
+            crate::parse::Statement::Expression(e) => Statement::Expression(e.clone()),
+            crate::parse::Statement::If(cond, then, els) => {
                 let then = Box::new(then.as_ref().clone().into());
                 let els = els.map(|els| Box::new(els.as_ref().clone().into()));
                 Statement::If(cond.clone(), then, els)
             }
-            crate::parse::ast::Statement::Compound(block) => {
+            crate::parse::Statement::Compound(block) => {
                 let new_block: Vec<BlockItem<Statement<Expression>, Expression>> = block
                     .into_iter()
                     .map(|item| match item {
@@ -88,12 +91,12 @@ impl From<crate::parse::ast::Statement<Expression>> for Statement<Expression> {
                     .collect();
                 Statement::Compound(new_block)
             }
-            crate::parse::ast::Statement::Null => Statement::Null,
-            crate::parse::ast::Statement::Break
-            | crate::parse::ast::Statement::Continue
-            | crate::parse::ast::Statement::While(_, _)
-            | crate::parse::ast::Statement::DoWhile(_, _)
-            | crate::parse::ast::Statement::For(_, _, _, _) => panic!("Invalid statement conversion"),
+            crate::parse::Statement::Null => Statement::Null,
+            crate::parse::Statement::Break
+            | crate::parse::Statement::Continue
+            | crate::parse::Statement::While(_, _)
+            | crate::parse::Statement::DoWhile(_, _)
+            | crate::parse::Statement::For(_, _, _, _) => panic!("Invalid statement conversion"),
         }
     }
 }

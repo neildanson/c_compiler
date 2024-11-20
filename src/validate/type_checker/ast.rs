@@ -1,4 +1,4 @@
-use crate::parse::{Type, Identifier, UnaryOperator, BinaryOperator, Constant};
+use crate::ast::{BinaryOperator, Constant, Identifier, Type, UnaryOperator};
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Expression {
@@ -6,12 +6,7 @@ pub enum Expression {
     Unary(UnaryOperator, Box<Expression>, Type),
     BinOp(BinaryOperator, Box<Expression>, Box<Expression>, Type),
     Assignment(Box<Expression>, Box<Expression>, Type),
-    Conditional(
-        Box<Expression>,
-        Box<Expression>,
-        Box<Expression>,
-        Type,
-    ),
+    Conditional(Box<Expression>, Box<Expression>, Box<Expression>, Type),
     FunctionCall(Identifier, Vec<Expression>, Type),
     Cast(Type, Box<Expression>),
     Constant(Constant),

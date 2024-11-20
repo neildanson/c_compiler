@@ -14,10 +14,15 @@ pub use unary_op::*;
 pub use value::*;
 
 use crate::{
+    ast::{
+        BinaryOperator, BlockItem, Constant, Declaration, ForInit, FunctionDeclaration,
+        StorageClass, Type, UnaryOperator, VariableDeclaration,
+    },
     error::CompilerError,
-    parse::{BinaryOperator, BlockItem, Constant, Declaration, ForInit, FunctionDeclaration, StorageClass, Type, UnaryOperator, VariableDeclaration},
     validate::{
-        loop_labelling::Statement, type_checker::{self, Expression}, InitialValue, StaticAttr, Symbol, ValidateResult
+        loop_labelling::Statement,
+        type_checker::{self, Expression},
+        InitialValue, StaticAttr, Symbol, ValidateResult,
     },
 };
 use std::collections::HashMap;

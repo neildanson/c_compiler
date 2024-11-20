@@ -1,6 +1,6 @@
 use std::fmt::{Display, Formatter};
 
-use crate::parse::{Constant, Type};
+use crate::ast::{Constant, Type};
 
 use super::Expression;
 

@@ -1,5 +1,4 @@
-use crate::parse;
-
+use crate::ast;
 #[derive(Clone, Debug, PartialEq)]
 pub enum UnaryOp {
     Complement,
@@ -7,12 +6,12 @@ pub enum UnaryOp {
     Not,
 }
 
-impl From<&parse::UnaryOperator> for UnaryOp {
-    fn from(op: &parse::UnaryOperator) -> Self {
+impl From<&ast::UnaryOperator> for UnaryOp {
+    fn from(op: &ast::UnaryOperator) -> Self {
         match op {
-            parse::UnaryOperator::Tilde => UnaryOp::Complement,
-            parse::UnaryOperator::Negation => UnaryOp::Negate,
-            parse::UnaryOperator::Not => UnaryOp::Not,
+            ast::UnaryOperator::Tilde => UnaryOp::Complement,
+            ast::UnaryOperator::Negation => UnaryOp::Negate,
+            ast::UnaryOperator::Not => UnaryOp::Not,
             _ => unimplemented!("UnaryOp not implemented for {:?}", op),
         }
     }

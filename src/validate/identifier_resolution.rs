@@ -1,9 +1,9 @@
+use crate::ast::*;
 use crate::error::*;
-use crate::parse::ast::*;
+use crate::parse::Expression;
+use crate::parse::Statement;
 use global_counter::primitive::exact::CounterI32;
 use std::collections::HashMap;
-
-type ParseStatement = Statement<crate::parse::Expression>;
 
 #[derive(Debug)]
 pub(crate) struct MapEntry {
@@ -213,9 +213,9 @@ impl IdentifierResolution {
 
     pub fn resolve_function_declaration(
         &mut self,
-        decl: FunctionDeclaration<ParseStatement, Expression>,
+        decl: FunctionDeclaration<Statement<Expression>, Expression>,
         nested: bool,
-    ) -> Result<FunctionDeclaration<ParseStatement, Expression>, CompilerError> {
+    ) -> Result<FunctionDeclaration<Statement<Expression>, Expression>, CompilerError> {
         if let Some(entry) = self.identifier_map.get(&decl.name) {
             if entry.from_current_scope && !entry.has_external_linkage {
                 {
@@ -261,8 +261,8 @@ impl IdentifierResolution {
 
     fn resolve_block(
         &mut self,
-        blocks: &[BlockItem<ParseStatement, Expression>],
-    ) -> Result<Vec<BlockItem<ParseStatement, Expression>>, CompilerError> {
+        blocks: &[BlockItem<Statement<Expression>, Expression>],
+    ) -> Result<Vec<BlockItem<Statement<Expression>, Expression>>, CompilerError> {
         let mut new_block = Vec::new();
         for item in blocks {
             match item {

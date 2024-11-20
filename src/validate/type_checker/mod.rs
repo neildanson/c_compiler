@@ -2,7 +2,14 @@ pub mod ast;
 pub mod symbol;
 
 use super::loop_labelling::Statement;
-use crate::{error::*, parse::{BinaryOperator, Declaration, ForInit, FunctionDeclaration, StorageClass, Type, UnaryOperator, VariableDeclaration}};
+use crate::ast::*;
+use crate::{
+    ast::{
+        BinaryOperator, Declaration, ForInit, FunctionDeclaration, StorageClass, Type,
+        UnaryOperator, VariableDeclaration,
+    },
+    error::*,
+};
 pub use ast::Expression;
 use std::collections::HashMap;
 pub use symbol::*;
@@ -33,19 +40,20 @@ impl TypeChecker {
         &mut self,
         variable_declaration: &VariableDeclaration<crate::parse::Expression>,
     ) -> Result<VariableDeclaration<Expression>, CompilerError> {
-        let mut initial_value = if let Some(crate::parse::Expression::Constant(i)) = &variable_declaration.init {
-            InitialValue::Initial((*i).into())
-        } else if variable_declaration.init.is_none() {
-            if variable_declaration.storage_class == Some(StorageClass::Extern) {
-                InitialValue::NoInitializer
+        let mut initial_value =
+            if let Some(crate::parse::Expression::Constant(i)) = &variable_declaration.init {
+                InitialValue::Initial((*i).into())
+            } else if variable_declaration.init.is_none() {
+                if variable_declaration.storage_class == Some(StorageClass::Extern) {
+                    InitialValue::NoInitializer
+                } else {
+                    InitialValue::Tentative
+                }
             } else {
-                InitialValue::Tentative
-            }
-        } else {
-            return Err(CompilerError::SemanticAnalysis(
-                SemanticAnalysisError::InvalidInitializerForFileScopeVariable,
-            ));
-        };
+                return Err(CompilerError::SemanticAnalysis(
+                    SemanticAnalysisError::InvalidInitializerForFileScopeVariable,
+                ));
+            };
 
         let mut global = variable_declaration.storage_class != Some(StorageClass::Static);
 
@@ -158,15 +166,16 @@ impl TypeChecker {
                 );
             }
         } else if variable_declaration.storage_class == Some(StorageClass::Static) {
-            let initial_value = if let Some(crate::parse::Expression::Constant(i)) = &variable_declaration.init {
-                InitialValue::Initial((*i).into())
-            } else if variable_declaration.init.is_none() {
-                InitialValue::Tentative
-            } else {
-                return Err(CompilerError::SemanticAnalysis(
-                    SemanticAnalysisError::NonConstantInitializerForLocalStaticVariable,
-                ));
-            };
+            let initial_value =
+                if let Some(crate::parse::Expression::Constant(i)) = &variable_declaration.init {
+                    InitialValue::Initial((*i).into())
+                } else if variable_declaration.init.is_none() {
+                    InitialValue::Tentative
+                } else {
+                    return Err(CompilerError::SemanticAnalysis(
+                        SemanticAnalysisError::NonConstantInitializerForLocalStaticVariable,
+                    ));
+                };
 
             let init = Self::compile_cast(initial_value, &variable_declaration.var_type);
             let ty = init.get_type(variable_declaration.var_type.clone());
@@ -412,9 +421,7 @@ impl TypeChecker {
                     .get_type();
 
                 let expression = self.type_check_expression(expression)?;
-                Ok(Statement::Return(
-                    self.convert_to(return_type, &expression),
-                ))
+                Ok(Statement::Return(self.convert_to(return_type, &expression)))
             }
             Statement::If(condition, then_block, else_block) => {
                 let condition = self.type_check_expression(condition)?;
@@ -484,21 +491,21 @@ impl TypeChecker {
 
     fn type_check_block_item(
         &mut self,
-        block_item: &crate::parse::BlockItem<Statement<crate::parse::Expression>, crate::parse::Expression>,
+        block_item: &BlockItem<Statement<crate::parse::Expression>, crate::parse::Expression>,
         containing_function_name: &str,
-    ) -> Result<crate::parse::BlockItem<Statement<Expression>, Expression>, CompilerError> {
+    ) -> Result<BlockItem<Statement<Expression>, Expression>, CompilerError> {
         match block_item {
-            crate::parse::BlockItem::Statement(statement) => Ok(crate::parse::BlockItem::Statement(
+            BlockItem::Statement(statement) => Ok(BlockItem::Statement(
                 self.type_check_statement(statement, containing_function_name)?,
             )),
-            crate::parse::BlockItem::Declaration(declaration) => match declaration {
-                crate::parse::Declaration::Variable(variable_declaration) => {
-                    Ok(crate::parse::BlockItem::Declaration(Declaration::Variable(
+            BlockItem::Declaration(declaration) => match declaration {
+                Declaration::Variable(variable_declaration) => {
+                    Ok(BlockItem::Declaration(Declaration::Variable(
                         self.type_check_local_variable_declaration(variable_declaration)?,
                     )))
                 }
-                crate::parse::Declaration::Function(function_declaration) => {
-                    Ok(crate::parse::BlockItem::Declaration(Declaration::Function(
+                Declaration::Function(function_declaration) => {
+                    Ok(BlockItem::Declaration(Declaration::Function(
                         self.type_check_function_declaration(function_declaration, false)?,
                     )))
                 }
@@ -508,7 +515,10 @@ impl TypeChecker {
 
     pub fn type_check_function_declaration(
         &mut self,
-        function_declaration: &FunctionDeclaration<Statement<crate::parse::Expression>, crate::parse::Expression>,
+        function_declaration: &FunctionDeclaration<
+            Statement<crate::parse::Expression>,
+            crate::parse::Expression,
+        >,
         top_level: bool,
     ) -> Result<FunctionDeclaration<Statement<Expression>, Expression>, CompilerError> {
         let new_parameters: Vec<_> = function_declaration

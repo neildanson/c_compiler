@@ -2,7 +2,7 @@ use super::{AssemblyType, Function, StaticVariable, TopLevel};
 use crate::{
     error::CompilerError,
     tacky::{self},
-    validate::{Symbol, Value},
+    validate::{type_checker::Value, Symbol},
 };
 use std::{collections::HashMap, fmt::Display};
 

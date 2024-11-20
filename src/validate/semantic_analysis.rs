@@ -1,6 +1,7 @@
 use super::loop_labelling::Statement;
-use super::{identifier_resolution::*, loop_labelling::LoopLabelling};
 use super::ValidateResult;
+use super::{identifier_resolution::*, loop_labelling::LoopLabelling};
+use crate::ast::*;
 use crate::error::*;
 use crate::parse::*;
 
@@ -9,11 +10,20 @@ pub struct SemanticAnalysis;
 
 impl SemanticAnalysis {
     fn semantic_validation_function(
-        function: FunctionDeclaration<ast::Statement<ast::Expression>, Expression>,
+        function: FunctionDeclaration<
+            crate::parse::Statement<crate::parse::Expression>,
+            Expression,
+        >,
         identifier_resolution: &mut IdentifierResolution,
         loop_labelling: &mut LoopLabelling,
         type_checker: &mut crate::validate::type_checker::TypeChecker,
-    ) -> Result<FunctionDeclaration<Statement<crate::validate::type_checker::Expression>, crate::validate::type_checker::Expression>, CompilerError> {
+    ) -> Result<
+        FunctionDeclaration<
+            Statement<crate::validate::type_checker::Expression>,
+            crate::validate::type_checker::Expression,
+        >,
+        CompilerError,
+    > {
         let function = identifier_resolution.resolve_function_declaration(function, false)?;
         let function = loop_labelling.label_function(function)?;
         let function = type_checker.type_check_function_declaration(&function, true)?;
@@ -21,7 +31,10 @@ impl SemanticAnalysis {
     }
 
     pub fn semantic_validation(
-        program: Program<ast::Statement<Expression>, Expression>,
+        program: Program<
+            crate::parse::Statement<crate::parse::Expression>,
+            crate::parse::Expression,
+        >,
     ) -> Result<ValidateResult, CompilerError> {
         let mut identifier_resolution = IdentifierResolution::default();
         let mut loop_labelling = LoopLabelling::default();

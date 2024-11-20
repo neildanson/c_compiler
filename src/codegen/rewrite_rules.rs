@@ -446,36 +446,34 @@ pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
                 assembly_type,
                 src2,
                 dst,
-            } => {
-                match op {
-                    BinaryOp::Add | BinaryOp::Sub => {
-                        let src2 = fixup_large_operand(src2, Reg::R11, &mut new_body);
-                        if let Operand::Stack(_) | Operand::Data(_) = dst {
-                            if let Operand::Stack(_) | Operand::Data(_) = src2 {
-                                new_body.push(Instruction::Mov {
-                                    assembly_type,
-                                    src: src2,
-                                    dst: Operand::Register(Reg::R10),
-                                });
-                                new_body.push(Instruction::Binary {
-                                    op,
-                                    assembly_type,
-                                    src2: Operand::Register(Reg::R10),
-                                    dst,
-                                });
-                                continue;
-                            }
+            } => match op {
+                BinaryOp::Add | BinaryOp::Sub => {
+                    let src2 = fixup_large_operand(src2, Reg::R11, &mut new_body);
+                    if let Operand::Stack(_) | Operand::Data(_) = dst {
+                        if let Operand::Stack(_) | Operand::Data(_) = src2 {
+                            new_body.push(Instruction::Mov {
+                                assembly_type,
+                                src: src2,
+                                dst: Operand::Register(Reg::R10),
+                            });
+                            new_body.push(Instruction::Binary {
+                                op,
+                                assembly_type,
+                                src2: Operand::Register(Reg::R10),
+                                dst,
+                            });
+                            continue;
                         }
-                        new_body.push(Instruction::Binary {
-                            op,
-                            assembly_type,
-                            src2,
-                            dst,
-                        });
                     }
-                    _ => continue,
+                    new_body.push(Instruction::Binary {
+                        op,
+                        assembly_type,
+                        src2,
+                        dst,
+                    });
                 }
-            }
+                _ => continue,
+            },
             Instruction::Idiv { assembly_type, src } => {
                 if let Operand::Immediate { imm: _ } = src {
                     new_body.push(Instruction::Mov {

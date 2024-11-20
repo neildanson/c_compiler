@@ -1,6 +1,6 @@
 use crate::{
+    ast::{Constant, Type},
     error::CompilerError,
-    parse::{Constant, Type},
     tacky::{self, Value},
 };
 use std::fmt::{Display, Formatter};

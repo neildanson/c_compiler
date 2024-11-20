@@ -1,4 +1,4 @@
-use crate::parse::{Constant, Type};
+use crate::ast::{Constant, Type};
 
 #[derive(Clone, Debug)]
 pub enum Value {

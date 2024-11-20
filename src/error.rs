@@ -1,6 +1,6 @@
 use std::{error::Error, fmt::Display};
 
-use crate::parse::Type;
+use crate::ast::Type;
 
 #[derive(Debug)]
 pub enum CodeGenError {

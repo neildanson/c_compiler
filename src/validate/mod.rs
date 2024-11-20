@@ -1,14 +1,14 @@
+use std::collections::HashMap;
 mod identifier_resolution;
 pub mod loop_labelling;
 pub mod semantic_analysis;
 pub mod type_checker;
 
 use loop_labelling::Statement;
-use std::collections::HashMap;
 
-pub use type_checker::*;
+pub use type_checker::{Expression, InitialValue, StaticAttr, Symbol};
 
-use crate::parse::Program;
+use crate::ast::Program;
 
 #[derive(Debug)]
 pub struct ValidateResult {

@@ -1,5 +1,6 @@
 #![feature(if_let_guard)]
 #![feature(let_chains)]
+pub mod ast;
 pub mod codegen;
 pub mod error;
 pub mod lex;
@@ -39,7 +40,7 @@ pub fn lex(filename: &str) -> Result<Vec<Token>> {
     Ok(tokens)
 }
 
-pub fn parse(filename: &str) -> Result<parse::Program<Statement<Expression>, Expression>> {
+pub fn parse(filename: &str) -> Result<ast::Program<Statement<Expression>, Expression>> {
     let tokens = lex(filename)?;
     let ast = parse_program(&tokens)?;
     Ok(ast)

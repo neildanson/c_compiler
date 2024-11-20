@@ -3,7 +3,7 @@ use std::{
     fmt::{Display, Formatter},
 };
 
-use crate::{error::CompilerError, parse::Type, tacky, validate::StaticInit};
+use crate::{ast::Type, error::CompilerError, tacky, validate::type_checker::StaticInit};
 
 use super::*;
 
