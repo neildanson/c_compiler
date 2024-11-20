@@ -1,12 +1,12 @@
 #![feature(if_let_guard)]
 #![feature(let_chains)]
-pub mod ast;
-pub mod codegen;
 pub mod error;
 pub mod lex;
+pub mod ast;
 pub mod parse;
-pub mod tacky;
 pub mod validate;
+pub mod tacky;
+pub mod codegen;
 
 use crate::lex::*;
 use crate::parse::parse_program;

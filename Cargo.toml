@@ -9,3 +9,10 @@ clap = "4.5.20"
 regex = "1.11.1"
 tempfile = "3.14.0"
 global_counter = "0.2.2"
+
+[dev-dependencies]
+criterion = "0.5.1"
+
+[[bench]]
+name = "parse_benchmark"
+harness = false
