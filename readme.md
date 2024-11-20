@@ -16,12 +16,12 @@ Test Suite here into folder _next to_ this repo.
 
 ## Compiler Stages
 
-* Lex
-* Parse
+* Lex -> Generates a list of Tokens
+* Parse -> Accepts tokens and turns into AST (Parse Statement, Parse Expression generics)
 * Semantic Validation
-    * Identifer Resolution
-    * Loop Labelling
-    * Type Checking
+    * Identifer Resolution -> Accepts AST and returns AST of same type
+    * Loop Labelling -> Accepts AST and tranforms to AST with LoopLabelling Statements
+    * Type Checking -> Accepts AST and transforms to AST with Type information on Expressions
 * Tacky Generation
 * CodeGen
 
@@ -80,7 +80,7 @@ Cannot move from rbp (local variable) to rbp must move 1 rbp to register 1st. In
 
 eg 
 
-`add 2, %eax`
+`add $2, %eax`
 
 will add 2 to eax and store in place. 
 
@@ -123,11 +123,13 @@ Copilot is pretty good at explaining why asm code segfaults. Use it.
 # TODOs
 
 
-100% Implemented up to chapter 10 (excluding some extras)
+# Progress
 
-Chapter 11 notes
+100% Implemented up to chapter 11 (excluding some extras)
 
-* Lexer complete
-* Parser complete
-* Validate complete
-* Codegen complete 
+Chapter 12 notes
+
+* Lexer incomplete
+* Parser not started
+* Validate not started
+* Codegen not started 
