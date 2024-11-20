@@ -1,5 +1,6 @@
 pub mod binary_op;
 pub mod condition_code;
+pub mod error;
 pub mod instruction;
 pub mod operand;
 pub mod program;

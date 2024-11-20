@@ -1,6 +1,5 @@
 use std::fmt::Display;
 
-
 #[derive(Debug)]
 pub enum SemanticAnalysisError {
     VariableAlreadyDeclared(String),

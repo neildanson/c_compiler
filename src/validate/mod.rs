@@ -1,6 +1,6 @@
 use std::collections::HashMap;
-mod identifier_resolution;
 pub mod error;
+mod identifier_resolution;
 pub mod loop_labelling;
 pub mod semantic_analysis;
 pub mod type_checker;
