@@ -123,7 +123,10 @@ impl Tokenizer {
             TokenMapper::new(r"^[0-9]+\b", Box::new(Token::Constant)),
             TokenMapper::new(r"^[0-9]+[lL]\b", Box::new(Token::LongConstant)),
             TokenMapper::new(r"^[0-9]+[uU]\b", Box::new(Token::UnsignedInt)),
-            TokenMapper::new(r"^[0-9]+([lL][uU]|[uU][lL])\b", Box::new(Token::UnsignedLong)),
+            TokenMapper::new(
+                r"^[0-9]+([lL][uU]|[uU][lL])\b",
+                Box::new(Token::UnsignedLong),
+            ),
             TokenMapper::new(r"^~", Box::new(|_| Token::Tilde)),
             TokenMapper::new(r"^--", Box::new(|_| Token::DoubleMinus)),
             TokenMapper::new(r"^\+\+", Box::new(|_| Token::DoublePlus)),
