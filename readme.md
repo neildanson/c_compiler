@@ -129,7 +129,7 @@ Copilot is pretty good at explaining why asm code segfaults. Use it.
 
 Chapter 12 notes
 
-* Lexer incomplete
+* Lexer complete
 * Parser not started
 * Validate not started
 * Codegen not started 

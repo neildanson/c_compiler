@@ -54,6 +54,10 @@ pub enum Token {
     Break,                         //break\b
     Continue,                      //continue\b
     Comma,                         //,
+    Signed,                        //signed\b
+    Unsigned,                      //unsigned\b
+    UnsignedInt(String),           //[0-9]+[uU]\b
+    UnsignedLong(String),          //[0-9]+[lL][uU]|[uU]|[lL]\b
 }
 
 pub struct Tokenizer {
@@ -108,6 +112,8 @@ impl Tokenizer {
             TokenMapper::new(r"^for\b", Box::new(|_| Token::For)),
             TokenMapper::new(r"^break\b", Box::new(|_| Token::Break)),
             TokenMapper::new(r"^continue\b", Box::new(|_| Token::Continue)),
+            TokenMapper::new(r"^signed\b", Box::new(|_| Token::Signed)),
+            TokenMapper::new(r"^unsigned\b", Box::new(|_| Token::Unsigned)),
             TokenMapper::new(r"^\(", Box::new(|_| Token::LParen)),
             TokenMapper::new(r"^\)", Box::new(|_| Token::RParen)),
             TokenMapper::new(r"^\{", Box::new(|_| Token::LBrace)),
@@ -116,6 +122,8 @@ impl Tokenizer {
             TokenMapper::new(r"^[a-zA-Z_]\w*\b", Box::new(Token::Identifier)),
             TokenMapper::new(r"^[0-9]+\b", Box::new(Token::Constant)),
             TokenMapper::new(r"^[0-9]+[lL]\b", Box::new(Token::LongConstant)),
+            TokenMapper::new(r"^[0-9]+[uU]\b", Box::new(Token::UnsignedInt)),
+            TokenMapper::new(r"^[0-9]+([lL][uU]|[uU][lL])\b", Box::new(Token::UnsignedLong)),
             TokenMapper::new(r"^~", Box::new(|_| Token::Tilde)),
             TokenMapper::new(r"^--", Box::new(|_| Token::DoubleMinus)),
             TokenMapper::new(r"^\+\+", Box::new(|_| Token::DoublePlus)),
