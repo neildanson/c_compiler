@@ -209,21 +209,12 @@ impl Display for Instruction {
                 write!(f, "\tpopq {}", register.asm(Some(AssemblyType::QuadWord)))
             }
             Instruction::Movsx { src, dst } => {
-                if cfg!(target_os = "macos") { 
-                    write!(
-                        f,
-                        "\tmovslq{}, {}",
-                        src.asm(AssemblyType::LongWord),
-                        dst.asm(AssemblyType::QuadWord)
-                    )
-                } else {
-                    write!(
-                        f,
-                        "\tmovsxl  {}, {}",
-                        src.asm(AssemblyType::LongWord),
-                        dst.asm(AssemblyType::QuadWord)
-                    )
-                }
+                write!(
+                    f,
+                    "\tmovslq{}, {}",
+                    src.asm(AssemblyType::LongWord),
+                    dst.asm(AssemblyType::QuadWord)
+                )
             }
         }
     }

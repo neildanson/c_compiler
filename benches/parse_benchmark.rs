@@ -54,7 +54,6 @@ fn lex_source(c: &mut Criterion) {
     });
 }
 
-
 fn parse_source(c: &mut Criterion) {
     let tokenizer = Tokenizer::new();
     c.bench_function("Parse Fibonacci Success", |b| {
