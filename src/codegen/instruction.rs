@@ -211,7 +211,7 @@ impl Display for Instruction {
             Instruction::Movsx { src, dst } => {
                 write!(
                     f,
-                    "\tmovslq{}, {}",
+                    "\tmovslq {}, {}",
                     src.asm(AssemblyType::LongWord),
                     dst.asm(AssemblyType::QuadWord)
                 )
