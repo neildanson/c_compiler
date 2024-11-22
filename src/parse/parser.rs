@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use super::{Expression, Statement};
 use crate::{ast::*, error::CompilerError, lex::Token};
 use anyhow::Result;
@@ -156,6 +158,14 @@ fn parse_factor(tokens: &[Token]) -> Result<(Expression, &[Token])> {
         }
         [Token::LongConstant(c), rest @ ..] => {
             let constant = parse_constant(c)?;
+            (Expression::Constant(constant), rest)
+        }
+        [Token::UnsignedIntConstant(c), rest @ ..] => {
+            let constant = parse_unsigned_constant(c)?;
+            (Expression::Constant(constant), rest)
+        }
+        [Token::UnsignedLongConstant(c), rest @ ..] => {
+            let constant = parse_unsigned_constant(c)?;
             (Expression::Constant(constant), rest)
         }
         [Token::Minus, rest @ ..] => {
@@ -421,11 +431,28 @@ fn parse_storage_class(token: &Token) -> Option<StorageClass> {
 }
 
 fn parse_type(token: &[&Token]) -> Result<Type> {
-    match token {
-        [Token::Int] => Ok(Type::Int),
-        [Token::Long] | [Token::Long, Token::Int] | [Token::Int, Token::Long] => Ok(Type::Long),
-        _ => Err(CompilerError::Parse("Invalid type specifier".to_string()).into()),
+    if token.is_empty() {
+        return Err(CompilerError::Parse("Invalid type specifier".to_string()).into());
     }
+    //We take 3 because we can have at most 3 type specifiers
+    let unique_tokens: HashSet<&Token> = token.iter().take(3).cloned().collect();
+    if token.len() != unique_tokens.len() {
+        return Err(CompilerError::Parse("Duplicate type specifier".to_string()).into());
+    }
+    if unique_tokens.contains(&Token::Signed) && unique_tokens.contains(&Token::Unsigned) {
+        return Err(CompilerError::Parse("Invalid type specifier".to_string()).into());
+    }
+
+    if unique_tokens.contains(&Token::Unsigned) && unique_tokens.contains(&Token::Long) {
+        return Ok(Type::ULong);
+    }
+    if unique_tokens.contains(&Token::Unsigned) {
+        return Ok(Type::UInt);
+    }
+    if unique_tokens.contains(&Token::Long) {
+        return Ok(Type::Long);
+    }
+    Ok(Type::Int)
 }
 
 fn parse_type_and_storage(
@@ -434,7 +461,11 @@ fn parse_type_and_storage(
     let mut types = Vec::new();
     let mut storage_classes = Vec::new();
     for specifier in specifier_list {
-        if specifier == &Token::Int || specifier == &Token::Long {
+        if specifier == &Token::Int
+            || specifier == &Token::Long
+            || specifier == &Token::Unsigned
+            || specifier == &Token::Signed
+        {
             types.push(specifier);
         } else {
             match specifier {
@@ -542,12 +573,8 @@ fn parse_block_item(tokens: &[Token]) -> Result<BlockItemResult> {
 }
 
 fn parse_constant(constant: &str) -> Result<Constant> {
-    let is_long = constant.ends_with("L") || constant.ends_with("l");
-    let constant = if is_long {
-        &constant[..constant.len() - 1]
-    } else {
-        constant
-    };
+    let is_long = constant.contains("L") || constant.contains("l");
+    let constant = constant.replace("L", "").replace("l", "");
 
     let v = constant.parse::<u64>()?;
     if v > i64::MAX as u64 {
@@ -558,6 +585,19 @@ fn parse_constant(constant: &str) -> Result<Constant> {
         Ok(Constant::Int(v as i32))
     } else {
         Ok(Constant::Long(v as i64))
+    }
+}
+
+fn parse_unsigned_constant(constant: &str) -> Result<Constant> {
+    let is_long = constant.contains("L") || constant.contains("l");
+    let constant = constant.replace("U", "").replace("u", "").replace("L", "").replace("l", "");
+
+    let v = constant.parse::<u64>()?;
+
+    if !is_long && v < (u32::MAX as u64) {
+        Ok(Constant::UnsignedInt(v as u32))
+    } else {
+        Ok(Constant::UnsignedLong(v as u64))
     }
 }
 

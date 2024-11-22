@@ -3,13 +3,15 @@ use regex::Regex;
 
 use crate::error::CompilerError;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq, Hash)]
 pub enum Token {
     Comment(String),
     PreProcessorDirective(String), //#[a-zA-Z_]\w*\b
     Identifier(String),            //[a-zA-Z_]\w*\b
     Constant(String),              //[0-9]+\b
     LongConstant(String),          //[0-9]+[lL]\b
+    UnsignedIntConstant(String),           //[0-9]+[uU]\b
+    UnsignedLongConstant(String),          //[0-9]+[lL][uU]|[uU]|[lL]\b
     Int,                           //int\b
     Long,                          //long\b
     Void,                          //void\b
@@ -56,8 +58,6 @@ pub enum Token {
     Comma,                         //,
     Signed,                        //signed\b
     Unsigned,                      //unsigned\b
-    UnsignedInt(String),           //[0-9]+[uU]\b
-    UnsignedLong(String),          //[0-9]+[lL][uU]|[uU]|[lL]\b
 }
 
 pub struct Tokenizer {
@@ -122,10 +122,10 @@ impl Tokenizer {
             TokenMapper::new(r"^[a-zA-Z_]\w*\b", Box::new(Token::Identifier)),
             TokenMapper::new(r"^[0-9]+\b", Box::new(Token::Constant)),
             TokenMapper::new(r"^[0-9]+[lL]\b", Box::new(Token::LongConstant)),
-            TokenMapper::new(r"^[0-9]+[uU]\b", Box::new(Token::UnsignedInt)),
+            TokenMapper::new(r"^[0-9]+[uU]\b", Box::new(Token::UnsignedIntConstant)),
             TokenMapper::new(
                 r"^[0-9]+([lL][uU]|[uU][lL])\b",
-                Box::new(Token::UnsignedLong),
+                Box::new(Token::UnsignedLongConstant),
             ),
             TokenMapper::new(r"^~", Box::new(|_| Token::Tilde)),
             TokenMapper::new(r"^--", Box::new(|_| Token::DoubleMinus)),
