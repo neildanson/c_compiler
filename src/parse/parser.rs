@@ -93,6 +93,10 @@ fn parse_nth_parameter(tokens: &[Token]) -> Result<(Identifier, Type, &[Token])>
             let ty = parse_type(&[ty1, ty2])?;
             Ok((name.clone(), ty, rest))
         }
+        [Token::Comma, ty1, ty2, ty3, Token::Identifier(name), rest @ ..] => {
+            let ty = parse_type(&[ty1, ty2, ty3])?;
+            Ok((name.clone(), ty, rest))
+        }
 
         toks => Err(CompilerError::Parse(format!("Parameter Unexpected Tokens {:?}", toks)).into()),
     }
@@ -105,6 +109,7 @@ fn parse_parameter_list(tokens: &[Token]) -> Result<ParameterListResult> {
             let ty = parse_type(&[ty])?;
             let mut parameters = vec![(ty, name.clone())];
             let mut rest = rest;
+            //This kinda hides the error.
             while let Ok((name, ty, new_rest)) = parse_nth_parameter(rest) {
                 parameters.push((ty, name.clone())); //
                 rest = new_rest;
@@ -115,6 +120,7 @@ fn parse_parameter_list(tokens: &[Token]) -> Result<ParameterListResult> {
             let ty = parse_type(&[ty1, ty2])?;
             let mut parameters = vec![(ty, name.clone())];
             let mut rest = rest;
+            //This kinda hides the error.
             while let Ok((name, ty, new_rest)) = parse_nth_parameter(rest) {
                 parameters.push((ty, name.clone()));
                 rest = new_rest;
