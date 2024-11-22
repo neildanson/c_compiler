@@ -121,6 +121,8 @@ pub enum BinaryOperator {
 pub enum Type {
     Int,
     Long,
+    UInt,
+    ULong,
     FunType(Vec<Type>, Box<Type>),
 }
 
@@ -129,6 +131,8 @@ impl Type {
         match self {
             Type::Int => Constant::Int(0),
             Type::Long => Constant::Long(0),
+            Type::UInt => Constant::UnsignedInt(0),
+            Type::ULong => Constant::UnsignedLong(0),
             Type::FunType(_, _) => panic!("Function type has no zero constant"),
         }
     }
@@ -138,6 +142,8 @@ impl Type {
 pub enum Constant {
     Int(i32),
     Long(i64),
+    UnsignedInt(u32),
+    UnsignedLong(u64),
 }
 
 impl Display for Constant {
@@ -145,6 +151,8 @@ impl Display for Constant {
         match self {
             Constant::Int(val) => write!(f, "{}", val),
             Constant::Long(val) => write!(f, "{}", val),
+            Constant::UnsignedInt(val) => write!(f, "{}", val),
+            Constant::UnsignedLong(val) => write!(f, "{}", val),
         }
     }
 }
@@ -154,6 +162,7 @@ impl Constant {
         match self {
             Constant::Int(_) => Type::Int,
             Constant::Long(_) => Type::Long,
+            _ => panic!("Unsigned types are not supported"),
         }
     }
 
@@ -161,6 +170,7 @@ impl Constant {
         match self {
             Constant::Int(val) => *val as i64,
             Constant::Long(val) => *val,
+            _ => panic!("Unsigned types are not supported"),
         }
     }
 }

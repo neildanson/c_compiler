@@ -33,6 +33,7 @@ impl From<Constant> for StaticInit {
         match value {
             Constant::Int(val) => StaticInit::IntInit(val),
             Constant::Long(val) => StaticInit::LongInit(val),
+            _ => panic!("Invalid conversion from Constant to StaticInit"),
         }
     }
 }

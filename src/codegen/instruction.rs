@@ -46,6 +46,8 @@ impl Value {
         match self {
             Value::Constant(Constant::Int(_)) => AssemblyType::LongWord,
             Value::Constant(Constant::Long(_)) => AssemblyType::QuadWord,
+            Value::Constant(Constant::UnsignedInt(_)) => AssemblyType::LongWord, //TODO: Check if this is correct
+            Value::Constant(Constant::UnsignedLong(_)) => AssemblyType::QuadWord, //TODO: Check if this is correct
             Value::Var(_, ty) => ty.into(),
         }
     }
@@ -53,6 +55,8 @@ impl Value {
         match self {
             Value::Constant(Constant::Int(_)) => Type::Int,
             Value::Constant(Constant::Long(_)) => Type::Long,
+            Value::Constant(Constant::UnsignedInt(_)) => Type::UInt,
+            Value::Constant(Constant::UnsignedLong(_)) => Type::ULong,
             Value::Var(_, ty) => ty.clone(),
         }
     }
