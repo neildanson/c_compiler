@@ -1,42 +1,18 @@
-/* Test out different ways to declare a signed int or long */
+/* Test initializing and updating unsigned global variables */
+static unsigned long x = 9223372036854775803ul; // 2^63 - 5
 
-#ifdef SUPPRESS_WARNINGS
-#ifndef __clang__
-#pragma GCC diagnostic ignored "-Wold-style-declaration"
-#endif
-#endif
+// make sure these are initialized to zero
+unsigned long zero_long;
+unsigned zero_int;
 
-static int i;
-signed extern i;
-int static signed i = 5;
-signed int static i;
-
-long signed l;
-long l = 7;
-int long l;
-signed long int l;
-
-int main(void) {
-    int signed extern i;
-    extern signed long l;
-
-    if (i != 5) {
-        return 1;
-    }
-
-    if (l != 7) {
-        return 2;
-    }
-
-    /* use signed type specifier in for loop */
-    int counter = 0;
-    for (signed int index = 10; index > 0; index = index - 1) {
-        counter = counter + 1;
-    }
-
-    if (counter != 10) {
-        return 3;
-    }
-
-    return 0;
+int main(void)
+{
+    if (x != 9223372036854775803ul)
+        return 0;
+    x = x + 10;
+    if (x != 9223372036854775813ul)
+        return 0;
+    if (zero_long || zero_int)
+        return 0;
+    return 1;
 }

@@ -482,7 +482,7 @@ fn parse_type(token: &[&Token]) -> Result<Type> {
     //END HACK
 
 
-    if unique_tokens.remove(&Token::Unsigned) || unique_tokens.contains(&Token::Long) {
+    if unique_tokens.contains(&Token::Unsigned) && unique_tokens.contains(&Token::Long) {
         return Ok(Type::ULong);
     }
     if unique_tokens.remove(&Token::Unsigned) {
