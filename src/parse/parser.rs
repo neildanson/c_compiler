@@ -467,25 +467,34 @@ fn parse_type(token: &[&Token]) -> Result<Type> {
     if token.is_empty() {
         return Err(CompilerError::Parse("Invalid type specifier".to_string()).into());
     }
-    //We take 3 because we can have at most 3 type specifiers
-    let unique_tokens: HashSet<&Token> = token.iter().take(3).cloned().collect();
+    let mut unique_tokens: HashSet<&Token> = token.iter().take(3).cloned().collect();
     if token.len() != unique_tokens.len() {
         return Err(CompilerError::Parse("Duplicate type specifier".to_string()).into());
     }
     if unique_tokens.contains(&Token::Signed) && unique_tokens.contains(&Token::Unsigned) {
-        return Err(CompilerError::Parse("Invalid type specifier".to_string()).into());
+        return Err(CompilerError::Parse("Conflicting type specifier".to_string()).into());
     }
 
-    if unique_tokens.contains(&Token::Unsigned) && unique_tokens.contains(&Token::Long) {
+    //HACK Remove this
+    if unique_tokens.contains(&Token::Extern) || unique_tokens.contains(&Token::Static) {
+        return Err(CompilerError::Parse("Invalid Storage Class specifier".to_string()).into());
+    }
+    //END HACK
+
+
+    if unique_tokens.remove(&Token::Unsigned) || unique_tokens.contains(&Token::Long) {
         return Ok(Type::ULong);
     }
-    if unique_tokens.contains(&Token::Unsigned) {
+    if unique_tokens.remove(&Token::Unsigned) {
         return Ok(Type::UInt);
     }
-    if unique_tokens.contains(&Token::Long) {
+    if unique_tokens.remove(&Token::Long) {
         return Ok(Type::Long);
     }
-    Ok(Type::Int)
+    if unique_tokens.remove(&Token::Int) || unique_tokens.remove(&Token::Signed) {
+        return Ok(Type::Int);
+    }
+    return Err(CompilerError::Parse(format!("Invalid type specifier {:?} {:?}", unique_tokens, token)).into());
 }
 
 fn parse_type_and_storage(

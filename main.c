@@ -1,74 +1,42 @@
-/* Test truncating wider to narrow types */
-int ulong_to_int(unsigned long ul, int expected) {
-    int result = (int) ul;
-    return (result == expected);
-}
+/* Test out different ways to declare a signed int or long */
 
-int ulong_to_uint(unsigned long ul, unsigned expected) {
-    return ((unsigned int) ul == expected);
-}
+#ifdef SUPPRESS_WARNINGS
+#ifndef __clang__
+#pragma GCC diagnostic ignored "-Wold-style-declaration"
+#endif
+#endif
 
-int long_to_uint(long l, unsigned int expected) {
-    return (unsigned int) l == expected;
-}
+static int i;
+signed extern i;
+int static signed i = 5;
+signed int static i;
+
+long signed l;
+long l = 7;
+int long l;
+signed long int l;
 
 int main(void) {
-    /* truncate long */
+    int signed extern i;
+    extern signed long l;
 
-    /* 100 is in the range of unsigned int,
-     * so truncating it to an unsigned int
-     * will preserve its value
-     */
-    if (!long_to_uint(100l, 100u)) {
+    if (i != 5) {
         return 1;
     }
 
-    /* -9223372036854774574 (i.e. -2^63 + 1234) is outside the range of unsigned int,
-     * so add 2^32 to bring it within range */
-    if (!long_to_uint(-9223372036854774574l, 1234u)) {
+    if (l != 7) {
         return 2;
     }
 
-    /* truncate unsigned long */
+    /* use signed type specifier in for loop */
+    int counter = 0;
+    for (signed int index = 10; index > 0; index = index - 1) {
+        counter = counter + 1;
+    }
 
-    /* 100 can be cast to an int or unsigned int without changing its value */
-    if (!ulong_to_int(100ul, 100)) {
+    if (counter != 10) {
         return 3;
     }
-
-    if (!ulong_to_uint(100ul, 100u)) {
-        return 4;
-    }
-
-    /* 4294967200 (i.e. 2^32 - 96) can be cast to an unsigned int without changing its value,
-     * but must be reduced modulo 2^32 to cast to a signed int
-     */
-    if (!ulong_to_uint(4294967200ul, 4294967200u)) {
-        return 5;
-    }
-
-    if (!ulong_to_int(4294967200ul, -96)) {
-        return 6;
-    }
-
-    /* 1152921506754330624 (i.e. 2^60 + 2^31) must be reduced modulo 2^32
-     * to represent as a signed or unsigned int
-     */
-
-    if (!ulong_to_uint(1152921506754330624ul, 2147483648u)) { // reduce to 2^31
-        return 7;
-    }
-
-    if (!ulong_to_int(1152921506754330624ul, -2147483648)){ // reduce to -2^31
-        return 8;
-    }
-
-    /* truncate unsigned long constant that can't
-     * be expressed in 32 bits, to test rewrite rule
-     */
-    unsigned int ui = (unsigned int)17179869189ul; // 2^34 + 5
-    if (ui != 5)
-        return 9;
 
     return 0;
 }
