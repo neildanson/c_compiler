@@ -223,6 +223,7 @@ fn parse_factor(tokens: &[Token]) -> Result<(Expression, &[Token])> {
             ),
             rest,
         ),
+        // This section is largely for type casting - make better?
         [Token::LParen, Token::Int, Token::RParen, rest @ ..] => {
             let (expression, rest) = parse_expression(rest, 0)?;
             let expression = Expression::Cast(Type::Int, Box::new(expression));
@@ -233,6 +234,32 @@ fn parse_factor(tokens: &[Token]) -> Result<(Expression, &[Token])> {
             let expression = Expression::Cast(Type::Long, Box::new(expression));
             (expression, rest)
         }
+        [Token::LParen, Token::Unsigned, Token::Int, Token::RParen, rest @ ..] => {
+            let (expression, rest) = parse_expression(rest, 0)?;
+            let expression = Expression::Cast(Type::Int, Box::new(expression));
+            (expression, rest)
+        }
+        [Token::LParen, Token::Unsigned, Token::Long, Token::RParen, rest @ ..] => {
+            let (expression, rest) = parse_expression(rest, 0)?;
+            let expression = Expression::Cast(Type::Long, Box::new(expression));
+            (expression, rest)
+        }
+        [Token::LParen, Token::Signed, Token::Int, Token::RParen, rest @ ..] => {
+            let (expression, rest) = parse_expression(rest, 0)?;
+            let expression = Expression::Cast(Type::Int, Box::new(expression));
+            (expression, rest)
+        }
+        [Token::LParen, Token::Signed, Token::Long, Token::RParen, rest @ ..] => {
+            let (expression, rest) = parse_expression(rest, 0)?;
+            let expression = Expression::Cast(Type::Long, Box::new(expression));
+            (expression, rest)
+        }
+        [Token::LParen, Token::Signed, Token::RParen, rest @ ..] => {
+            let (expression, rest) = parse_expression(rest, 0)?;
+            let expression = Expression::Cast(Type::Int, Box::new(expression));
+            (expression, rest)
+        }
+        // END : This section is largely for type casting - make better?
         [Token::LParen, rest @ ..] => {
             let (expression, rest) = parse_expression(rest, 0)?;
             let rest = swallow_one(Token::RParen, rest)?;
