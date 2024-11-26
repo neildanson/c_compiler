@@ -475,13 +475,6 @@ fn parse_type(token: &[&Token]) -> Result<Type> {
         return Err(CompilerError::Parse("Conflicting type specifier".to_string()).into());
     }
 
-    //HACK Remove this
-    if unique_tokens.contains(&Token::Extern) || unique_tokens.contains(&Token::Static) {
-        return Err(CompilerError::Parse("Invalid Storage Class specifier".to_string()).into());
-    }
-    //END HACK
-
-
     if unique_tokens.remove(&Token::Unsigned) || unique_tokens.contains(&Token::Long) {
         return Ok(Type::ULong);
     }
