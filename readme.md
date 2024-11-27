@@ -122,6 +122,8 @@ Copilot is pretty good at explaining why asm code segfaults. Use it.
 
 # TODOs
 
+Cast code in Parse is awful
+Anything that calls `parse_type` is bad (nth_parameter)
 
 # Progress
 
