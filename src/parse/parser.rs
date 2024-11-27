@@ -485,13 +485,13 @@ fn parse_type(token: &[&Token]) -> Result<Type> {
     if unique_tokens.contains(&Token::Unsigned) && unique_tokens.contains(&Token::Long) {
         return Ok(Type::ULong);
     }
-    if unique_tokens.remove(&Token::Unsigned) {
+    if unique_tokens.contains(&Token::Unsigned) {
         return Ok(Type::UInt);
     }
-    if unique_tokens.remove(&Token::Long) {
+    if unique_tokens.contains(&Token::Long) {
         return Ok(Type::Long);
     }
-    if unique_tokens.remove(&Token::Int) || unique_tokens.remove(&Token::Signed) {
+    if unique_tokens.contains(&Token::Int) || unique_tokens.remove(&Token::Signed) {
         return Ok(Type::Int);
     }
     return Err(CompilerError::Parse(format!("Invalid type specifier {:?} {:?}", unique_tokens, token)).into());
