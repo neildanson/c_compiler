@@ -84,66 +84,37 @@ where
 }
 
 fn parse_nth_parameter(tokens: &[Token]) -> Result<(Identifier, Type, &[Token])> {
-    match tokens {
-        [Token::Comma, ty, Token::Identifier(name), rest @ ..] => {
-            let ty = parse_type(&[ty])?;
-            Ok((name.clone(), ty, rest))
-        }
-        [Token::Comma, ty1, ty2, Token::Identifier(name), rest @ ..] => {
-            let ty = parse_type(&[ty1, ty2])?;
-            Ok((name.clone(), ty, rest))
-        }
-        [Token::Comma, ty1, ty2, ty3, Token::Identifier(name), rest @ ..] => {
-            let ty = parse_type(&[ty1, ty2, ty3])?;
-            Ok((name.clone(), ty, rest))
-        }
-
-        toks => Err(CompilerError::Parse(format!("Parameter Unexpected Tokens {:?}", toks)).into()),
+    let rest = swallow_one(Token::Comma, tokens)?;
+    let (ty, _, rest) = parse_type_and_storage(rest, false)?;
+    match rest {
+        [Token::Identifier(name), rest @ ..] => Ok((name.clone(), ty, rest)),
+        _ => Err(CompilerError::Parse(format!("Parameter Unexpected Tokens {:?}", rest)).into()),
     }
 }
 
 fn parse_parameter_list(tokens: &[Token]) -> Result<ParameterListResult> {
     let (parameters, rest) = match tokens {
         [Token::Void, rest @ ..] => (Vec::new(), rest),
-        [ty, Token::Identifier(name), rest @ ..] => {
-            let ty = parse_type(&[ty])?;
-            let mut parameters = vec![(ty, name.clone())];
-            let mut rest = rest;
-            //This kinda hides the error.
-            while let Ok((name, ty, new_rest)) = parse_nth_parameter(rest) {
-                parameters.push((ty, name.clone())); //
-                rest = new_rest;
+        rest => {
+            let (ty, _, rest) = parse_type_and_storage(rest, false)?;
+            match rest {
+                [Token::Identifier(name), rest @ ..] => {
+                    let mut parameters = vec![(ty, name.clone())];
+                    let mut rest = rest;
+                    while let Ok((name, ty, new_rest)) = parse_nth_parameter(rest) {
+                        parameters.push((ty, name.clone()));
+                        rest = new_rest;
+                    }
+                    return Ok((parameters, rest));
+                }
+                _ => {
+                    return Err(CompilerError::Parse(format!(
+                        "Parameter List Unexpected Tokens {:?}",
+                        rest
+                    ))
+                    .into())
+                }
             }
-            (parameters, rest)
-        }
-        [ty1, ty2, Token::Identifier(name), rest @ ..] => {
-            let ty = parse_type(&[ty1, ty2])?;
-            let mut parameters = vec![(ty, name.clone())];
-            let mut rest = rest;
-            //This kinda hides the error.
-            while let Ok((name, ty, new_rest)) = parse_nth_parameter(rest) {
-                parameters.push((ty, name.clone()));
-                rest = new_rest;
-            }
-            (parameters, rest)
-        }
-        [ty1, ty2, ty3, Token::Identifier(name), rest @ ..] => {
-            let ty = parse_type(&[ty1, ty2, ty3])?;
-            let mut parameters = vec![(ty, name.clone())];
-            let mut rest = rest;
-            //This kinda hides the error.
-            while let Ok((name, ty, new_rest)) = parse_nth_parameter(rest) {
-                parameters.push((ty, name.clone()));
-                rest = new_rest;
-            }
-            (parameters, rest)
-        }
-        toks => {
-            return Err(CompilerError::Parse(format!(
-                "Parameter List Unexpected Tokens {:?}",
-                toks
-            ))
-            .into())
         }
     };
     Ok((parameters, rest))
@@ -486,10 +457,6 @@ fn parse_type(token: &[&Token]) -> Result<Type> {
         return Err(CompilerError::Parse("Conflicting type specifier".to_string()).into());
     }
 
-    if unique_tokens.contains(&Token::Extern) || unique_tokens.contains(&Token::Static) {
-        return Err(CompilerError::Parse("Invalid Storage Class specifier".to_string()).into());
-    }
-
     if unique_tokens.contains(&Token::Unsigned) && unique_tokens.contains(&Token::Long) {
         return Ok(Type::ULong);
     }
@@ -502,11 +469,16 @@ fn parse_type(token: &[&Token]) -> Result<Type> {
     if unique_tokens.contains(&Token::Int) || unique_tokens.remove(&Token::Signed) {
         return Ok(Type::Int);
     }
-    return Err(CompilerError::Parse(format!("Invalid type specifier {:?} {:?}", unique_tokens, token)).into());
+    return Err(CompilerError::Parse(format!(
+        "Invalid type specifier {:?} {:?}",
+        unique_tokens, token
+    ))
+    .into());
 }
 
 fn parse_type_and_storage(
     specifier_list: &[Token],
+    allow_storage: bool,
 ) -> Result<(Type, Option<StorageClass>, &[Token])> {
     let mut types = Vec::new();
     let mut storage_classes = Vec::new();
@@ -541,6 +513,10 @@ fn parse_type_and_storage(
         None => None,
     };
 
+    if !allow_storage && storage_class.is_some() {
+        return Err(CompilerError::Parse("Invalid storage class specifier".to_string()).into());
+    }
+
     Ok((
         ty,
         storage_class,
@@ -551,7 +527,7 @@ fn parse_type_and_storage(
 fn parse_variable_declaration(
     tokens: &[Token],
 ) -> Result<(VariableDeclaration<Expression>, &[Token])> {
-    let (var_type, storage_class, rest) = parse_type_and_storage(tokens)?;
+    let (var_type, storage_class, rest) = parse_type_and_storage(tokens, true)?;
     let (declaration, rest) = match rest {
         [Token::Identifier(name), Token::Assignment, rest @ ..] => {
             let (expression, rest) = parse_expression(rest, 0)?;
@@ -640,7 +616,11 @@ fn parse_constant(constant: &str) -> Result<Constant> {
 
 fn parse_unsigned_constant(constant: &str) -> Result<Constant> {
     let is_long = constant.contains("L") || constant.contains("l");
-    let constant = constant.replace("U", "").replace("u", "").replace("L", "").replace("l", "");
+    let constant = constant
+        .replace("U", "")
+        .replace("u", "")
+        .replace("L", "")
+        .replace("l", "");
 
     let v = constant.parse::<u64>()?;
 
@@ -678,7 +658,7 @@ fn parse_function_body(tokens: &[Token]) -> Result<FunctionBodyResult> {
 }
 
 fn parse_function_declaration(tokens: &[Token]) -> Result<FunctionDeclarationResult> {
-    let (fun_type, storage_class, rest) = parse_type_and_storage(tokens)?;
+    let (fun_type, storage_class, rest) = parse_type_and_storage(tokens, true)?;
     let (function, rest) = match rest {
         [Token::Identifier(name), Token::LParen, rest @ ..] => {
             let (params, rest) = parse_parameter_list(rest)?;

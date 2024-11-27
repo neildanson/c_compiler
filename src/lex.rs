@@ -3,15 +3,15 @@ use regex::Regex;
 
 use crate::error::CompilerError;
 
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub enum Token {
     Comment(String),
     PreProcessorDirective(String), //#[a-zA-Z_]\w*\b
     Identifier(String),            //[a-zA-Z_]\w*\b
     Constant(String),              //[0-9]+\b
     LongConstant(String),          //[0-9]+[lL]\b
-    UnsignedIntConstant(String),           //[0-9]+[uU]\b
-    UnsignedLongConstant(String),          //[0-9]+[lL][uU]|[uU]|[lL]\b
+    UnsignedIntConstant(String),   //[0-9]+[uU]\b
+    UnsignedLongConstant(String),  //[0-9]+[lL][uU]|[uU]|[lL]\b
     Int,                           //int\b
     Long,                          //long\b
     Void,                          //void\b
