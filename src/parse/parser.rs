@@ -127,6 +127,17 @@ fn parse_parameter_list(tokens: &[Token]) -> Result<ParameterListResult> {
             }
             (parameters, rest)
         }
+        [ty1, ty2, ty3, Token::Identifier(name), rest @ ..] => {
+            let ty = parse_type(&[ty1, ty2, ty3])?;
+            let mut parameters = vec![(ty, name.clone())];
+            let mut rest = rest;
+            //This kinda hides the error.
+            while let Ok((name, ty, new_rest)) = parse_nth_parameter(rest) {
+                parameters.push((ty, name.clone()));
+                rest = new_rest;
+            }
+            (parameters, rest)
+        }
         toks => {
             return Err(CompilerError::Parse(format!(
                 "Parameter List Unexpected Tokens {:?}",
@@ -467,7 +478,7 @@ fn parse_type(token: &[&Token]) -> Result<Type> {
     if token.is_empty() {
         return Err(CompilerError::Parse("Invalid type specifier".to_string()).into());
     }
-    let mut unique_tokens: HashSet<&Token> = token.iter().take(3).cloned().collect();
+    let mut unique_tokens: HashSet<&Token> = token.iter().cloned().collect();
     if token.len() != unique_tokens.len() {
         return Err(CompilerError::Parse("Duplicate type specifier".to_string()).into());
     }
@@ -475,12 +486,9 @@ fn parse_type(token: &[&Token]) -> Result<Type> {
         return Err(CompilerError::Parse("Conflicting type specifier".to_string()).into());
     }
 
-    //HACK Remove this
     if unique_tokens.contains(&Token::Extern) || unique_tokens.contains(&Token::Static) {
         return Err(CompilerError::Parse("Invalid Storage Class specifier".to_string()).into());
     }
-    //END HACK
-
 
     if unique_tokens.contains(&Token::Unsigned) && unique_tokens.contains(&Token::Long) {
         return Ok(Type::ULong);
