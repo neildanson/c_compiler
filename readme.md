@@ -122,9 +122,6 @@ Copilot is pretty good at explaining why asm code segfaults. Use it.
 
 # TODOs
 
-Cast code in Parse is awful
-Anything that calls `parse_type` is bad (nth_parameter)
-
 # Progress
 
 100% Implemented up to chapter 11 (excluding some extras)
@@ -132,6 +129,7 @@ Anything that calls `parse_type` is bad (nth_parameter)
 Chapter 12 notes
 
 * Lexer complete
-* Parser not started
-* Validate not started
+* Parser complete
+* Validate in progress
+* Tacky not started
 * Codegen not started 
