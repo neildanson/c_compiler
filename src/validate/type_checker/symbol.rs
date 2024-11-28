@@ -8,6 +8,8 @@ use super::Expression;
 pub enum StaticInit {
     IntInit(i32),
     LongInit(i64),
+    UintInit(u32),
+    ULongInit(u64),
 }
 
 impl StaticInit {
@@ -15,6 +17,8 @@ impl StaticInit {
         match self {
             StaticInit::IntInit(_) => Type::Int,
             StaticInit::LongInit(_) => Type::Long,
+            StaticInit::UintInit(_) => Type::UInt,
+            StaticInit::ULongInit(_) => Type::ULong,
         }
     }
 }
@@ -24,6 +28,8 @@ impl Display for StaticInit {
         match self {
             StaticInit::IntInit(val) => write!(f, "{}", val),
             StaticInit::LongInit(val) => write!(f, "{}", val),
+            StaticInit::UintInit(val) => write!(f, "{}", val),
+            StaticInit::ULongInit(val) => write!(f, "{}", val),
         }
     }
 }
@@ -33,7 +39,9 @@ impl From<Constant> for StaticInit {
         match value {
             Constant::Int(val) => StaticInit::IntInit(val),
             Constant::Long(val) => StaticInit::LongInit(val),
-            _ => panic!("Invalid conversion from Constant to StaticInit"),
+            Constant::UnsignedInt(val) => StaticInit::UintInit(val),
+            Constant::UnsignedLong(val) => StaticInit::ULongInit(val),
+            //_ => panic!("Invalid conversion from Constant to StaticInit"),
         }
     }
 }
@@ -43,6 +51,8 @@ impl From<StaticInit> for Constant {
         match value {
             StaticInit::IntInit(val) => Constant::Int(val),
             StaticInit::LongInit(val) => Constant::Long(val),
+            StaticInit::UintInit(val) => Constant::UnsignedInt(val),
+            StaticInit::ULongInit(val) => Constant::UnsignedLong(val),
         }
     }
 }
@@ -52,6 +62,8 @@ impl From<StaticInit> for Expression {
         match value {
             StaticInit::IntInit(val) => Expression::Constant(Constant::Int(val)),
             StaticInit::LongInit(val) => Expression::Constant(Constant::Long(val)),
+            StaticInit::UintInit(val) => Expression::Constant(Constant::UnsignedInt(val)),
+            StaticInit::ULongInit(val) => Expression::Constant(Constant::UnsignedLong(val)),
         }
     }
 }

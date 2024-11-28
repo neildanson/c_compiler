@@ -162,7 +162,8 @@ impl Constant {
         match self {
             Constant::Int(_) => Type::Int,
             Constant::Long(_) => Type::Long,
-            _ => panic!("Unsigned types are not supported"),
+            Constant::UnsignedInt(_) => Type::UInt,
+            Constant::UnsignedLong(_) => Type::ULong,
         }
     }
 

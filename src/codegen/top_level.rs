@@ -130,6 +130,8 @@ impl Display for StaticVariable {
             match self.value {
                 StaticInit::IntInit(value) => writeln!(f, "\t.long {}", value),
                 StaticInit::LongInit(value) => writeln!(f, "\t.quad {}", value),
+                StaticInit::UintInit(value) => writeln!(f, "\t.long {}", value), //TODO Check
+                StaticInit::ULongInit(value) => writeln!(f, "\t.quad {}", value), //TODO Check
             }
         }
     }
