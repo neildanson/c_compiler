@@ -26,11 +26,15 @@ impl TypeChecker {
             InitialValue::Initial(StaticInit::IntInit(val)) => match ty {
                 Type::Int => InitialValue::Initial(StaticInit::IntInit(val)),
                 Type::Long => InitialValue::Initial(StaticInit::LongInit(val as i64)),
+                Type::UInt => InitialValue::Initial(StaticInit::UintInit(val as u32)),
+                Type::ULong => InitialValue::Initial(StaticInit::ULongInit(val as u64)),
                 _ => panic!("Invalid cast"),
             },
             InitialValue::Initial(StaticInit::LongInit(val)) => match ty {
                 Type::Int => InitialValue::Initial(StaticInit::IntInit(val as i32)),
                 Type::Long => InitialValue::Initial(StaticInit::LongInit(val)),
+                Type::UInt => InitialValue::Initial(StaticInit::UintInit(val as u32)),
+                Type::ULong => InitialValue::Initial(StaticInit::ULongInit(val as u64)),
                 _ => panic!("Invalid cast"),
             },
             _ => i,
@@ -228,8 +232,16 @@ impl TypeChecker {
     fn get_common_type(ty1: Type, ty2: Type) -> Type {
         if ty1 == ty2 {
             ty1
+        } else if ty1.size() == ty2.size() {
+            if ty1.is_signed() {
+                return ty2;
+            } else {
+                return ty1;
+            }
+        } else if ty1.size().unwrap_or(0) > ty2.size().unwrap_or(0) {
+            return ty1;
         } else {
-            Type::Long
+            return ty2;
         }
     }
 

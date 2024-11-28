@@ -136,6 +136,26 @@ impl Type {
             Type::FunType(_, _) => panic!("Function type has no zero constant"),
         }
     }
+
+    pub fn size(&self) -> Option<usize> {
+        match self {
+            Type::Int => Some(4),
+            Type::Long => Some(8),
+            Type::UInt => Some(4),
+            Type::ULong => Some(8),
+            Type::FunType(_, _) => None,
+        }
+    }
+
+    pub fn is_signed(&self) -> bool {
+        match self {
+            Type::Int => true,
+            Type::Long => true,
+            Type::UInt => false,
+            Type::ULong => false,
+            Type::FunType(_, _) => panic!("Function type has no sign"),
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Copy)]
