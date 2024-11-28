@@ -21,22 +21,31 @@ pub(crate) struct TypeChecker {
 }
 
 impl TypeChecker {
+    //This is fugly. Can we do better?
     fn compile_cast(i: InitialValue, ty: &Type) -> InitialValue {
         match i {
-            InitialValue::Initial(StaticInit::IntInit(val)) => match ty {
-                Type::Int => InitialValue::Initial(StaticInit::IntInit(val)),
-                Type::Long => InitialValue::Initial(StaticInit::LongInit(val as i64)),
-                Type::UInt => InitialValue::Initial(StaticInit::UintInit(val as u32)),
-                Type::ULong => InitialValue::Initial(StaticInit::ULongInit(val as u64)),
-                _ => panic!("Invalid cast"),
-            },
-            InitialValue::Initial(StaticInit::LongInit(val)) => match ty {
-                Type::Int => InitialValue::Initial(StaticInit::IntInit(val as i32)),
-                Type::Long => InitialValue::Initial(StaticInit::LongInit(val)),
-                Type::UInt => InitialValue::Initial(StaticInit::UintInit(val as u32)),
-                Type::ULong => InitialValue::Initial(StaticInit::ULongInit(val as u64)),
-                _ => panic!("Invalid cast"),
-            },
+            InitialValue::Initial(init) => {
+                let new_init = match (init, ty) {
+                    (StaticInit::IntInit(val), Type::Int) => StaticInit::IntInit(val),
+                    (StaticInit::IntInit(val), Type::Long) => StaticInit::LongInit(val as i64),
+                    (StaticInit::IntInit(val), Type::UInt) => StaticInit::UintInit(val as u32),
+                    (StaticInit::IntInit(val), Type::ULong) => StaticInit::ULongInit(val as u64),
+                    (StaticInit::LongInit(val), Type::Int) => StaticInit::IntInit(val as i32),
+                    (StaticInit::LongInit(val), Type::Long) => StaticInit::LongInit(val),
+                    (StaticInit::LongInit(val), Type::UInt) => StaticInit::UintInit(val as u32),
+                    (StaticInit::LongInit(val), Type::ULong) => StaticInit::ULongInit(val as u64),
+                    (StaticInit::UintInit(val), Type::Int) => StaticInit::IntInit(val as i32),
+                    (StaticInit::UintInit(val), Type::Long) => StaticInit::LongInit(val as i64),
+                    (StaticInit::UintInit(val), Type::UInt) => StaticInit::UintInit(val),
+                    (StaticInit::UintInit(val), Type::ULong) => StaticInit::ULongInit(val as u64),
+                    (StaticInit::ULongInit(val), Type::Int) => StaticInit::IntInit(val as i32),
+                    (StaticInit::ULongInit(val), Type::Long) => StaticInit::LongInit(val as i64),
+                    (StaticInit::ULongInit(val), Type::UInt) => StaticInit::UintInit(val as u32),
+                    (StaticInit::ULongInit(val), Type::ULong) => StaticInit::ULongInit(val),
+                    _ => panic!("Invalid cast"),
+                };
+                InitialValue::Initial(new_init)
+            }
             _ => i,
         }
     }

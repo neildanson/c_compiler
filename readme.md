@@ -130,6 +130,6 @@ Chapter 12 notes
 
 * Lexer complete
 * Parser complete
-* Validate in progress
-* Tacky not started
+* Validate complete
+* Tacky in progress
 * Codegen not started 
