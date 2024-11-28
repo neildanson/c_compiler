@@ -138,7 +138,7 @@ fn parse_argument_list(tokens: &[Token]) -> Result<(Vec<Expression>, &[Token])> 
     }
 }
 
-fn parse_cast(tokens:&[Token]) -> Result<(Expression, &[Token])> {
+fn parse_cast(tokens: &[Token]) -> Result<(Expression, &[Token])> {
     let (ty, _, rest) = parse_type_and_storage(tokens, false)?;
     let rest = swallow_one(Token::RParen, rest)?;
     let (expression, rest) = parse_expression(rest, 0)?;
@@ -217,9 +217,7 @@ fn parse_factor(tokens: &[Token]) -> Result<(Expression, &[Token])> {
         [Token::LParen, rest @ ..] => {
             let cast = parse_cast(rest);
             match cast {
-                Ok((expression, rest)) => {
-                    (expression, rest)
-                }
+                Ok((expression, rest)) => (expression, rest),
                 Err(_) => {
                     let (expression, rest) = parse_expression(rest, 0)?;
                     let rest = swallow_one(Token::RParen, rest)?;
@@ -449,11 +447,11 @@ fn parse_type(token: &[&Token]) -> Result<Type> {
     if unique_tokens.contains(&Token::Int) || unique_tokens.remove(&Token::Signed) {
         return Ok(Type::Int);
     }
-    return Err(CompilerError::Parse(format!(
+    Err(CompilerError::Parse(format!(
         "Invalid type specifier {:?} {:?}",
         unique_tokens, token
     ))
-    .into());
+    .into())
 }
 
 fn parse_type_and_storage(
@@ -607,7 +605,7 @@ fn parse_unsigned_constant(constant: &str) -> Result<Constant> {
     if !is_long && v < (u32::MAX as u64) {
         Ok(Constant::UnsignedInt(v as u32))
     } else {
-        Ok(Constant::UnsignedLong(v as u64))
+        Ok(Constant::UnsignedLong(v))
     }
 }
 
