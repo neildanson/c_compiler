@@ -21,6 +21,15 @@ impl StaticInit {
             StaticInit::ULongInit(_) => Type::ULong,
         }
     }
+
+    pub fn is_zero(&self) -> bool {
+        match self {
+            StaticInit::IntInit(val) => *val == 0,
+            StaticInit::LongInit(val) => *val == 0,
+            StaticInit::UintInit(val) => *val == 0,
+            StaticInit::ULongInit(val) => *val == 0,
+        }
+    }
 }
 
 impl Display for StaticInit {

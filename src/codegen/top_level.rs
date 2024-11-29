@@ -109,7 +109,7 @@ impl Display for StaticVariable {
                 writeln!(f, "\t.globl {}", self.identfiier)?;
             }
         }
-        if self.value == StaticInit::IntInit(0) || self.value == StaticInit::LongInit(0) {
+        if self.value.is_zero() {
             writeln!(f, "\t.balign {}", self.alignment)?;
             writeln!(f, "\t.bss")?;
             if cfg!(target_os = "macos") {

@@ -75,6 +75,10 @@ pub enum Instruction {
         src: Operand,
         dst: Operand,
     },
+    MovZeroExtend {
+        src: Operand,
+        dst: Operand,
+    },
     Unary {
         op: UnaryOp,
         assembly_type: AssemblyType,
@@ -225,6 +229,14 @@ impl Display for Instruction {
                 write!(
                     f,
                     "\tmovslq {}, {}",
+                    src.asm(AssemblyType::LongWord),
+                    dst.asm(AssemblyType::QuadWord)
+                )
+            }
+            Instruction::MovZeroExtend { src, dst } => {
+                write!(
+                    f,
+                    "\tmovzbl {}, {}",
                     src.asm(AssemblyType::LongWord),
                     dst.asm(AssemblyType::QuadWord)
                 )
