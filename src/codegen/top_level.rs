@@ -143,6 +143,8 @@ impl TryFrom<tacky::StaticVariable> for StaticVariable {
         let alignment = match ast.ty {
             Type::Int => 4,
             Type::Long => 8,
+            Type::UInt => 4,
+            Type::ULong => 8,
             _ => panic!("Unsupported type"),
         };
         Ok(StaticVariable {

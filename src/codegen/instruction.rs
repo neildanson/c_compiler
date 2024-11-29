@@ -236,8 +236,16 @@ impl Display for Instruction {
             Instruction::MovZeroExtend { src, dst } => {
                 write!(
                     f,
-                    "\tmovzbl {}, {}",
+                    "\tmov{} {}, {}",
+                    AssemblyType::LongWord,
                     src.asm(AssemblyType::LongWord),
+                    Operand::Register(Reg::AX).asm(AssemblyType::LongWord)
+                )?;
+                write!(
+                    f,
+                    "\tmov{} {}, {}",
+                    AssemblyType::QuadWord,
+                    Operand::Register(Reg::AX).asm(AssemblyType::QuadWord),
                     dst.asm(AssemblyType::QuadWord)
                 )
             }
@@ -522,8 +530,10 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
                     dst,
                 }])
             }
-            tacky::Instruction::ZeroExtend { src : _src , dst : _dst } => {
-                unimplemented!("Zero extend not implemented")
+            tacky::Instruction::ZeroExtend { src, dst } => {
+                let src = src.into();
+                let dst = dst.into();
+                Ok(vec![Instruction::MovZeroExtend { src, dst }])
             }
         }
     }

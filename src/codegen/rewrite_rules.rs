@@ -250,7 +250,7 @@ pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
                     && imm > i32::MAX as i128
                 {
                     let src = Operand::Immediate {
-                        imm: imm as i32 as i128, //Weird? 
+                        imm: imm as i32 as i128, //Weird?
                     };
                     new_body.push(Instruction::Mov {
                         assembly_type,
