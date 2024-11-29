@@ -83,7 +83,7 @@ impl Function {
                 Instruction::Binary {
                     op: BinaryOp::Sub,
                     assembly_type: AssemblyType::QuadWord,
-                    src2: Operand::Immediate { imm: size as i64 },
+                    src2: Operand::Immediate { imm: size as i128 },
                     dst: Operand::Register(Reg::SP),
                 },
             ); //* 4 as ints are 4 bytes */

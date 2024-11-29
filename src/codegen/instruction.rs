@@ -267,7 +267,7 @@ fn convert_function_call(
             op: BinaryOp::Sub,
             assembly_type: AssemblyType::QuadWord,
             src2: Operand::Immediate {
-                imm: stack_padding as i64,
+                imm: stack_padding as i128,
             },
             dst: Operand::Register(Reg::SP),
         });
@@ -311,7 +311,7 @@ fn convert_function_call(
             op: BinaryOp::Add,
             assembly_type: AssemblyType::QuadWord,
             src2: Operand::Immediate {
-                imm: bytes_to_remove as i64,
+                imm: bytes_to_remove as i128,
             },
             dst: Operand::Register(Reg::SP),
         });

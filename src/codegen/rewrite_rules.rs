@@ -16,7 +16,7 @@ fn valid_stack_location(stack_pos: i32, ty: &AssemblyType) -> i32 {
 
 fn fixup_large_operand(operand: Operand, reg: Reg, instructions: &mut Vec<Instruction>) -> Operand {
     match operand {
-        Operand::Immediate { imm } if imm > i32::MAX as i64 => {
+        Operand::Immediate { imm } if imm > i32::MAX as i128 => {
             instructions.push(Instruction::Mov {
                 assembly_type: AssemblyType::QuadWord,
                 src: Operand::Immediate { imm },
@@ -220,10 +220,10 @@ pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
                     }
                 }
                 if let Operand::Immediate { imm } = src
-                    && imm > i32::MAX as i64
+                    && imm > i32::MAX as i128
                 {
                     let src = Operand::Immediate {
-                        imm: imm as i32 as i64,
+                        imm: imm as i32 as i128, //Weird? 
                     };
                     new_body.push(Instruction::Mov {
                         assembly_type,

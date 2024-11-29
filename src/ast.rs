@@ -187,10 +187,11 @@ impl Constant {
         }
     }
 
-    pub fn as_i64(&self) -> i64 {
+    //i128 can hold all values  of i32, i64, u32, u64
+    pub fn as_i128(&self) -> i128 {
         match self {
-            Constant::Int(val) => *val as i64,
-            Constant::Long(val) => *val,
+            Constant::Int(val) => *val as i128,
+            Constant::Long(val) => *val as i128,
             _ => panic!("Unsigned types are not supported"),
         }
     }
