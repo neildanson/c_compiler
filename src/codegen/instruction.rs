@@ -90,6 +90,10 @@ pub enum Instruction {
         assembly_type: AssemblyType,
         src: Operand,
     },
+    Div {
+        assembly_type: AssemblyType,
+        src: Operand,
+    },
     Cdq(AssemblyType),
     Ret,
     Cmp(AssemblyType, Operand, Operand),
@@ -149,6 +153,9 @@ impl Display for Instruction {
             }
             Instruction::Idiv { assembly_type, src } => {
                 write!(f, "\tidiv{} {}", assembly_type, src.asm(*assembly_type))
+            }
+            Instruction::Div { assembly_type, src } => {
+                write!(f, "\tdiv{} {}", assembly_type, src.asm(*assembly_type))
             }
             Instruction::Cdq(AssemblyType::LongWord) => {
                 write!(f, "\tcdq")

@@ -6,12 +6,16 @@ use super::error::CodeGenError;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum ConditionCode {
-    E,  // Equal
-    NE, // Not Equal
-    L,  // Less
-    LE, // Less or Equal
-    G,  // Greater
-    GE, // Greater or Equal
+    E,  // Signed Equal (ZF=1)
+    NE, // Signed Not Equal (ZF=0)
+    L,  // Signed Less
+    LE, // Signed Less or Equal
+    G,  // Signed Greater
+    GE, // Signed Greater or Equal
+    A,  // Unsigned Greater
+    AE, // Unsigned Greater or Equal
+    B,  // Unsigned Less
+    BE,  //CF=1 or ZF=1
 }
 
 impl Display for ConditionCode {
@@ -23,6 +27,10 @@ impl Display for ConditionCode {
             ConditionCode::LE => write!(f, "le"),
             ConditionCode::G => write!(f, "g"),
             ConditionCode::GE => write!(f, "ge"),
+            ConditionCode::A => write!(f, "a"),
+            ConditionCode::AE => write!(f, "ae"),
+            ConditionCode::B => write!(f, "b"),
+            ConditionCode::BE => write!(f, "be"),
         }
     }
 }
