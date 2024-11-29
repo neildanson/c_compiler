@@ -45,4 +45,8 @@ pub enum Instruction {
         src: Value,
         dst: Value,
     },
+    ZeroExtend {
+        src: Value,
+        dst: Value,
+    },
 }

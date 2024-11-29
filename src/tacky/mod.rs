@@ -118,16 +118,26 @@ impl Tacky {
                     Ok(expr)
                 } else {
                     let dst = self.make_tacky_var(ty.clone());
-                    match ty {
-                        Type::Int => instructions.push(Instruction::Truncate {
+                    if ty.size() == expr_ty.size() {
+                        instructions.push(Instruction::Copy {
                             src: expr,
                             dst: dst.clone(),
-                        }),
-                        Type::Long => instructions.push(Instruction::SignExtend {
+                        });
+                    } else if ty.size() < expr_ty.size() {
+                        instructions.push(Instruction::Truncate {
                             src: expr,
                             dst: dst.clone(),
-                        }),
-                        _ => return Err(CompilerError::InvalidCast(expr_ty, ty.clone())),
+                        });
+                    } else if expr_ty.is_signed() {
+                        instructions.push(Instruction::SignExtend {
+                            src: expr,
+                            dst: dst.clone(),
+                        });
+                    } else {
+                        instructions.push(Instruction::ZeroExtend {
+                            src: expr,
+                            dst: dst.clone(),
+                        });
                     }
                     Ok(dst)
                 }
