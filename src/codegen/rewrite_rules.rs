@@ -187,6 +187,33 @@ pub(crate) fn rewrite_pseudo_with_stack(
                     _ => dst,
                 },
             }),
+            Instruction::Div { assembly_type, src } => {
+                new_body.push(Instruction::Div {
+                    assembly_type,
+                    src: match src {
+                        Operand::Pseudo(name) => {
+                            fixup_pseudo(name, &mut stack, false, static_variables)
+                        }
+                        _ => src,
+                    },
+                });
+            }
+            Instruction::MovZeroExtend { src, dst } => {
+                new_body.push(Instruction::MovZeroExtend {
+                    src: match src {
+                        Operand::Pseudo(name) => {
+                            fixup_pseudo(name, &mut stack, false, static_variables)
+                        }
+                        _ => src,
+                    },
+                    dst: match dst {
+                        Operand::Pseudo(name) => {
+                            fixup_pseudo(name, &mut stack, false, static_variables)
+                        }
+                        _ => dst,
+                    },
+                });
+            }
             any_other => new_body.push(any_other),
         }
     }

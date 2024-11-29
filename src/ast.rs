@@ -192,7 +192,8 @@ impl Constant {
         match self {
             Constant::Int(val) => *val as i128,
             Constant::Long(val) => *val as i128,
-            _ => panic!("Unsigned types are not supported"),
+            Constant::UnsignedInt(val) => *val as i128,
+            Constant::UnsignedLong(val) => *val as i128,
         }
     }
 }
