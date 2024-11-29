@@ -15,7 +15,7 @@ pub enum ConditionCode {
     A,  // Unsigned Greater
     AE, // Unsigned Greater or Equal
     B,  // Unsigned Less
-    BE,  //CF=1 or ZF=1
+    BE,  //Unsigned Less or Equal
 }
 
 impl Display for ConditionCode {
