@@ -4,7 +4,7 @@ cargo build --release
 
 
 #../writing-a-c-compiler-tests/test_compiler ./target/release/c_compiler --chapter 11
-../writing-a-c-compiler-tests/test_compiler ./target/release/c_compiler --chapter 12 --stage codegen
+../writing-a-c-compiler-tests/test_compiler ./target/release/c_compiler --chapter 12 
 
 rm -rf temp
 mkdir temp

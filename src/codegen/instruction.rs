@@ -234,7 +234,7 @@ impl Display for Instruction {
                 )
             }
             Instruction::MovZeroExtend { src, dst } => {
-                write!(
+                writeln!(
                     f,
                     "\tmov{} {}, {}",
                     AssemblyType::LongWord,
