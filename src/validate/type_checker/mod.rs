@@ -239,11 +239,6 @@ impl TypeChecker {
     }
 
     fn get_common_type(ty1: Type, ty2: Type) -> Type {
-
-        println!("GetCommonType");
-        println!("{:?}", ty1.size());
-        println!("{:?}", ty2.size());
-
         if ty1 == ty2 {
             ty1
         } else if ty1.size() == ty2.size() {
@@ -265,9 +260,6 @@ impl TypeChecker {
         if expression_ty == ty.clone() {
             return expression.clone();
         }
-        println!("ConvertTo");
-        println!("{}", ty);
-        println!("{}", expression_ty);
 
         Expression::Cast(ty.clone(), Box::new(expression.clone()))
     }
