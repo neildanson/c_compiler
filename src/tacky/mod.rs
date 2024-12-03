@@ -89,7 +89,9 @@ impl Tacky {
         e: &Expression,
     ) -> Result<Value, CompilerError> {
         match e {
-            Expression::BinOp(op, e1, e2, _) => self.emit_tacky_binop(op, e1, e2),
+            Expression::BinOp(op, e1, e2, _) => {        
+                self.emit_tacky_binop(op, e1, e2)
+            },
             Expression::Assignment(lhs, rhs, _) => match lhs.as_ref() {
                 Expression::Var(v, ty) => {
                     let src = self.emit_tacky_expr(rhs)?;
@@ -540,6 +542,7 @@ impl Tacky {
                             condition: cond,
                             target: end_label.clone(),
                         });
+                        self.make_comment("then");
                         self.emit_tacky_statement(then)?;
                         self.instructions.push(Instruction::Label { name: end_label });
                     }
@@ -553,6 +556,7 @@ impl Tacky {
                         self.instructions.push(Instruction::Jump {
                             target: end_label.clone(),
                         });
+                        self.make_comment("else");
                         self.instructions.push(Instruction::Label { name: else_label });
                         self.emit_tacky_statement(els)?;
                         self.instructions.push(Instruction::Label { name: end_label });
@@ -562,11 +566,13 @@ impl Tacky {
                 Ok(())
             }
             Statement::Return(e) => {
+                self.make_comment("return");
                 let value = self.emit_tacky_expr(e)?;
                 self.instructions.push(Instruction::Return(value));
                 Ok(())
             }
             Statement::Expression(e) => {
+                self.make_comment("expression");
                 let _value = self.emit_tacky_expr(e)?;
                 Ok(())
             }
@@ -578,9 +584,11 @@ impl Tacky {
                 Ok(())
             }
             Statement::DoWhile(body, cond, loop_label) => {
+                self.make_comment(&format!("do while {}", cond));
                 self.emit_tacky_do_while(body, cond, loop_label)
             }
             Statement::While(cond, body, label) => {
+                self.make_comment(&format!("while {}", cond));
                 self.emit_tacky_while(cond, body, label)
             }
             Statement::For(for_init, cond, post, body, loop_label) => {
