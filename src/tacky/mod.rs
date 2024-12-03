@@ -122,6 +122,7 @@ impl Tacky {
                 let expr_ty = expr.get_type();
                 let expr = self.emit_tacky_expr(expr)?;
                 if expr_ty == *ty {
+                    self.make_comment(format!("No cast - same type ({}) to ({})", expr_ty, ty));
                     Ok(expr)
                 } else {
                     let dst = self.make_tacky_var(ty.clone());

@@ -72,9 +72,9 @@ impl Expression {
 impl Display for Expression {
     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
         match self {
-            Expression::Var(ident, ty) => write!(f, "{} {} ", ty, ident),
+            Expression::Var(ident, _) => write!(f, "{} ", ident),
             Expression::BinOp(op, lhs, rhs, _) => write!(f, "({} {} {})", lhs, op, rhs),
-            Expression::Cast(t, expr) => write!(f, "({} as {})", expr, t),
+            Expression::Cast(ty, expr) => write!(f, "({}){}", ty, expr,),
             Expression::Unary(op, expr, _) => write!(f, "({} {})", op, expr),
             Expression::Assignment(lhs, rhs, _) => write!(f, "({} = {})", lhs, rhs),
             Expression::Conditional(cond, then_expr, else_expr, _) => {

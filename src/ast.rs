@@ -230,9 +230,9 @@ impl Display for Constant {
     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
         match self {
             Constant::Int(val) => write!(f, "{}", val),
-            Constant::Long(val) => write!(f, "{}", val),
-            Constant::UnsignedInt(val) => write!(f, "{}", val),
-            Constant::UnsignedLong(val) => write!(f, "{}", val),
+            Constant::Long(val) => write!(f, "{}l", val),
+            Constant::UnsignedInt(val) => write!(f, "{}u", val),
+            Constant::UnsignedLong(val) => write!(f, "{}ul", val),
         }
     }
 }
