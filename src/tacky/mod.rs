@@ -29,6 +29,7 @@ use std::collections::HashMap;
 
 pub struct Tacky {
     counter: u32,
+    instructions : Vec<Instruction>,
     labels: HashMap<String, u32>,
     validate_result: ValidateResult,
 }
@@ -37,6 +38,7 @@ impl Tacky {
     pub fn new(validate_result: ValidateResult) -> Self {
         Tacky {
             counter: 0,
+            instructions: Vec::new(),
             labels: HashMap::new(),
             validate_result,
         }
@@ -59,17 +61,17 @@ impl Tacky {
         Value::Var(name, ty)
     }
 
-    fn emit_temp(&mut self, src: Value, instructions: &mut Vec<Instruction>) -> Value {
+    fn emit_temp(&mut self, src: Value) -> Value {
         let dst = self.make_tacky_var(src.parse_type());
-        instructions.push(Instruction::Copy {
+        self.instructions.push(Instruction::Copy {
             src,
             dst: dst.clone(),
         });
         dst
     }
 
-    fn make_comment(&self, comment : &str, instructions: &mut Vec<Instruction>) {
-        instructions.push(Instruction::Comment(comment.to_string()));
+    fn make_comment(&mut self, comment : &str) {
+        self.instructions.push(Instruction::Comment(comment.to_string()));
     }
 
     fn make_label(&mut self, label: String) -> String {
@@ -85,30 +87,29 @@ impl Tacky {
     fn emit_tacky_expr(
         &mut self,
         e: &Expression,
-        instructions: &mut Vec<Instruction>,
     ) -> Result<Value, CompilerError> {
         match e {
-            Expression::BinOp(op, e1, e2, _) => self.emit_tacky_binop(op, e1, e2, instructions),
+            Expression::BinOp(op, e1, e2, _) => self.emit_tacky_binop(op, e1, e2),
             Expression::Assignment(lhs, rhs, _) => match lhs.as_ref() {
                 Expression::Var(v, ty) => {
-                    let src = self.emit_tacky_expr(rhs, instructions)?;
-                    instructions.push(Instruction::Copy {
+                    let src = self.emit_tacky_expr(rhs)?;
+                    self.instructions.push(Instruction::Copy {
                         src,
                         dst: Value::Var(v.clone(), ty.clone()),
                     });
                     Ok(Value::Var(v.clone(), ty.clone()))
                 }
 
-                e => self.emit_tacky_expr(e, instructions),
+                e => self.emit_tacky_expr(e),
             },
             Expression::FunctionCall(ident, params, ty) => {
                 let mut args = Vec::new();
                 for p in params {
-                    let arg = self.emit_tacky_expr(p, instructions)?;
+                    let arg = self.emit_tacky_expr(p)?;
                     args.push(arg);
                 }
                 let result = self.make_tacky_var(ty.clone());
-                instructions.push(Instruction::FunCall {
+                self.instructions.push(Instruction::FunCall {
                     name: ident.clone(),
                     args,
                     dst: result.clone(),
@@ -117,32 +118,32 @@ impl Tacky {
             }
             Expression::Cast(ty, expr) => {
                 let expr_ty = expr.get_type();
-                let expr = self.emit_tacky_expr(expr, instructions)?;
+                let expr = self.emit_tacky_expr(expr)?;
                 if expr_ty == *ty {
                     Ok(expr)
                 } else {
                     let dst = self.make_tacky_var(ty.clone());
                     if ty.size() == expr_ty.size() {
-                        self.make_comment("Copy", instructions);
-                        instructions.push(Instruction::Copy {
+                        self.make_comment("Copy");
+                        self.instructions.push(Instruction::Copy {
                             src: expr,
                             dst: dst.clone(),
                         });
                     } else if ty.size() < expr_ty.size() {
-                        self.make_comment("Truncate", instructions);
-                        instructions.push(Instruction::Truncate {
+                        self.make_comment("Truncate");
+                        self.instructions.push(Instruction::Truncate {
                             src: expr,
                             dst: dst.clone(),
                         });
                     } else if expr_ty.is_signed() {
-                        self.make_comment("Sign Extend", instructions);
-                        instructions.push(Instruction::SignExtend {
+                        self.make_comment("Sign Extend");
+                        self.instructions.push(Instruction::SignExtend {
                             src: expr,
                             dst: dst.clone(),
                         });
                     } else {
-                        self.make_comment("Zero Extend", instructions);
-                        instructions.push(Instruction::ZeroExtend {
+                        self.make_comment("Zero Extend");
+                        self.instructions.push(Instruction::ZeroExtend {
                             src: expr,
                             dst: dst.clone(),
                         });
@@ -150,7 +151,7 @@ impl Tacky {
                     Ok(dst)
                 }
             }
-            e => self.emit_tacky_factor(e, instructions),
+            e => self.emit_tacky_factor(e),
         }
     }
 
@@ -159,54 +160,51 @@ impl Tacky {
         cond: &Expression,
         then: &Expression,
         els: &Expression,
-        instructions: &mut Vec<Instruction>,
     ) -> Result<Value, CompilerError> {
-        self.make_comment(&format!("If {:?}", cond), instructions);
-        let cond = self.emit_tacky_expr(cond, instructions)?;
-        let cond = self.emit_temp(cond, instructions);
+        let cond = self.emit_tacky_expr(cond)?;
+        let cond = self.emit_temp(cond);
         let result = self.make_tacky_var(then.get_type());
 
         let else_label = self.make_label("e2_label".to_string());
         let end_label = self.make_label("end".to_string());
-        instructions.push(Instruction::JumpIfZero {
+        self.instructions.push(Instruction::JumpIfZero {
             condition: cond,
             target: else_label.clone(),
         });
 
-        let v1 = self.emit_tacky_expr(then, instructions)?;
-        instructions.push(Instruction::Copy {
+        let v1 = self.emit_tacky_expr(then)?;
+        self.instructions.push(Instruction::Copy {
             src: v1,
             dst: result.clone(),
         });
 
-        instructions.push(Instruction::Jump {
+        self.instructions.push(Instruction::Jump {
             target: end_label.clone(),
         });
-        instructions.push(Instruction::Label { name: else_label });
+        self.instructions.push(Instruction::Label { name: else_label });
 
-        let v2 = self.emit_tacky_expr(els, instructions)?;
-        instructions.push(Instruction::Copy {
+        let v2 = self.emit_tacky_expr(els)?;
+        self.instructions.push(Instruction::Copy {
             src: v2,
             dst: result.clone(),
         });
 
-        instructions.push(Instruction::Label { name: end_label });
+        self.instructions.push(Instruction::Label { name: end_label });
         Ok(result)
     }
 
     fn emit_tacky_factor(
         &mut self,
         f: &Expression,
-        instructions: &mut Vec<Instruction>,
     ) -> Result<Value, CompilerError> {
         match f {
             Expression::Constant(i) => Ok(Value::Constant(*i)),
-            Expression::Unary(op, inner, _) => self.emit_tacky_unaryop(op, inner, instructions),
+            Expression::Unary(op, inner, _) => self.emit_tacky_unaryop(op, inner),
             Expression::Var(v, ty) => Ok(Value::Var(v.clone(), ty.clone())),
             Expression::Conditional(cond, then, els, _) => {
-                self.emit_tacky_conditional(cond.as_ref(), then.as_ref(), els, instructions)
+                self.emit_tacky_conditional(cond.as_ref(), then.as_ref(), els)
             }
-            e => self.emit_tacky_expr(e, instructions),
+            e => self.emit_tacky_expr(e),
         }
     }
 
@@ -214,13 +212,12 @@ impl Tacky {
         &mut self,
         op: &UnaryOperator,
         inner: &Expression,
-        instructions: &mut Vec<Instruction>,
     ) -> Result<Value, CompilerError> {
         let dst = self.make_tacky_var(inner.get_type());
         match op {
             UnaryOperator::PreIncrement => {
-                let src = self.emit_tacky_expr(inner, instructions)?;
-                instructions.push(Instruction::Binary {
+                let src = self.emit_tacky_expr(inner)?;
+                self.instructions.push(Instruction::Binary {
                     op: BinaryOp::Add,
                     src1: src.clone(),
                     src2: Value::Constant(Constant::Int(1)),
@@ -229,8 +226,8 @@ impl Tacky {
                 Ok(dst)
             }
             UnaryOperator::PreDecrement => {
-                let src = self.emit_tacky_expr(inner, instructions)?;
-                instructions.push(Instruction::Binary {
+                let src = self.emit_tacky_expr(inner)?;
+                self.instructions.push(Instruction::Binary {
                     op: BinaryOp::Subtract,
                     src1: src.clone(),
                     src2: Value::Constant(Constant::Int(1)),
@@ -239,8 +236,8 @@ impl Tacky {
                 Ok(dst)
             }
             UnaryOperator::PostDecrement => {
-                let src = self.emit_tacky_expr(inner, instructions)?;
-                instructions.push(Instruction::Binary {
+                let src = self.emit_tacky_expr(inner)?;
+                self.instructions.push(Instruction::Binary {
                     op: BinaryOp::Subtract,
                     src1: src.clone(),
                     src2: Value::Constant(Constant::Int(1)),
@@ -249,8 +246,8 @@ impl Tacky {
                 Ok(src)
             }
             UnaryOperator::PostIncrement => {
-                let src = self.emit_tacky_expr(inner, instructions)?;
-                instructions.push(Instruction::Binary {
+                let src = self.emit_tacky_expr(inner)?;
+                self.instructions.push(Instruction::Binary {
                     op: BinaryOp::Add,
                     src1: src.clone(),
                     src2: Value::Constant(Constant::Int(1)),
@@ -259,9 +256,9 @@ impl Tacky {
                 Ok(src)
             }
             _ => {
-                let src = self.emit_tacky_factor(inner, instructions)?;
+                let src = self.emit_tacky_factor(inner)?;
                 let tacky_op = op.into();
-                instructions.push(Instruction::Unary {
+                self.instructions.push(Instruction::Unary {
                     op: tacky_op,
                     src,
                     dst: dst.clone(),
@@ -276,84 +273,83 @@ impl Tacky {
         op: &BinaryOperator,
         e1: &Expression,
         e2: &Expression,
-        instructions: &mut Vec<Instruction>,
     ) -> Result<Value, CompilerError> {
         match op {
             BinaryOperator::And => {
-                let v1 = self.emit_tacky_expr(e1, instructions)?;
-                let v1 = self.emit_temp(v1, instructions);
+                let v1 = self.emit_tacky_expr(e1)?;
+                let v1 = self.emit_temp(v1);
                 let false_label = self.make_label("else".to_string());
                 let end = self.make_label("end".to_string());
-                instructions.push(Instruction::JumpIfZero {
+                self.instructions.push(Instruction::JumpIfZero {
                     condition: v1,
                     target: false_label.clone(),
                 });
-                let v2 = self.emit_tacky_expr(e2, instructions)?;
-                let v2 = self.emit_temp(v2, instructions);
-                instructions.push(Instruction::JumpIfZero {
+                let v2 = self.emit_tacky_expr(e2)?;
+                let v2 = self.emit_temp(v2);
+                self.instructions.push(Instruction::JumpIfZero {
                     condition: v2,
                     target: false_label.clone(),
                 });
                 let one = Value::Constant(Constant::Int(1));
                 let zero = Value::Constant(Constant::Int(0));
                 let dst = self.make_tacky_var(Type::Int);
-                instructions.push(Instruction::Copy {
+                self.instructions.push(Instruction::Copy {
                     src: one,
                     dst: dst.clone(),
                 });
-                instructions.push(Instruction::Jump {
+                self.instructions.push(Instruction::Jump {
                     target: end.clone(),
                 });
-                instructions.push(Instruction::Label { name: false_label });
-                instructions.push(Instruction::Copy {
+                self.instructions.push(Instruction::Label { name: false_label });
+                self.instructions.push(Instruction::Copy {
                     src: zero,
                     dst: dst.clone(),
                 });
-                instructions.push(Instruction::Label { name: end });
+                self.instructions.push(Instruction::Label { name: end });
                 Ok(dst)
             }
             BinaryOperator::Or => {
-                let v1 = self.emit_tacky_expr(e1, instructions)?;
-                let v1 = self.emit_temp(v1, instructions);
+                let v1 = self.emit_tacky_expr(e1)?;
+                let v1 = self.emit_temp(v1);
 
                 let true_label = self.make_label("if".to_string());
                 let end = self.make_label("end".to_string());
-                instructions.push(Instruction::JumpIfNotZero {
+                self.instructions.push(Instruction::JumpIfNotZero {
                     condition: v1,
                     target: true_label.clone(),
                 });
-                let v2 = self.emit_tacky_expr(e2, instructions)?;
-                let v2 = self.emit_temp(v2, instructions);
+                let v2 = self.emit_tacky_expr(e2)?;
+                let v2 = self.emit_temp(v2);
 
-                instructions.push(Instruction::JumpIfNotZero {
+                self.instructions.push(Instruction::JumpIfNotZero {
                     condition: v2,
                     target: true_label.clone(),
                 });
                 let one = Value::Constant(Constant::Int(1));
                 let zero = Value::Constant(Constant::Int(0));
                 let dst = self.make_tacky_var(Type::Int);
-                instructions.push(Instruction::Copy {
+                self.instructions.push(Instruction::Copy {
                     src: zero,
                     dst: dst.clone(),
                 });
-                instructions.push(Instruction::Jump {
+                self.instructions.push(Instruction::Jump {
                     target: end.clone(),
                 });
-                instructions.push(Instruction::Label { name: true_label });
-                instructions.push(Instruction::Copy {
+                self.instructions.push(Instruction::Label { name: true_label });
+                self.instructions.push(Instruction::Copy {
                     src: one,
                     dst: dst.clone(),
                 });
-                instructions.push(Instruction::Label { name: end });
+                self.instructions.push(Instruction::Label { name: end });
                 Ok(dst)
             }
             _ => {
-                let src1 = self.emit_tacky_expr(e1, instructions)?;
-                let src2 = self.emit_tacky_expr(e2, instructions)?;
+                let src1 = self.emit_tacky_expr(e1)?;
+                let src2 = self.emit_tacky_expr(e2)?;
                 //Check this get_type
                 let dst = self.make_tacky_var(e1.get_type());
                 let tacky_op = op.try_into()?;
-                instructions.push(Instruction::Binary {
+                self.instructions.push(Instruction::Binary {
                     op: tacky_op,
                     src1,
                     src2,
@@ -367,13 +363,12 @@ impl Tacky {
     fn emit_tacky_variable_decl(
         &mut self,
         d: &VariableDeclaration<Expression>,
-        instructions: &mut Vec<Instruction>,
     ) -> Result<(), CompilerError> {
         let name = d.name.clone();
         let value = d
             .init
             .as_ref()
-            .map(|e| self.emit_tacky_expr(e, instructions))
+            .map(|e| self.emit_tacky_expr(e))
             .transpose()?;
 
         if d.storage_class == Some(StorageClass::Static) {
@@ -381,7 +376,7 @@ impl Tacky {
         }
         if d.storage_class != Some(StorageClass::Extern) {
             let value = value.unwrap_or(Value::Constant(d.var_type.zero_constant()));
-            instructions.push(Instruction::Copy {
+            self.instructions.push(Instruction::Copy {
                 src: value,
                 dst: Value::Var(name, d.var_type.clone()),
             });
@@ -392,11 +387,10 @@ impl Tacky {
     fn emit_tacky_decl(
         &mut self,
         d: &Declaration<Statement<Expression>, Expression>,
-        instructions: &mut Vec<Instruction>,
     ) -> Result<(), CompilerError> {
         match d {
             Declaration::Variable(decl) => {
-                self.emit_tacky_variable_decl(decl, instructions)?;
+                self.emit_tacky_variable_decl(decl)?;
             }
             Declaration::Function(_) => {}
         }
@@ -406,14 +400,13 @@ impl Tacky {
     fn emit_tacky_block_item(
         &mut self,
         item: &BlockItem<Statement<Expression>, Expression>,
-        instructions: &mut Vec<Instruction>,
     ) -> Result<(), CompilerError> {
         match item {
             BlockItem::Declaration(decl) => {
-                self.emit_tacky_decl(decl, instructions)?;
+                self.emit_tacky_decl(decl)?;
             }
             BlockItem::Statement(s) => {
-                self.emit_tacky_statement(s, instructions)?;
+                self.emit_tacky_statement(s)?;
             }
         }
         Ok(())
@@ -424,27 +417,26 @@ impl Tacky {
         body: &Statement<Expression>,
         cond: &Expression,
         loop_label: &str,
-        instructions: &mut Vec<Instruction>,
     ) -> Result<(), CompilerError> {
         let start_label = self.make_label("start".to_string());
         let break_label = format!("break_{loop_label}");
         let continue_label = format!("continue_{loop_label}");
 
-        instructions.push(Instruction::Label {
+        self.instructions.push(Instruction::Label {
             name: start_label.clone(),
         });
-        self.emit_tacky_statement(body, instructions)?;
-        instructions.push(Instruction::Label {
+        self.emit_tacky_statement(body)?;
+        self.instructions.push(Instruction::Label {
             name: continue_label.clone(),
         });
 
-        let cond = self.emit_tacky_expr(cond, instructions)?;
+        let cond = self.emit_tacky_expr(cond)?;
 
-        instructions.push(Instruction::JumpIfNotZero {
+        self.instructions.push(Instruction::JumpIfNotZero {
             condition: cond,
             target: start_label.clone(),
         });
-        instructions.push(Instruction::Label {
+        self.instructions.push(Instruction::Label {
             name: break_label.clone(),
         });
         Ok(())
@@ -455,24 +447,23 @@ impl Tacky {
         cond: &Expression,
         body: &Statement<Expression>,
         loop_label: &str,
-        instructions: &mut Vec<Instruction>,
     ) -> Result<(), CompilerError> {
         let break_label = format!("break_{loop_label}");
         let continue_label = format!("continue_{loop_label}");
-        instructions.push(Instruction::Label {
+        self.instructions.push(Instruction::Label {
             name: continue_label.clone(),
         });
 
-        let cond = self.emit_tacky_expr(cond, instructions)?;
-        instructions.push(Instruction::JumpIfZero {
+        let cond = self.emit_tacky_expr(cond)?;
+        self.instructions.push(Instruction::JumpIfZero {
             condition: cond,
             target: break_label.clone(),
         });
-        self.emit_tacky_statement(body, instructions)?;
-        instructions.push(Instruction::Jump {
+        self.emit_tacky_statement(body)?;
+        self.instructions.push(Instruction::Jump {
             target: continue_label.clone(),
         });
-        instructions.push(Instruction::Label {
+        self.instructions.push(Instruction::Label {
             name: break_label.clone(),
         });
         Ok(())
@@ -485,7 +476,6 @@ impl Tacky {
         post: &Option<Expression>,
         body: &Statement<Expression>,
         loop_label: &str,
-        instructions: &mut Vec<Instruction>,
     ) -> Result<(), CompilerError> {
         let start_label = self.make_label("start".to_string());
         let break_label = format!("break_{loop_label}");
@@ -493,39 +483,39 @@ impl Tacky {
 
         match for_init {
             ForInit::InitDeclaration(decl) => {
-                self.emit_tacky_variable_decl(decl, instructions)?;
+                self.emit_tacky_variable_decl(decl)?;
             }
             ForInit::InitExpression(Some(e)) => {
-                self.emit_tacky_expr(e, instructions)?; //Value?
+                self.emit_tacky_expr(e)?; //Value?
             }
             ForInit::InitExpression(None) => {}
         }
 
-        instructions.push(Instruction::Label {
+        self.instructions.push(Instruction::Label {
             name: start_label.clone(),
         });
 
         if let Some(cond) = cond {
-            let cond = self.emit_tacky_expr(cond, instructions)?;
-            instructions.push(Instruction::JumpIfZero {
+            let cond = self.emit_tacky_expr(cond)?;
+            self.instructions.push(Instruction::JumpIfZero {
                 condition: cond,
                 target: break_label.clone(),
             });
         }
 
-        self.emit_tacky_statement(body, instructions)?;
-        instructions.push(Instruction::Label {
+        self.emit_tacky_statement(body)?;
+        self.instructions.push(Instruction::Label {
             name: continue_label.clone(),
         });
 
         if let Some(post) = post {
-            self.emit_tacky_expr(post, instructions)?;
+            self.emit_tacky_expr(post)?;
         }
-        instructions.push(Instruction::Jump {
+        self.instructions.push(Instruction::Jump {
             target: start_label.clone(),
         });
 
-        instructions.push(Instruction::Label {
+        self.instructions.push(Instruction::Label {
             name: break_label.clone(),
         });
 
@@ -535,76 +525,75 @@ impl Tacky {
     fn emit_tacky_statement(
         &mut self,
         s: &Statement<Expression>,
-        instructions: &mut Vec<Instruction>,
     ) -> Result<(), CompilerError> {
         match s {
             Statement::If(cond, then, els) => {
-                let cond = self.emit_tacky_expr(cond, instructions)?;
-                let cond = self.emit_temp(cond, instructions);
+                let cond = self.emit_tacky_expr(cond)?;
+                let cond = self.emit_temp(cond);
                 let else_label = self.make_label("else".to_string());
                 let end_label = self.make_label("end".to_string());
 
                 match els {
                     None => {
-                        instructions.push(Instruction::JumpIfZero {
+                        self.instructions.push(Instruction::JumpIfZero {
                             condition: cond,
                             target: end_label.clone(),
                         });
-                        self.emit_tacky_statement(then, instructions)?;
-                        instructions.push(Instruction::Label { name: end_label });
+                        self.emit_tacky_statement(then)?;
+                        self.instructions.push(Instruction::Label { name: end_label });
                     }
                     Some(els) => {
-                        instructions.push(Instruction::JumpIfZero {
+                        self.instructions.push(Instruction::JumpIfZero {
                             condition: cond,
                             target: else_label.clone(),
                         });
-                        self.emit_tacky_statement(then, instructions)?;
-                        instructions.push(Instruction::Jump {
+                        self.emit_tacky_statement(then)?;
+                        self.instructions.push(Instruction::Jump {
                             target: end_label.clone(),
                         });
-                        instructions.push(Instruction::Label { name: else_label });
-                        self.emit_tacky_statement(els, instructions)?;
-                        instructions.push(Instruction::Label { name: end_label });
+                        self.instructions.push(Instruction::Label { name: else_label });
+                        self.emit_tacky_statement(els)?;
+                        self.instructions.push(Instruction::Label { name: end_label });
                     }
                 }
 
                 Ok(())
             }
             Statement::Return(e) => {
-                let value = self.emit_tacky_expr(e, instructions)?;
-                instructions.push(Instruction::Return(value));
+                let value = self.emit_tacky_expr(e)?;
+                self.instructions.push(Instruction::Return(value));
                 Ok(())
             }
             Statement::Expression(e) => {
-                let _value = self.emit_tacky_expr(e, instructions)?;
+                let _value = self.emit_tacky_expr(e)?;
                 Ok(())
             }
             Statement::Null => Ok(()),
             Statement::Compound(block) => {
                 for item in block {
-                    self.emit_tacky_block_item(item, instructions)?;
+                    self.emit_tacky_block_item(item)?;
                 }
                 Ok(())
             }
             Statement::DoWhile(body, cond, loop_label) => {
-                self.emit_tacky_do_while(body, cond, loop_label, instructions)
+                self.emit_tacky_do_while(body, cond, loop_label)
             }
             Statement::While(cond, body, label) => {
-                self.emit_tacky_while(cond, body, label, instructions)
+                self.emit_tacky_while(cond, body, label)
             }
             Statement::For(for_init, cond, post, body, loop_label) => {
-                self.emit_tacky_for_loop(for_init, cond, post, body, loop_label, instructions)
+                self.emit_tacky_for_loop(for_init, cond, post, body, loop_label)
             }
             Statement::Break(label) => {
                 let break_label = format!("break_{}", label.clone());
-                instructions.push(Instruction::Jump {
+                self.instructions.push(Instruction::Jump {
                     target: break_label,
                 });
                 Ok(())
             }
             Statement::Continue(label) => {
                 let continue_label = format!("continue_{}", label.clone());
-                instructions.push(Instruction::Jump {
+                self.instructions.push(Instruction::Jump {
                     target: continue_label,
                 });
                 Ok(())
@@ -616,13 +605,12 @@ impl Tacky {
         &mut self,
         f: &FunctionDeclaration<Statement<Expression>, Expression>,
     ) -> Result<Option<Function>, CompilerError> {
-        let mut body = Vec::new();
         if let Some(body_stmt) = f.body.as_ref() {
             for block_item in body_stmt {
-                self.emit_tacky_block_item(block_item, &mut body)?;
+                self.emit_tacky_block_item(block_item)?;
             }
 
-            Tacky::fixup_missing_return(&mut body);
+            Tacky::fixup_missing_return(&mut self.instructions);
 
             Ok(Some(Function {
                 name: f.name.clone(),
@@ -637,7 +625,7 @@ impl Tacky {
                     .iter()
                     .map(|(ty, name)| (ty.clone(), name.clone()))
                     .collect(),
-                body: Some(body),
+                body: Some(self.instructions.clone()),
             }))
         } else {
             Ok(None)
