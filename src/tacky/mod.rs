@@ -68,6 +68,10 @@ impl Tacky {
         dst
     }
 
+    fn make_comment(&self, comment : &str, instructions: &mut Vec<Instruction>) {
+        instructions.push(Instruction::Comment(comment.to_string()));
+    }
+
     fn make_label(&mut self, label: String) -> String {
         let name = format!(
             "{}{}",
@@ -119,25 +123,25 @@ impl Tacky {
                 } else {
                     let dst = self.make_tacky_var(ty.clone());
                     if ty.size() == expr_ty.size() {
-                        instructions.push(Instruction::Comment("Copy".to_string()));
+                        self.make_comment("Copy", instructions);
                         instructions.push(Instruction::Copy {
                             src: expr,
                             dst: dst.clone(),
                         });
                     } else if ty.size() < expr_ty.size() {
-                        instructions.push(Instruction::Comment("Truncate".to_string()));
+                        self.make_comment("Truncate", instructions);
                         instructions.push(Instruction::Truncate {
                             src: expr,
                             dst: dst.clone(),
                         });
                     } else if expr_ty.is_signed() {
-                        instructions.push(Instruction::Comment("Sign extend".to_string()));
+                        self.make_comment("Sign Extend", instructions);
                         instructions.push(Instruction::SignExtend {
                             src: expr,
                             dst: dst.clone(),
                         });
                     } else {
-                        instructions.push(Instruction::Comment("Zero extend".to_string()));
+                        self.make_comment("Zero Extend", instructions);
                         instructions.push(Instruction::ZeroExtend {
                             src: expr,
                             dst: dst.clone(),
@@ -157,6 +161,7 @@ impl Tacky {
         els: &Expression,
         instructions: &mut Vec<Instruction>,
     ) -> Result<Value, CompilerError> {
+        self.make_comment(&format!("If {:?}", cond), instructions);
         let cond = self.emit_tacky_expr(cond, instructions)?;
         let cond = self.emit_temp(cond, instructions);
         let result = self.make_tacky_var(then.get_type());
