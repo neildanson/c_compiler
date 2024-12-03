@@ -516,9 +516,47 @@ pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
                 }
                 new_body.push(instruction.clone());
             }
+            Instruction::Div { assembly_type, src } => {
+                if let Operand::Immediate { imm: _ } = src {
+                    new_body.push(Instruction::Mov {
+                        assembly_type,
+                        src,
+                        dst: Operand::Register(Reg::R10),
+                    });
+                    new_body.push(Instruction::Div {
+                        assembly_type,
+                        src: Operand::Register(Reg::R10),
+                    });
+                    continue;
+                }
+                new_body.push(instruction.clone());
+            }
             Instruction::Push(operand) => {
                 let operand = fixup_large_operand(operand, Reg::R10, &mut new_body);
                 new_body.push(Instruction::Push(operand));
+            }
+            Instruction::MovZeroExtend { src, dst } => {
+                if let Operand::Register(_) = dst {
+                    new_body.push(Instruction::Mov {
+                        assembly_type: AssemblyType::LongWord,
+                        src,
+                        dst: dst,
+                    });
+                   
+                    continue;
+                } else {
+                    new_body.push(Instruction::Mov {
+                        assembly_type: AssemblyType::LongWord,
+                        src,
+                        dst: Operand::Register(Reg::R11),
+                    });
+                    new_body.push(Instruction::Mov {
+                        assembly_type: AssemblyType::QuadWord,
+                        src: Operand::Register(Reg::R11),
+                        dst,
+                    });
+                    continue;
+                }
             }
             _ => new_body.push(instruction.clone()),
         }

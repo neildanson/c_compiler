@@ -233,21 +233,8 @@ impl Display for Instruction {
                     dst.asm(AssemblyType::QuadWord)
                 )
             }
-            Instruction::MovZeroExtend { src, dst } => {
-                writeln!(
-                    f,
-                    "\tmov{} {}, {}",
-                    AssemblyType::LongWord,
-                    src.asm(AssemblyType::LongWord),
-                    Operand::Register(Reg::AX).asm(AssemblyType::LongWord)
-                )?;
-                write!(
-                    f,
-                    "\tmov{} {}, {}",
-                    AssemblyType::QuadWord,
-                    Operand::Register(Reg::AX).asm(AssemblyType::QuadWord),
-                    dst.asm(AssemblyType::QuadWord)
-                )
+            Instruction::MovZeroExtend { src : _src , dst : _dst } => {
+                panic!("MovZeroExtend not implemented")
             }
         }
     }
@@ -293,7 +280,6 @@ fn convert_function_call(
     for arg in stack_args.iter().rev() {
         let assembly_arg = (*arg).clone().into();
         if arg.assembly_type() == AssemblyType::QuadWord {
-            println!("Pushing quad word");
             instructions.push(Instruction::Push(assembly_arg));
         } else {
             match assembly_arg {
@@ -394,27 +380,57 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
                 src2,
                 dst,
             } => {
-                let assembly_type = src1.assembly_type(); //TODO: Check if this is correct
-                let src1 = src1.into();
-                let src2 = src2.into();
-                let dst = dst.into();
-                Ok(vec![
-                    Instruction::Mov {
-                        assembly_type,
-                        src: src1,
-                        dst: Operand::Register(Reg::AX),
-                    },
-                    Instruction::Cdq(assembly_type),
-                    Instruction::Idiv {
-                        assembly_type,
-                        src: src2,
-                    },
-                    Instruction::Mov {
-                        assembly_type,
-                        src: Operand::Register(Reg::AX),
-                        dst,
-                    },
-                ])
+                let assembly_type = src1.assembly_type(); 
+                if src1.parse_type().is_signed() {
+                    //TODO: Check if this is correct
+                    let src1 = src1.into();
+                    let src2 = src2.into();
+                    let dst = dst.into();
+                    Ok(vec![
+                        Instruction::Mov {
+                            assembly_type,
+                            src: src1,
+                            dst: Operand::Register(Reg::AX),
+                        },
+                        Instruction::Cdq(assembly_type),
+                        Instruction::Idiv {
+                            assembly_type,
+                            src: src2,
+                        },
+                        Instruction::Mov {
+                            assembly_type,
+                            src: Operand::Register(Reg::AX),
+                            dst,
+                        },
+                    ])
+                }else {
+                    //TODO: Check if this is correct
+                    let src1 = src1.into();
+                    let src2 = src2.into();
+                    let dst = dst.into();
+                    Ok(vec![
+                        Instruction::Mov {
+                            assembly_type,
+                            src: src1,
+                            dst: Operand::Register(Reg::AX),
+                        },
+                        Instruction::Mov {
+                            assembly_type,
+                            src: Operand::Immediate { imm: 0 },
+                            dst: Operand::Register(Reg::DX),
+                        },
+                        Instruction::Div {
+                            assembly_type,
+                            src: src2,
+                        },
+                        Instruction::Mov {
+                            assembly_type,
+                            src: Operand::Register(Reg::AX),
+                            dst,
+                        },
+                    ])
+                }
+                
             }
             tacky::Instruction::Binary {
                 op: tacky::BinaryOp::Remainder,
