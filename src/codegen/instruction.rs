@@ -237,7 +237,10 @@ impl Display for Instruction {
                     dst.asm(AssemblyType::QuadWord)
                 )
             }
-            Instruction::MovZeroExtend { src : _src , dst : _dst } => {
+            Instruction::MovZeroExtend {
+                src: _src,
+                dst: _dst,
+            } => {
                 panic!("MovZeroExtend not implemented")
             }
         }
@@ -385,7 +388,7 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
                 src2,
                 dst,
             } => {
-                let assembly_type = src1.assembly_type(); 
+                let assembly_type = src1.assembly_type();
                 if src1.parse_type().is_signed() {
                     //TODO: Check if this is correct
                     let src1 = src1.into();
@@ -408,7 +411,7 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
                             dst,
                         },
                     ])
-                }else {
+                } else {
                     //TODO: Check if this is correct
                     let src1 = src1.into();
                     let src2 = src2.into();
@@ -435,7 +438,6 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
                         },
                     ])
                 }
-                
             }
             tacky::Instruction::Binary {
                 op: tacky::BinaryOp::Remainder,

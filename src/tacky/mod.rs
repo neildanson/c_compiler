@@ -29,7 +29,7 @@ use std::{collections::HashMap, fmt::Display};
 
 pub struct Tacky {
     counter: u32,
-    instructions : Vec<Instruction>,
+    instructions: Vec<Instruction>,
     labels: HashMap<String, u32>,
     validate_result: ValidateResult,
 }
@@ -70,8 +70,9 @@ impl Tacky {
         dst
     }
 
-     fn make_comment(&mut self, comment : impl Display) {
-        self.instructions.push(Instruction::Comment(format!("{}", comment)));
+    fn make_comment(&mut self, comment: impl Display) {
+        self.instructions
+            .push(Instruction::Comment(format!("{}", comment)));
     }
 
     fn make_label(&mut self, label: String) -> String {
@@ -84,14 +85,9 @@ impl Tacky {
         name
     }
 
-    fn emit_tacky_expr(
-        &mut self,
-        e: &Expression,
-    ) -> Result<Value, CompilerError> {
+    fn emit_tacky_expr(&mut self, e: &Expression) -> Result<Value, CompilerError> {
         match e {
-            Expression::BinOp(op, e1, e2, _) => {        
-                self.emit_tacky_binop(op, e1, e2)
-            },
+            Expression::BinOp(op, e1, e2, _) => self.emit_tacky_binop(op, e1, e2),
             Expression::Assignment(lhs, rhs, _) => match lhs.as_ref() {
                 Expression::Var(v, ty) => {
                     let src = self.emit_tacky_expr(rhs)?;
@@ -133,19 +129,28 @@ impl Tacky {
                             dst: dst.clone(),
                         });
                     } else if ty.size() < expr_ty.size() {
-                        self.make_comment(format!("Truncate - cast to smaller ({}) to ({})", expr_ty, ty));
+                        self.make_comment(format!(
+                            "Truncate - cast to smaller ({}) to ({})",
+                            expr_ty, ty
+                        ));
                         self.instructions.push(Instruction::Truncate {
                             src: expr,
                             dst: dst.clone(),
                         });
                     } else if expr_ty.is_signed() {
-                        self.make_comment(format!("Sign Extend - cast to larger ({}) to ({})", expr_ty, ty));
+                        self.make_comment(format!(
+                            "Sign Extend - cast to larger ({}) to ({})",
+                            expr_ty, ty
+                        ));
                         self.instructions.push(Instruction::SignExtend {
                             src: expr,
                             dst: dst.clone(),
                         });
                     } else {
-                        self.make_comment(format!("(Unsigned) Zero Extend - cast to  ({}) to ({})", expr_ty, ty));
+                        self.make_comment(format!(
+                            "(Unsigned) Zero Extend - cast to  ({}) to ({})",
+                            expr_ty, ty
+                        ));
                         self.instructions.push(Instruction::ZeroExtend {
                             src: expr,
                             dst: dst.clone(),
@@ -184,7 +189,8 @@ impl Tacky {
         self.instructions.push(Instruction::Jump {
             target: end_label.clone(),
         });
-        self.instructions.push(Instruction::Label { name: else_label });
+        self.instructions
+            .push(Instruction::Label { name: else_label });
 
         let v2 = self.emit_tacky_expr(els)?;
         self.instructions.push(Instruction::Copy {
@@ -192,14 +198,12 @@ impl Tacky {
             dst: result.clone(),
         });
 
-        self.instructions.push(Instruction::Label { name: end_label });
+        self.instructions
+            .push(Instruction::Label { name: end_label });
         Ok(result)
     }
 
-    fn emit_tacky_factor(
-        &mut self,
-        f: &Expression,
-    ) -> Result<Value, CompilerError> {
+    fn emit_tacky_factor(&mut self, f: &Expression) -> Result<Value, CompilerError> {
         match f {
             Expression::Constant(i) => Ok(Value::Constant(*i)),
             Expression::Unary(op, inner, _) => self.emit_tacky_unaryop(op, inner),
@@ -303,7 +307,8 @@ impl Tacky {
                 self.instructions.push(Instruction::Jump {
                     target: end.clone(),
                 });
-                self.instructions.push(Instruction::Label { name: false_label });
+                self.instructions
+                    .push(Instruction::Label { name: false_label });
                 self.instructions.push(Instruction::Copy {
                     src: zero,
                     dst: dst.clone(),
@@ -338,7 +343,8 @@ impl Tacky {
                 self.instructions.push(Instruction::Jump {
                     target: end.clone(),
                 });
-                self.instructions.push(Instruction::Label { name: true_label });
+                self.instructions
+                    .push(Instruction::Label { name: true_label });
                 self.instructions.push(Instruction::Copy {
                     src: one,
                     dst: dst.clone(),
@@ -525,10 +531,7 @@ impl Tacky {
         Ok(())
     }
 
-    fn emit_tacky_statement(
-        &mut self,
-        s: &Statement<Expression>,
-    ) -> Result<(), CompilerError> {
+    fn emit_tacky_statement(&mut self, s: &Statement<Expression>) -> Result<(), CompilerError> {
         match s {
             Statement::If(cond, then, els) => {
                 self.make_comment(&format!("if {}", cond));
@@ -545,7 +548,8 @@ impl Tacky {
                         });
                         self.make_comment("then");
                         self.emit_tacky_statement(then)?;
-                        self.instructions.push(Instruction::Label { name: end_label });
+                        self.instructions
+                            .push(Instruction::Label { name: end_label });
                     }
                     Some(els) => {
                         self.instructions.push(Instruction::JumpIfZero {
@@ -558,9 +562,11 @@ impl Tacky {
                             target: end_label.clone(),
                         });
                         self.make_comment("else");
-                        self.instructions.push(Instruction::Label { name: else_label });
+                        self.instructions
+                            .push(Instruction::Label { name: else_label });
                         self.emit_tacky_statement(els)?;
-                        self.instructions.push(Instruction::Label { name: end_label });
+                        self.instructions
+                            .push(Instruction::Label { name: end_label });
                     }
                 }
 

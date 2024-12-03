@@ -84,9 +84,7 @@ impl Display for Expression {
                 write!(f, "{}()", name)
             }
             Expression::Constant(c) => write!(f, "{}", c),
-
             //_ => write!(f, "{:?}", self) //TODO
         }
-
     }
 }

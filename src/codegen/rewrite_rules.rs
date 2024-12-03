@@ -542,7 +542,7 @@ pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
                         src,
                         dst: dst,
                     });
-                   
+
                     continue;
                 } else {
                     new_body.push(Instruction::Mov {

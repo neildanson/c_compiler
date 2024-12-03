@@ -344,12 +344,14 @@ impl TypeChecker {
                                 Box::new(right),
                                 common_type,
                             )),
-                            _ => Ok(Expression::BinOp(
-                                op.clone(),
-                                Box::new(left),
-                                Box::new(right),
-                                common_type,
-                            )),
+                            _ => {
+                                Ok(Expression::BinOp(
+                                    op.clone(),
+                                    Box::new(left),
+                                    Box::new(right),
+                                    common_type,
+                                ))
+                            }
                         }
                     }
                 }
