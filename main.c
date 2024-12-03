@@ -11,7 +11,7 @@ int main(void) {
      * 2. signed-extend the result, which preserves the value of -96
      * Note that if we cast ui directly to a signed long, its value wouldn't change
      */
-    if ((long) (signed) ui != -96l)
+    if ((long)  ui != -96l)
         return 1;
 
     return 0;

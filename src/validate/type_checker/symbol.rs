@@ -8,7 +8,7 @@ use super::Expression;
 pub enum StaticInit {
     IntInit(i32),
     LongInit(i64),
-    UintInit(u32),
+    UIntInit(u32),
     ULongInit(u64),
 }
 
@@ -17,7 +17,7 @@ impl StaticInit {
         match self {
             StaticInit::IntInit(_) => Type::Int,
             StaticInit::LongInit(_) => Type::Long,
-            StaticInit::UintInit(_) => Type::UInt,
+            StaticInit::UIntInit(_) => Type::UInt,
             StaticInit::ULongInit(_) => Type::ULong,
         }
     }
@@ -26,7 +26,7 @@ impl StaticInit {
         match self {
             StaticInit::IntInit(val) => *val == 0,
             StaticInit::LongInit(val) => *val == 0,
-            StaticInit::UintInit(val) => *val == 0,
+            StaticInit::UIntInit(val) => *val == 0,
             StaticInit::ULongInit(val) => *val == 0,
         }
     }
@@ -37,7 +37,7 @@ impl Display for StaticInit {
         match self {
             StaticInit::IntInit(val) => write!(f, "{}", val),
             StaticInit::LongInit(val) => write!(f, "{}", val),
-            StaticInit::UintInit(val) => write!(f, "{}", val),
+            StaticInit::UIntInit(val) => write!(f, "{}", val),
             StaticInit::ULongInit(val) => write!(f, "{}", val),
         }
     }
@@ -48,7 +48,7 @@ impl From<Constant> for StaticInit {
         match value {
             Constant::Int(val) => StaticInit::IntInit(val),
             Constant::Long(val) => StaticInit::LongInit(val),
-            Constant::UnsignedInt(val) => StaticInit::UintInit(val),
+            Constant::UnsignedInt(val) => StaticInit::UIntInit(val),
             Constant::UnsignedLong(val) => StaticInit::ULongInit(val),
             //_ => panic!("Invalid conversion from Constant to StaticInit"),
         }
@@ -60,7 +60,7 @@ impl From<StaticInit> for Constant {
         match value {
             StaticInit::IntInit(val) => Constant::Int(val),
             StaticInit::LongInit(val) => Constant::Long(val),
-            StaticInit::UintInit(val) => Constant::UnsignedInt(val),
+            StaticInit::UIntInit(val) => Constant::UnsignedInt(val),
             StaticInit::ULongInit(val) => Constant::UnsignedLong(val),
         }
     }
@@ -71,7 +71,7 @@ impl From<StaticInit> for Expression {
         match value {
             StaticInit::IntInit(val) => Expression::Constant(Constant::Int(val)),
             StaticInit::LongInit(val) => Expression::Constant(Constant::Long(val)),
-            StaticInit::UintInit(val) => Expression::Constant(Constant::UnsignedInt(val)),
+            StaticInit::UIntInit(val) => Expression::Constant(Constant::UnsignedInt(val)),
             StaticInit::ULongInit(val) => Expression::Constant(Constant::UnsignedLong(val)),
         }
     }

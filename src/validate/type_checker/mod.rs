@@ -28,19 +28,19 @@ impl TypeChecker {
                 let new_init = match (init, ty) {
                     (StaticInit::IntInit(val), Type::Int) => StaticInit::IntInit(val),
                     (StaticInit::IntInit(val), Type::Long) => StaticInit::LongInit(val as i64),
-                    (StaticInit::IntInit(val), Type::UInt) => StaticInit::UintInit(val as u32),
+                    (StaticInit::IntInit(val), Type::UInt) => StaticInit::UIntInit(val as u32),
                     (StaticInit::IntInit(val), Type::ULong) => StaticInit::ULongInit(val as u64),
                     (StaticInit::LongInit(val), Type::Int) => StaticInit::IntInit(val as i32),
                     (StaticInit::LongInit(val), Type::Long) => StaticInit::LongInit(val),
-                    (StaticInit::LongInit(val), Type::UInt) => StaticInit::UintInit(val as u32),
+                    (StaticInit::LongInit(val), Type::UInt) => StaticInit::UIntInit(val as u32),
                     (StaticInit::LongInit(val), Type::ULong) => StaticInit::ULongInit(val as u64),
-                    (StaticInit::UintInit(val), Type::Int) => StaticInit::IntInit(val as i32),
-                    (StaticInit::UintInit(val), Type::Long) => StaticInit::LongInit(val as i64),
-                    (StaticInit::UintInit(val), Type::UInt) => StaticInit::UintInit(val),
-                    (StaticInit::UintInit(val), Type::ULong) => StaticInit::ULongInit(val as u64),
+                    (StaticInit::UIntInit(val), Type::Int) => StaticInit::IntInit(val as i32),
+                    (StaticInit::UIntInit(val), Type::Long) => StaticInit::LongInit(val as i64),
+                    (StaticInit::UIntInit(val), Type::UInt) => StaticInit::UIntInit(val),
+                    (StaticInit::UIntInit(val), Type::ULong) => StaticInit::ULongInit(val as u64),
                     (StaticInit::ULongInit(val), Type::Int) => StaticInit::IntInit(val as i32),
                     (StaticInit::ULongInit(val), Type::Long) => StaticInit::LongInit(val as i64),
-                    (StaticInit::ULongInit(val), Type::UInt) => StaticInit::UintInit(val as u32),
+                    (StaticInit::ULongInit(val), Type::UInt) => StaticInit::UIntInit(val as u32),
                     (StaticInit::ULongInit(val), Type::ULong) => StaticInit::ULongInit(val),
                     _ => panic!("Invalid cast"),
                 };
@@ -239,6 +239,11 @@ impl TypeChecker {
     }
 
     fn get_common_type(ty1: Type, ty2: Type) -> Type {
+
+        println!("GetCommonType");
+        println!("{:?}", ty1.size());
+        println!("{:?}", ty2.size());
+
         if ty1 == ty2 {
             ty1
         } else if ty1.size() == ty2.size() {
@@ -248,6 +253,7 @@ impl TypeChecker {
                 return ty1;
             }
         } else if ty1.size().unwrap_or(0) > ty2.size().unwrap_or(0) {
+
             return ty1;
         } else {
             return ty2;
@@ -259,6 +265,10 @@ impl TypeChecker {
         if expression_ty == ty.clone() {
             return expression.clone();
         }
+        println!("ConvertTo");
+        println!("{}", ty);
+        println!("{}", expression_ty);
+
         Expression::Cast(ty.clone(), Box::new(expression.clone()))
     }
 
