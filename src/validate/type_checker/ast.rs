@@ -1,3 +1,5 @@
+use std::fmt::{Display, Formatter};
+
 use crate::ast::{BinaryOperator, Constant, Identifier, Type, UnaryOperator};
 
 #[derive(Clone, Debug, PartialEq)]
@@ -64,5 +66,15 @@ impl Expression {
             Expression::Cast(t, _) => t.clone(),
             Expression::Constant(c) => c.get_type(),
         }
+    }
+}
+
+impl Display for Expression {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+        match self {
+            Expression::Var(ident, _) => write!(f, "var {} ", ident),
+            _ => write!(f, "") //TODO
+        }
+
     }
 }
