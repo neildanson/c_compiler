@@ -144,7 +144,7 @@ impl Tacky {
                             dst: dst.clone(),
                         });
                     } else {
-                        self.make_comment(format!("Zero Extend - cast to larger ({}) to ({})", expr_ty, ty));
+                        self.make_comment(format!("(Unsigned) Zero Extend - cast to larger ({}) to ({})", expr_ty, ty));
                         self.instructions.push(Instruction::ZeroExtend {
                             src: expr,
                             dst: dst.clone(),
