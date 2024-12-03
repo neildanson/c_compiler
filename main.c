@@ -1,18 +1,18 @@
-/* Test initializing and updating unsigned global variables */
-static unsigned long x = 9223372036854775803ul; // 2^63 - 5
+/* The order in which multiple casts are applied matters */
 
-// make sure these are initialized to zero
-unsigned long zero_long;
-unsigned zero_int;
+// start with a global variable so we can't optimize away casts in Part III
+unsigned int ui = 4294967200u; // 2^32 - 96
 
-int main(void)
-{
-    if (x != 9223372036854775803ul)
+int main(void) {
+
+
+    /* In this case we
+     * 1. convert ui to a signed int by computing ui - 2^32, producing -96
+     * 2. signed-extend the result, which preserves the value of -96
+     * Note that if we cast ui directly to a signed long, its value wouldn't change
+     */
+    if ((long) (signed)  ui != -96l)
         return 1;
-    x = x + 10;
-    if (x != 9223372036854775813ul)
-        return 2;
-    if (zero_long || zero_int)
-        return 3;
-    return 5;
+
+    return 0;
 }
