@@ -622,6 +622,9 @@ impl Tacky {
 
             Tacky::fixup_missing_return(&mut self.instructions);
 
+            let instructions = self.instructions.clone();
+            self.instructions.clear();
+
             Ok(Some(Function {
                 name: f.name.clone(),
                 global: self
@@ -635,7 +638,7 @@ impl Tacky {
                     .iter()
                     .map(|(ty, name)| (ty.clone(), name.clone()))
                     .collect(),
-                body: Some(self.instructions.clone()),
+                body: Some(instructions),
             }))
         } else {
             Ok(None)

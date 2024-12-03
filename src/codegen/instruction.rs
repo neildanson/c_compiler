@@ -131,7 +131,7 @@ impl Display for Instruction {
     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
         match self {
             Instruction::Comment(comment) => {
-                write!(f, "# {}", comment)
+                write!(f, "/* {} */", comment)
             }
             Instruction::Mov {
                 assembly_type,
