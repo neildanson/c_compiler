@@ -126,25 +126,25 @@ impl Tacky {
                 } else {
                     let dst = self.make_tacky_var(ty.clone());
                     if ty.size() == expr_ty.size() {
-                        self.make_comment("Copy");
+                        self.make_comment(format!("Copy - same size ({}) to ({})", expr_ty, ty));
                         self.instructions.push(Instruction::Copy {
                             src: expr,
                             dst: dst.clone(),
                         });
                     } else if ty.size() < expr_ty.size() {
-                        self.make_comment("Truncate");
+                        self.make_comment(format!("Truncate - cast to smaller ({}) to ({})", expr_ty, ty));
                         self.instructions.push(Instruction::Truncate {
                             src: expr,
                             dst: dst.clone(),
                         });
                     } else if expr_ty.is_signed() {
-                        self.make_comment("Sign Extend");
+                        self.make_comment(format!("Sign Extend - cast to larger ({}) to ({})", expr_ty, ty));
                         self.instructions.push(Instruction::SignExtend {
                             src: expr,
                             dst: dst.clone(),
                         });
                     } else {
-                        self.make_comment("Zero Extend");
+                        self.make_comment(format!("Zero Extend - cast to larger ({}) to ({})", expr_ty, ty));
                         self.instructions.push(Instruction::ZeroExtend {
                             src: expr,
                             dst: dst.clone(),
