@@ -248,7 +248,6 @@ impl TypeChecker {
                 return ty1;
             }
         } else if ty1.size().unwrap_or(0) > ty2.size().unwrap_or(0) {
-
             return ty1;
         } else {
             return ty2;
