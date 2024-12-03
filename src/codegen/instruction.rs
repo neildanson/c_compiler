@@ -66,6 +66,7 @@ impl Value {
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Instruction {
+    Comment(String),
     Mov {
         assembly_type: AssemblyType,
         src: Operand,
@@ -129,6 +130,9 @@ pub fn format_fn_call(name: &str) -> String {
 impl Display for Instruction {
     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
         match self {
+            Instruction::Comment(comment) => {
+                write!(f, "# {}", comment)
+            }
             Instruction::Mov {
                 assembly_type,
                 src,
@@ -325,6 +329,7 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
     type Error = CompilerError;
     fn try_from(instruction: tacky::Instruction) -> Result<Self, Self::Error> {
         match instruction {
+            tacky::Instruction::Comment(comment) => Ok(vec![Instruction::Comment(comment)]),
             tacky::Instruction::Return(value) => {
                 //This should use correct type
                 let assembly_type = value.assembly_type(); //TODO: This is incorrect

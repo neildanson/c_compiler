@@ -119,21 +119,25 @@ impl Tacky {
                 } else {
                     let dst = self.make_tacky_var(ty.clone());
                     if ty.size() == expr_ty.size() {
+                        instructions.push(Instruction::Comment("Copy".to_string()));
                         instructions.push(Instruction::Copy {
                             src: expr,
                             dst: dst.clone(),
                         });
                     } else if ty.size() < expr_ty.size() {
+                        instructions.push(Instruction::Comment("Truncate".to_string()));
                         instructions.push(Instruction::Truncate {
                             src: expr,
                             dst: dst.clone(),
                         });
                     } else if expr_ty.is_signed() {
+                        instructions.push(Instruction::Comment("Sign extend".to_string()));
                         instructions.push(Instruction::SignExtend {
                             src: expr,
                             dst: dst.clone(),
                         });
                     } else {
+                        instructions.push(Instruction::Comment("Zero extend".to_string()));
                         instructions.push(Instruction::ZeroExtend {
                             src: expr,
                             dst: dst.clone(),

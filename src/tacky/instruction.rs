@@ -2,6 +2,7 @@ use super::{BinaryOp, UnaryOp, Value};
 
 #[derive(Clone, Debug)]
 pub enum Instruction {
+    Comment(String),
     Return(Value),
     Unary {
         op: UnaryOp,
