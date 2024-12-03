@@ -1,18 +1,27 @@
-/* The order in which multiple casts are applied matters */
+/* Test that we correctly perform conversions "as if by assignment", including:
+ * - actual assignment expressions
+ * - initializers for automatic variables
+ * - return statements
+ * Implicit conversions of function arguments are in a separate test case, convert_function_arguments.c
+ */
 
-// start with a global variable so we can't optimize away casts in Part III
-unsigned int ui = 4294967200u; // 2^32 - 96
+#ifdef SUPPRESS_WARNINGS
+#ifdef __clang__
+#pragma clang diagnostic ignored "-Wconstant-conversion"
+#else
+#pragma GCC diagnostic ignored "-Woverflow"
+#endif
+#endif
+long return_extended_int(int i) {
+    return i;
+}
+
 
 int main(void) {
-
-
-    /* In this case we
-     * 1. convert ui to a signed int by computing ui - 2^32, producing -96
-     * 2. signed-extend the result, which preserves the value of -96
-     * Note that if we cast ui directly to a signed long, its value wouldn't change
-     */
-    if ((long) (signed)  ui != -96l)
-        return 1;
+    long result = return_extended_int(-10);
+    if (result != -10) {
+        return 2;
+    }
 
     return 0;
 }
