@@ -95,6 +95,20 @@ pub enum UnaryOperator {
     PostDecrement,
 }
 
+impl Display for UnaryOperator {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+        match self {
+            UnaryOperator::Negation => write!(f, "-"),
+            UnaryOperator::Tilde => write!(f, "~"),
+            UnaryOperator::Not => write!(f, "!"),
+            UnaryOperator::PreIncrement => write!(f, "++"),
+            UnaryOperator::PostIncrement => write!(f, "++"),
+            UnaryOperator::PreDecrement => write!(f, "--"),
+            UnaryOperator::PostDecrement => write!(f, "--"),
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum BinaryOperator {
     Add,
@@ -117,6 +131,31 @@ pub enum BinaryOperator {
     GreaterThanOrEqual,
 }
 
+impl Display for BinaryOperator {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+        match self {
+            BinaryOperator::Add => write!(f, "+"),
+            BinaryOperator::Sub => write!(f, "-"),
+            BinaryOperator::Mul => write!(f, "*"),
+            BinaryOperator::Div => write!(f, "/"),
+            BinaryOperator::Mod => write!(f, "%"),
+            BinaryOperator::ShiftLeft => write!(f, "<<"),
+            BinaryOperator::ShiftRight => write!(f, ">>"),
+            BinaryOperator::BitwiseAnd => write!(f, "&"),
+            BinaryOperator::BitwiseOr => write!(f, "|"),
+            BinaryOperator::BitwiseXor => write!(f, "^"),
+            BinaryOperator::And => write!(f, "&&"),
+            BinaryOperator::Or => write!(f, "||"),
+            BinaryOperator::Equal => write!(f, "=="),
+            BinaryOperator::NotEqual => write!(f, "!="),
+            BinaryOperator::LessThan => write!(f, "<"),
+            BinaryOperator::GreaterThan => write!(f, ">"),
+            BinaryOperator::LessThanOrEqual => write!(f, "<="),
+            BinaryOperator::GreaterThanOrEqual => write!(f, ">="),
+        }
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum Type {
     Int,
@@ -124,6 +163,27 @@ pub enum Type {
     UInt,
     ULong,
     FunType(Vec<Type>, Box<Type>),
+}
+
+impl Display for Type {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+        match self {
+            Type::Int => write!(f, "int"),
+            Type::Long => write!(f, "long"),
+            Type::UInt => write!(f, "unsigned int"),
+            Type::ULong => write!(f, "unsigned long"),
+            Type::FunType(params, ret) => {
+                write!(f, "fun(")?;
+                for (i, param) in params.iter().enumerate() {
+                    write!(f, "{}", param)?;
+                    if i < params.len() - 1 {
+                        write!(f, ", ")?;
+                    }
+                }
+                write!(f, ") -> {}", ret)
+            }
+        }
+    }
 }
 
 impl Type {

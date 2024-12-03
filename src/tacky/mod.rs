@@ -25,7 +25,7 @@ use crate::{
         InitialValue, StaticAttr, Symbol, ValidateResult,
     },
 };
-use std::collections::HashMap;
+use std::{collections::HashMap, fmt::Display};
 
 pub struct Tacky {
     counter: u32,
@@ -70,8 +70,8 @@ impl Tacky {
         dst
     }
 
-    fn make_comment(&mut self, comment : &str) {
-        self.instructions.push(Instruction::Comment(comment.to_string()));
+     fn make_comment(&mut self, comment : impl Display) {
+        self.instructions.push(Instruction::Comment(format!("{}", comment)));
     }
 
     fn make_label(&mut self, label: String) -> String {
@@ -528,6 +528,7 @@ impl Tacky {
     ) -> Result<(), CompilerError> {
         match s {
             Statement::If(cond, then, els) => {
+                self.make_comment(&format!("if {}", cond));
                 let cond = self.emit_tacky_expr(cond)?;
                 let cond = self.emit_temp(cond);
                 let else_label = self.make_label("else".to_string());
@@ -547,6 +548,7 @@ impl Tacky {
                             condition: cond,
                             target: else_label.clone(),
                         });
+                        self.make_comment("then");
                         self.emit_tacky_statement(then)?;
                         self.instructions.push(Instruction::Jump {
                             target: end_label.clone(),
