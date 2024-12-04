@@ -1,7 +1,7 @@
 use anyhow::Result;
 use regex::Regex;
 
-use crate::error::CompilerError;
+use crate::{error::CompilerError, substring::Substring};
 
 #[derive(Debug, PartialEq, Eq, Hash, Clone)]
 pub enum Token {
@@ -83,10 +83,10 @@ impl TokenMapper {
         }
     }
 
-    fn map<'a>(&self, input: &'a str) -> Option<(Token, &'a str)> {
-        if let Some(mat) = self.regex.find(input) {
+    fn map<'a>(&self, input: &Substring) -> Option<(Token, Substring)> {
+        if let Some(mat) = self.regex.find(&input) {
             let s = mat.as_str();
-            Some(((self.token)(s.to_string()), &input[s.len()..]))
+            Some(((self.token)(s.to_string()), (&input[s.len()..]).into()))
         } else {
             None
         }
@@ -160,18 +160,18 @@ impl Tokenizer {
 
     pub fn tokenize(&self, input: &str) -> Result<Vec<Token>> {
         let mut tokens = Vec::new();
-        let mut input = input;
+        let mut input : Substring =  input.into();
         while !input.is_empty() {
             if input.starts_with(" ")
                 || input.starts_with("\n")
                 || input.starts_with("\r")
                 || input.starts_with("\t")
             {
-                input = &input[1..];
+                input = input.advance(1);
             } else {
                 let mut found = false;
                 for token_mapper in &self.token_mappers {
-                    if let Some((token, rest)) = token_mapper.map(input) {
+                    if let Some((token, rest)) = token_mapper.map(&input) {
                         tokens.push(token);
                         input = rest;
                         found = true;
