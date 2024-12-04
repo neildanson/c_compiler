@@ -225,7 +225,6 @@ fn parse_factor(tokens: &[Token]) -> Result<(Expression, &[Token])> {
             rest,
         ),
 
-        
         [Token::Identifier(name), Token::LParen, rest @ ..] => {
             let (arguments, rest) = parse_argument_list(rest)?;
             (Expression::FunctionCall(name.clone(), arguments), rest)

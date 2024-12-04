@@ -445,27 +445,55 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
                 src2,
                 dst,
             } => {
-                let assembly_type = src1.assembly_type(); //TODO: Check if this is correct
-                let src1 = src1.into();
-                let src2 = src2.into();
-                let dst = dst.into();
-                Ok(vec![
-                    Instruction::Mov {
-                        assembly_type,
-                        src: src1,
-                        dst: Operand::Register(Reg::AX),
-                    },
-                    Instruction::Cdq(assembly_type),
-                    Instruction::Idiv {
-                        assembly_type,
-                        src: src2,
-                    },
-                    Instruction::Mov {
-                        assembly_type,
-                        src: Operand::Register(Reg::DX),
-                        dst,
-                    },
-                ])
+                if src2.parse_type().is_signed() {
+                    let assembly_type = src1.assembly_type(); //TODO: Check if this is correct
+                    let src1 = src1.into();
+                    let src2 = src2.into();
+                    let dst = dst.into();
+                    Ok(vec![
+                        Instruction::Mov {
+                            assembly_type,
+                            src: src1,
+                            dst: Operand::Register(Reg::AX),
+                        },
+                        Instruction::Cdq(assembly_type),
+                        Instruction::Idiv {
+                            assembly_type,
+                            src: src2,
+                        },
+                        Instruction::Mov {
+                            assembly_type,
+                            src: Operand::Register(Reg::DX),
+                            dst,
+                        },
+                    ])
+                } else {
+                    let assembly_type = src1.assembly_type(); //TODO: Check if this is correct
+                    let src1 = src1.into();
+                    let src2 = src2.into();
+                    let dst = dst.into();
+                    Ok(vec![
+                        Instruction::Mov {
+                            assembly_type,
+                            src: src1,
+                            dst: Operand::Register(Reg::AX),
+                        },
+                        Instruction::Mov {
+                            assembly_type,
+                            src: Operand::Immediate { imm: 0 },
+                            dst: Operand::Register(Reg::DX),
+                        },
+                        Instruction::Div {
+                            assembly_type,
+                            src: src2,
+                        },
+                        Instruction::Mov {
+                            assembly_type,
+                            src: Operand::Register(Reg::DX),
+                            dst,
+                        },
+                    ])
+                }
             }
             tacky::Instruction::Binary {
                 op,
