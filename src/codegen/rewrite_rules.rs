@@ -540,7 +540,7 @@ pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
                     new_body.push(Instruction::Mov {
                         assembly_type: AssemblyType::LongWord,
                         src,
-                        dst: dst,
+                        dst,
                     });
 
                     continue;

@@ -535,7 +535,7 @@ impl Tacky {
     fn emit_tacky_statement(&mut self, s: &Statement<Expression>) -> Result<(), CompilerError> {
         match s {
             Statement::If(cond, then, els) => {
-                self.make_comment(&format!("if {}", cond));
+                self.make_comment(format!("if {}", cond));
                 let cond = self.emit_tacky_expr(cond)?;
                 let cond = self.emit_temp(cond);
                 let else_label = self.make_label("else".to_string());
@@ -592,11 +592,11 @@ impl Tacky {
                 Ok(())
             }
             Statement::DoWhile(body, cond, loop_label) => {
-                self.make_comment(&format!("do while {}", cond));
+                self.make_comment(format!("do while {}", cond));
                 self.emit_tacky_do_while(body, cond, loop_label)
             }
             Statement::While(cond, body, label) => {
-                self.make_comment(&format!("while {}", cond));
+                self.make_comment(format!("while {}", cond));
                 self.emit_tacky_while(cond, body, label)
             }
             Statement::For(for_init, cond, post, body, loop_label) => {
