@@ -1,6 +1,6 @@
 use std::fmt::{Display, Formatter};
 
-use crate::{error::CompilerError, tacky};
+use crate::{ast::Type, error::CompilerError, tacky};
 
 use super::error::CodeGenError;
 
@@ -35,16 +35,20 @@ impl Display for ConditionCode {
     }
 }
 
-impl TryFrom<tacky::BinaryOp> for ConditionCode {
-    type Error = CompilerError;
-    fn try_from(cc: tacky::BinaryOp) -> Result<Self, Self::Error> {
-        match cc {
-            tacky::BinaryOp::Equal => Ok(ConditionCode::E),
-            tacky::BinaryOp::NotEqual => Ok(ConditionCode::NE),
-            tacky::BinaryOp::LessThan => Ok(ConditionCode::L),
-            tacky::BinaryOp::LessThanOrEqual => Ok(ConditionCode::LE),
-            tacky::BinaryOp::GreaterThan => Ok(ConditionCode::G),
-            tacky::BinaryOp::GreaterThanOrEqual => Ok(ConditionCode::GE),
+impl ConditionCode {
+    //TODO : Add more condition codes for unsigned
+    pub fn try_from(cc: tacky::BinaryOp, ty: Type) -> Result<Self, CompilerError> {
+        match (cc, ty.is_signed()) {
+            (tacky::BinaryOp::Equal, _) => Ok(ConditionCode::E),
+            (tacky::BinaryOp::NotEqual, _) => Ok(ConditionCode::NE),
+            (tacky::BinaryOp::LessThan, true) => Ok(ConditionCode::L),
+            (tacky::BinaryOp::LessThan, false) => Ok(ConditionCode::B),
+            (tacky::BinaryOp::LessThanOrEqual, true) => Ok(ConditionCode::LE),
+            (tacky::BinaryOp::LessThanOrEqual, false) => Ok(ConditionCode::BE),
+            (tacky::BinaryOp::GreaterThan, true) => Ok(ConditionCode::G),
+            (tacky::BinaryOp::GreaterThan, false) => Ok(ConditionCode::A),
+            (tacky::BinaryOp::GreaterThanOrEqual, true) => Ok(ConditionCode::GE),
+            (tacky::BinaryOp::GreaterThanOrEqual, false) => Ok(ConditionCode::AE),
             _ => Err(CompilerError::CodeGen(CodeGenError::InvalidConditionCode)),
         }
     }

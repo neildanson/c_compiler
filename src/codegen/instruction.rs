@@ -472,7 +472,7 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
                 src1,
                 src2,
                 dst,
-            } if let Ok(cc) = op.clone().try_into() => {
+            } if let Ok(cc) = ConditionCode::try_from(op.clone(), src1.parse_type()) => {
                 let assembly_type = src1.assembly_type();
                 let src1 = src1.into();
                 let src2 = src2.into();
