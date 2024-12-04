@@ -124,12 +124,12 @@ Copilot is pretty good at explaining why asm code segfaults. Use it.
 
 # Progress
 
-100% Implemented up to chapter 11 (excluding some extras)
+100% Implemented up to chapter 12 (excluding some extras)
 
-Chapter 12 notes
+Chapter 13 notes
 
-* Lexer complete
-* Parser complete
-* Validate complete
-* Tacky complete
-* Codegen in progress
+* Lexer not started
+* Parser not started
+* Validate not started
+* Tacky not started
+* Codegen in not started
