@@ -329,29 +329,29 @@ impl TypeChecker {
                         Box::new(right),
                         Type::Int,
                     )),
-                    _ => match op {
-                        BinaryOperator::Add
-                        | BinaryOperator::Sub
-                        | BinaryOperator::Mul
-                        | BinaryOperator::Div
-                        | BinaryOperator::Mod => {
-                            let common_type = Self::get_common_type(left.get_type(), right.get_type());
-                            let left = self.convert_to(common_type.clone(), &left);
-                            let right = self.convert_to(common_type.clone(), &right);
-                            Ok(Expression::BinOp(
+                    _ => {
+                        let common_type = Self::get_common_type(left.get_type(), right.get_type());
+                        let left = self.convert_to(common_type.clone(), &left);
+                        let right = self.convert_to(common_type.clone(), &right);
+                        match op {
+                            BinaryOperator::Add
+                            | BinaryOperator::Sub
+                            | BinaryOperator::Mul
+                            | BinaryOperator::Div
+                            | BinaryOperator::Mod => Ok(Expression::BinOp(
                                 op.clone(),
                                 Box::new(left),
                                 Box::new(right),
                                 common_type,
-                            ))
+                            )),
+                            _ => Ok(Expression::BinOp(
+                                op.clone(),
+                                Box::new(left),
+                                Box::new(right),
+                                Type::Int,
+                            )),
                         }
-                        _ => Ok(Expression::BinOp(
-                            op.clone(),
-                            Box::new(left),
-                            Box::new(right),
-                            Type::Int,
-                        )),
-                    },
+                    }
                 }
             }
             crate::parse::Expression::Unary(UnaryOperator::Not, expression) => {
