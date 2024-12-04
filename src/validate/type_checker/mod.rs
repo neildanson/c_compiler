@@ -401,7 +401,8 @@ impl TypeChecker {
                         SemanticAnalysisError::InvalidCastInAssignment,
                     ));
                 }
-                Ok(self.convert_to(ty.clone(), &self.type_check_expression(expr)?))
+                let expr = Expression::Cast(ty.clone(), Box::new(self.type_check_expression(expr)?));
+                Ok(expr)
             }
         }
     }

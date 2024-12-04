@@ -117,6 +117,7 @@ impl Tacky {
             Expression::Cast(ty, expr) => {
                 let expr_ty = expr.get_type();
                 let expr = self.emit_tacky_expr(expr)?;
+                self.make_comment(format!("{}", expr));
                 if expr_ty == *ty {
                     self.make_comment(format!("No cast - same type ({}) to ({})", expr_ty, ty));
                     Ok(expr)

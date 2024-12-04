@@ -141,13 +141,24 @@ fn parse_argument_list(tokens: &[Token]) -> Result<(Vec<Expression>, &[Token])> 
 fn parse_cast(tokens: &[Token]) -> Result<(Expression, &[Token])> {
     let (ty, _, rest) = parse_type_and_storage(tokens, false)?;
     let rest = swallow_one(Token::RParen, rest)?;
-    let (expression, rest) = parse_expression(rest, 0)?;
+    let (expression, rest) = parse_factor(rest)?;
     let expression = Expression::Cast(ty, Box::new(expression));
     Ok((expression, rest))
 }
 
 fn parse_factor(tokens: &[Token]) -> Result<(Expression, &[Token])> {
     let (factor, tokens) = match tokens {
+        [Token::LParen, rest @ ..] => {
+            let cast = parse_cast(rest);
+            match cast {
+                Ok((expression, rest)) => (expression, rest),
+                Err(_) => {
+                    let (expression, rest) = parse_expression(rest, 0)?;
+                    let rest = swallow_one(Token::RParen, rest)?;
+                    (expression, rest)
+                }
+            }
+        }
         [Token::Constant(c), rest @ ..] => {
             let constant = parse_constant(c)?;
             (Expression::Constant(constant), rest)
@@ -214,17 +225,7 @@ fn parse_factor(tokens: &[Token]) -> Result<(Expression, &[Token])> {
             rest,
         ),
 
-        [Token::LParen, rest @ ..] => {
-            let cast = parse_cast(rest);
-            match cast {
-                Ok((expression, rest)) => (expression, rest),
-                Err(_) => {
-                    let (expression, rest) = parse_expression(rest, 0)?;
-                    let rest = swallow_one(Token::RParen, rest)?;
-                    (expression, rest)
-                }
-            }
-        }
+        
         [Token::Identifier(name), Token::LParen, rest @ ..] => {
             let (arguments, rest) = parse_argument_list(rest)?;
             (Expression::FunctionCall(name.clone(), arguments), rest)
