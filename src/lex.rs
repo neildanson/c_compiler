@@ -8,11 +8,11 @@ pub enum Token {
     Comment(String),
     PreProcessorDirective(String), //#[a-zA-Z_]\w*\b
     Identifier(String),            //[a-zA-Z_]\w*\b
-    Constant(String),              //[0-9]+\b
-    LongConstant(String),          //[0-9]+[lL]\b
-    UnsignedIntConstant(String),   //[0-9]+[uU]\b
-    UnsignedLongConstant(String),  //[0-9]+[lL][uU]|[uU]|[lL]\b
-    FloatConstant(String),
+    Constant(String),              //[0-9][^\w.]
+    LongConstant(String),          //([0-9]+[lL])[^\w.]
+    UnsignedIntConstant(String),   //([0-9]+[uU])[^\w.]
+    UnsignedLongConstant(String),  //([0-9]+([lL][uU]|[uU][lL]))[^\w.]
+    DoubleConstant(String),        //(([0-9]*\.[0-9]+|[0-9]+\.?)[Ee][+-]?[0-9]+|[0-9]*\.[0-9]+|[0-9]+\.)[^\w.]
     Int,                //int\b
     Long,               //long\b
     Double,             //double\b
@@ -131,7 +131,7 @@ impl Tokenizer {
             TokenMapper::new(r"^;", Box::new(|_| Token::SemiColon), false),
             TokenMapper::new(
                 r"^(([0-9]*\.[0-9]+|[0-9]+\.?)[Ee][+-]?[0-9]+|[0-9]*\.[0-9]+|[0-9]+\.)[^\w.]",
-                Box::new(Token::FloatConstant),
+                Box::new(Token::DoubleConstant),
                 true,
             ),
             TokenMapper::new(r"^[a-zA-Z_]\w*\b", Box::new(Token::Identifier), false),
@@ -313,7 +313,7 @@ mod tests {
         assert_eq!(
             tokens,
             vec![
-                Token::FloatConstant("42.012".to_string()),
+                Token::DoubleConstant("42.012".to_string()),
                 Token::SemiColon
             ]
         );

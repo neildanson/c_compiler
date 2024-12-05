@@ -175,6 +175,10 @@ fn parse_factor(tokens: &[Token]) -> Result<(Expression, &[Token])> {
             let constant = parse_unsigned_constant(c)?;
             (Expression::Constant(constant), rest)
         }
+        [Token::DoubleConstant(c), rest @ ..] => {
+            let constant = c.parse::<f64>()?;
+            (Expression::Constant(Constant::Double(constant)), rest)
+        }
         [Token::Minus, rest @ ..] => {
             let (factor, rest) = parse_factor(rest)?;
             (
@@ -469,6 +473,7 @@ fn parse_type_and_storage(
             || specifier == &Token::Long
             || specifier == &Token::Unsigned
             || specifier == &Token::Signed
+            || specifier == &Token::Double
         {
             types.push(specifier);
         } else {

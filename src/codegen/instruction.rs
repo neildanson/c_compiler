@@ -29,6 +29,7 @@ impl From<&Type> for AssemblyType {
             Type::Long => AssemblyType::QuadWord,
             Type::UInt => AssemblyType::LongWord, 
             Type::ULong => AssemblyType::QuadWord,
+            Type::Double => AssemblyType::QuadWord, //TODO: Check if this is correct
             _ => panic!("Unsupported assembly type for type {:?}", ty),
         }
     }
