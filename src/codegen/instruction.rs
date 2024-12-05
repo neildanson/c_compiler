@@ -27,8 +27,8 @@ impl From<&Type> for AssemblyType {
         match ty {
             Type::Int => AssemblyType::LongWord,
             Type::Long => AssemblyType::QuadWord,
-            Type::UInt => AssemblyType::LongWord, //TODO: Check if this is correct
-            Type::ULong => AssemblyType::QuadWord, //TODO: Check if this is correct
+            Type::UInt => AssemblyType::LongWord, 
+            Type::ULong => AssemblyType::QuadWord,
             _ => panic!("Unsupported assembly type for type {:?}", ty),
         }
     }
@@ -48,9 +48,10 @@ impl Value {
         match self {
             Value::Constant(Constant::Int(_)) => AssemblyType::LongWord,
             Value::Constant(Constant::Long(_)) => AssemblyType::QuadWord,
-            Value::Constant(Constant::UnsignedInt(_)) => AssemblyType::LongWord, //TODO: Check if this is correct
-            Value::Constant(Constant::UnsignedLong(_)) => AssemblyType::QuadWord, //TODO: Check if this is correct
+            Value::Constant(Constant::UnsignedInt(_)) => AssemblyType::LongWord, 
+            Value::Constant(Constant::UnsignedLong(_)) => AssemblyType::QuadWord,
             Value::Var(_, ty) => ty.into(),
+            Value::Constant(Constant::Double(_)) => unimplemented!("Double")
         }
     }
     pub fn parse_type(&self) -> Type {
@@ -59,6 +60,7 @@ impl Value {
             Value::Constant(Constant::Long(_)) => Type::Long,
             Value::Constant(Constant::UnsignedInt(_)) => Type::UInt,
             Value::Constant(Constant::UnsignedLong(_)) => Type::ULong,
+            Value::Constant(Constant::Double(_)) => Type::Double,
             Value::Var(_, ty) => ty.clone(),
         }
     }

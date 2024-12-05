@@ -50,7 +50,7 @@ impl From<Constant> for StaticInit {
             Constant::Long(val) => StaticInit::LongInit(val),
             Constant::UnsignedInt(val) => StaticInit::UIntInit(val),
             Constant::UnsignedLong(val) => StaticInit::ULongInit(val),
-            //_ => panic!("Invalid conversion from Constant to StaticInit"),
+            _ => panic!("Invalid conversion from Constant to StaticInit"),
         }
     }
 }

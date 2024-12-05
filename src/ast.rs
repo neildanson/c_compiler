@@ -162,6 +162,7 @@ pub enum Type {
     Long,
     UInt,
     ULong,
+    Double, 
     FunType(Vec<Type>, Box<Type>),
 }
 
@@ -172,6 +173,7 @@ impl Display for Type {
             Type::Long => write!(f, "long"),
             Type::UInt => write!(f, "unsigned int"),
             Type::ULong => write!(f, "unsigned long"),
+            Type::Double => write!(f, "double"),
             Type::FunType(params, ret) => {
                 write!(f, "fun(")?;
                 for (i, param) in params.iter().enumerate() {
@@ -193,6 +195,7 @@ impl Type {
             Type::Long => Constant::Long(0),
             Type::UInt => Constant::UnsignedInt(0),
             Type::ULong => Constant::UnsignedLong(0),
+            Type::Double => Constant::Double(0.0),
             Type::FunType(_, _) => panic!("Function type has no zero constant"),
         }
     }
@@ -203,6 +206,7 @@ impl Type {
             Type::Long => Some(8),
             Type::UInt => Some(4),
             Type::ULong => Some(8),
+            Type::Double => Some(8),
             Type::FunType(_, _) => None,
         }
     }
@@ -213,6 +217,7 @@ impl Type {
             Type::Long => true,
             Type::UInt => false,
             Type::ULong => false,
+            Type::Double => panic!("Double type has no sign"), 
             Type::FunType(_, _) => panic!("Function type has no sign"),
         }
     }
@@ -224,6 +229,7 @@ pub enum Constant {
     Long(i64),
     UnsignedInt(u32),
     UnsignedLong(u64),
+    Double(f64),
 }
 
 impl Display for Constant {
@@ -233,6 +239,7 @@ impl Display for Constant {
             Constant::Long(val) => write!(f, "{}l", val),
             Constant::UnsignedInt(val) => write!(f, "{}u", val),
             Constant::UnsignedLong(val) => write!(f, "{}ul", val),
+            Constant::Double(val) => write!(f, "{}", val),
         }
     }
 }
@@ -244,6 +251,7 @@ impl Constant {
             Constant::Long(_) => Type::Long,
             Constant::UnsignedInt(_) => Type::UInt,
             Constant::UnsignedLong(_) => Type::ULong,
+            Constant::Double(_) => Type::Double,
         }
     }
 
@@ -254,6 +262,7 @@ impl Constant {
             Constant::Long(val) => *val as i128,
             Constant::UnsignedInt(val) => *val as i128,
             Constant::UnsignedLong(val) => *val as i128,
+            Constant::Double(_) => panic!("Double constant cannot be converted to i128"),
         }
     }
 }
