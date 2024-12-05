@@ -12,8 +12,10 @@ pub enum Token {
     LongConstant(String),          //[0-9]+[lL]\b
     UnsignedIntConstant(String),   //[0-9]+[uU]\b
     UnsignedLongConstant(String),  //[0-9]+[lL][uU]|[uU]|[lL]\b
+    FloatConstant(String),         
     Int,                           //int\b
     Long,                          //long\b
+    Double,                        //double\b
     Void,                          //void\b
     Return,                        //return\b
     Static,                        //static\b
@@ -112,6 +114,7 @@ impl Tokenizer {
             TokenMapper::new(r"^extern\b", Box::new(|_| Token::Extern), false),
             TokenMapper::new(r"^int\b", Box::new(|_| Token::Int), false),
             TokenMapper::new(r"^long\b", Box::new(|_| Token::Long), false),
+            TokenMapper::new(r"^double\b", Box::new(|_| Token::Double), false),
             TokenMapper::new(r"^if\b", Box::new(|_| Token::If), false),
             TokenMapper::new(r"^else\b", Box::new(|_| Token::Else), false),
             TokenMapper::new(r"^do\b", Box::new(|_| Token::Do), false),
@@ -126,6 +129,7 @@ impl Tokenizer {
             TokenMapper::new(r"^\{", Box::new(|_| Token::LBrace), false),
             TokenMapper::new(r"^\}", Box::new(|_| Token::RBrace), false),
             TokenMapper::new(r"^;", Box::new(|_| Token::SemiColon), false),
+            TokenMapper::new(r"^(([0-9]*\.[0-9]+|[0-9]+\.?)[Ee][+-]?[0-9]+[0-9]*\.[0-9]+|[0-9]+\.)[^\w.]", Box::new(Token::FloatConstant), true),
             TokenMapper::new(r"^[a-zA-Z_]\w*\b", Box::new(Token::Identifier), false),
             TokenMapper::new(r"^([0-9]+)[^\w.]", Box::new(Token::Constant), true),
             TokenMapper::new(r"^([0-9]+[lL])[^\w.]", Box::new(Token::LongConstant), true),
@@ -268,6 +272,16 @@ mod tests {
         assert_eq!(
             tokens,
             vec![Token::Asterisk, Token::Constant("42".to_string()), Token::SemiColon]
+        );
+    }
+
+    #[test]
+    fn test_floating_point() {
+        let tokenizer = Tokenizer::new();
+        let tokens = tokenizer.tokenize("42.012f;").unwrap();
+        assert_eq!(
+            tokens,
+            vec![Token::Asterisk, Token::FloatConstant("42.012f".to_string()), Token::SemiColon]
         );
     }
 }
