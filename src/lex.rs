@@ -267,7 +267,7 @@ mod tests {
         let tokens = tokenizer.tokenize("*42;").unwrap();
         assert_eq!(
             tokens,
-            vec![Token::Asterisk, Token::Constant("42;".to_string()), Token::SemiColon]
+            vec![Token::Asterisk, Token::Constant("42".to_string()), Token::SemiColon]
         );
     }
 }

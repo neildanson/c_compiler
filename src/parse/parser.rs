@@ -711,7 +711,7 @@ mod tests {
         let tokens = tokenizer.tokenize("42;").unwrap();
         let (expression, rest) = parse_expression(&tokens, 0).unwrap();
         assert_eq!(expression, Expression::Constant(Constant::Int(42)));
-        assert!(rest.is_empty());
+        assert_eq!(rest, [Token::SemiColon]);
     }
 
     #[test]
@@ -726,7 +726,7 @@ mod tests {
                 Box::new(Expression::Constant(Constant::Int(42))),
             )
         );
-        assert!(rest.is_empty());
+        assert_eq!(rest, [Token::SemiColon]);
     }
 
     #[test]
