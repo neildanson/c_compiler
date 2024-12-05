@@ -12,54 +12,54 @@ pub enum Token {
     LongConstant(String),          //[0-9]+[lL]\b
     UnsignedIntConstant(String),   //[0-9]+[uU]\b
     UnsignedLongConstant(String),  //[0-9]+[lL][uU]|[uU]|[lL]\b
-    FloatConstant(String),         
-    Int,                           //int\b
-    Long,                          //long\b
-    Double,                        //double\b
-    Void,                          //void\b
-    Return,                        //return\b
-    Static,                        //static\b
-    Extern,                        //extern\b
-    If,                            //if\b
-    Else,                          //else\b
-    LParen,                        //\(
-    RParen,                        //\)
-    LBrace,                        //{
-    RBrace,                        //}
-    SemiColon,                     //;
-    Tilde,                         //~
-    DoubleMinus,                   //--
-    DoublePlus,                    //++
-    Plus,                          //+
-    Minus,                         //-
-    Asterisk,                      //*
-    Slash,                         // /
-    Percent,                       //%
-    ShiftLeft,                     //<<
-    ShiftRight,                    //>>
-    BitwiseXor,                    //^
-    BitwiseOr,                     //^|
-    BitwiseAnd,                    //^&
-    Not,                           //^!
-    And,                           //^&&
-    Or,                            //^||
-    Equal,                         //^==
-    NotEqual,                      //^!=
-    LessThan,                      //<
-    GreaterThan,                   //>
-    LessThanOrEqual,               //<=
-    GreaterThanOrEqual,            //>=
-    Assignment,                    //=
-    QuestionMark,                  //?
-    Colon,                         //:
-    Do,                            //do\b
-    While,                         //while\b
-    For,                           //for\b
-    Break,                         //break\b
-    Continue,                      //continue\b
-    Comma,                         //,
-    Signed,                        //signed\b
-    Unsigned,                      //unsigned\b
+    FloatConstant(String),
+    Int,                //int\b
+    Long,               //long\b
+    Double,             //double\b
+    Void,               //void\b
+    Return,             //return\b
+    Static,             //static\b
+    Extern,             //extern\b
+    If,                 //if\b
+    Else,               //else\b
+    LParen,             //\(
+    RParen,             //\)
+    LBrace,             //{
+    RBrace,             //}
+    SemiColon,          //;
+    Tilde,              //~
+    DoubleMinus,        //--
+    DoublePlus,         //++
+    Plus,               //+
+    Minus,              //-
+    Asterisk,           //*
+    Slash,              // /
+    Percent,            //%
+    ShiftLeft,          //<<
+    ShiftRight,         //>>
+    BitwiseXor,         //^
+    BitwiseOr,          //^|
+    BitwiseAnd,         //^&
+    Not,                //^!
+    And,                //^&&
+    Or,                 //^||
+    Equal,              //^==
+    NotEqual,           //^!=
+    LessThan,           //<
+    GreaterThan,        //>
+    LessThanOrEqual,    //<=
+    GreaterThanOrEqual, //>=
+    Assignment,         //=
+    QuestionMark,       //?
+    Colon,              //:
+    Do,                 //do\b
+    While,              //while\b
+    For,                //for\b
+    Break,              //break\b
+    Continue,           //continue\b
+    Comma,              //,
+    Signed,             //signed\b
+    Unsigned,           //unsigned\b
 }
 
 pub struct Tokenizer {
@@ -75,26 +75,22 @@ impl Default for Tokenizer {
 struct TokenMapper {
     regex: Regex,
     token: Box<dyn Fn(String) -> Token>,
-    back_one : bool,
+    back_one: bool,
 }
 
 impl TokenMapper {
-    fn new(regex: &str, token: Box<dyn Fn(String) -> Token>, back_one:bool) -> Self {
+    fn new(regex: &str, token: Box<dyn Fn(String) -> Token>, back_one: bool) -> Self {
         TokenMapper {
             regex: Regex::new(regex).unwrap(),
             token,
-            back_one
+            back_one,
         }
     }
 
     fn map<'a>(&self, input: &'a str) -> Option<(Token, &'a str)> {
         if let Some(mat) = self.regex.find(input) {
             let s = mat.as_str();
-            let s = if self.back_one {
-                &s[..s.len()-1]
-            } else {
-                s
-            };
+            let s = if self.back_one { &s[..s.len() - 1] } else { s };
             Some(((self.token)(s.to_string()), &input[s.len()..]))
         } else {
             None
@@ -105,7 +101,11 @@ impl TokenMapper {
 impl Tokenizer {
     pub fn new() -> Self {
         let token_mappers = vec![
-            TokenMapper::new(r"^/[*]([^*]|([*][^/]))*[*]/", Box::new(Token::Comment), false),
+            TokenMapper::new(
+                r"^/[*]([^*]|([*][^/]))*[*]/",
+                Box::new(Token::Comment),
+                false,
+            ),
             TokenMapper::new(r"^//(.*)", Box::new(Token::Comment), false),
             TokenMapper::new(r"^#(.*)", Box::new(Token::PreProcessorDirective), false),
             TokenMapper::new(r"^void\b", Box::new(|_| Token::Void), false),
@@ -129,11 +129,19 @@ impl Tokenizer {
             TokenMapper::new(r"^\{", Box::new(|_| Token::LBrace), false),
             TokenMapper::new(r"^\}", Box::new(|_| Token::RBrace), false),
             TokenMapper::new(r"^;", Box::new(|_| Token::SemiColon), false),
-            TokenMapper::new(r"^(([0-9]*\.[0-9]+|[0-9]+\.?)[Ee][+-]?[0-9]+[0-9]*\.[0-9]+|[0-9]+\.)[^\w.]", Box::new(Token::FloatConstant), true),
+            TokenMapper::new(
+                r"^(([0-9]*\.[0-9]+|[0-9]+\.?)[Ee][+-]?[0-9]+|[0-9]*\.[0-9]+|[0-9]+\.)[^\w.]",
+                Box::new(Token::FloatConstant),
+                true,
+            ),
             TokenMapper::new(r"^[a-zA-Z_]\w*\b", Box::new(Token::Identifier), false),
             TokenMapper::new(r"^([0-9]+)[^\w.]", Box::new(Token::Constant), true),
             TokenMapper::new(r"^([0-9]+[lL])[^\w.]", Box::new(Token::LongConstant), true),
-            TokenMapper::new(r"^([0-9]+[uU])[^\w.]", Box::new(Token::UnsignedIntConstant), true),
+            TokenMapper::new(
+                r"^([0-9]+[uU])[^\w.]",
+                Box::new(Token::UnsignedIntConstant),
+                true,
+            ),
             TokenMapper::new(
                 r"^([0-9]+([lL][uU]|[uU][lL]))[^\w.]",
                 Box::new(Token::UnsignedLongConstant),
@@ -234,7 +242,11 @@ mod tests {
         let tokens = tokenizer.tokenize("--42;").unwrap();
         assert_eq!(
             tokens,
-            vec![Token::DoubleMinus, Token::Constant("42".to_string()), Token::SemiColon]
+            vec![
+                Token::DoubleMinus,
+                Token::Constant("42".to_string()),
+                Token::SemiColon
+            ]
         );
     }
 
@@ -244,7 +256,11 @@ mod tests {
         let tokens = tokenizer.tokenize("~42;").unwrap();
         assert_eq!(
             tokens,
-            vec![Token::Tilde, Token::Constant("42".to_string()), Token::SemiColon]
+            vec![
+                Token::Tilde,
+                Token::Constant("42".to_string()),
+                Token::SemiColon
+            ]
         );
     }
 
@@ -252,7 +268,14 @@ mod tests {
     fn test_plus() {
         let tokenizer = Tokenizer::new();
         let tokens = tokenizer.tokenize("+42;").unwrap();
-        assert_eq!(tokens, vec![Token::Plus, Token::Constant("42".to_string()), Token::SemiColon]);
+        assert_eq!(
+            tokens,
+            vec![
+                Token::Plus,
+                Token::Constant("42".to_string()),
+                Token::SemiColon
+            ]
+        );
     }
 
     #[test]
@@ -261,7 +284,11 @@ mod tests {
         let tokens = tokenizer.tokenize("-42;").unwrap();
         assert_eq!(
             tokens,
-            vec![Token::Minus, Token::Constant("42".to_string()), Token::SemiColon]
+            vec![
+                Token::Minus,
+                Token::Constant("42".to_string()),
+                Token::SemiColon
+            ]
         );
     }
 
@@ -271,17 +298,24 @@ mod tests {
         let tokens = tokenizer.tokenize("*42;").unwrap();
         assert_eq!(
             tokens,
-            vec![Token::Asterisk, Token::Constant("42".to_string()), Token::SemiColon]
+            vec![
+                Token::Asterisk,
+                Token::Constant("42".to_string()),
+                Token::SemiColon
+            ]
         );
     }
 
     #[test]
     fn test_floating_point() {
         let tokenizer = Tokenizer::new();
-        let tokens = tokenizer.tokenize("42.012f;").unwrap();
+        let tokens = tokenizer.tokenize("42.012;").unwrap();
         assert_eq!(
             tokens,
-            vec![Token::Asterisk, Token::FloatConstant("42.012f".to_string()), Token::SemiColon]
+            vec![
+                Token::FloatConstant("42.012".to_string()),
+                Token::SemiColon
+            ]
         );
     }
 }
