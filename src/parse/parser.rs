@@ -708,7 +708,7 @@ mod tests {
     #[test]
     fn test_parse_expression() {
         let tokenizer = Tokenizer::new();
-        let tokens = tokenizer.tokenize("42").unwrap();
+        let tokens = tokenizer.tokenize("42;").unwrap();
         let (expression, rest) = parse_expression(&tokens, 0).unwrap();
         assert_eq!(expression, Expression::Constant(Constant::Int(42)));
         assert!(rest.is_empty());
@@ -717,7 +717,7 @@ mod tests {
     #[test]
     fn test_parse_expression_unary() {
         let tokenizer = Tokenizer::new();
-        let tokens = tokenizer.tokenize("-42").unwrap();
+        let tokens = tokenizer.tokenize("-42;").unwrap();
         let (expression, rest) = parse_expression(&tokens, 0).unwrap();
         assert_eq!(
             expression,
