@@ -439,6 +439,10 @@ fn parse_type(token: &[&Token]) -> Result<Type> {
         return Err(CompilerError::Parse("Conflicting type specifier".to_string()).into());
     }
 
+    if unique_tokens.contains(&Token::Unsigned) && unique_tokens.contains(&Token::Double) {
+        return Err(CompilerError::Parse("Conflicting type specifier".to_string()).into());
+    }
+
     if unique_tokens.contains(&Token::Double) {
         return Ok(Type::Double);
     }
