@@ -123,6 +123,8 @@ impl Tacky {
                     Ok(expr)
                 } else {
                     let dst = self.make_tacky_var(ty.clone());
+                    /*TODO include double casting */
+
                     if ty.size() == expr_ty.size() {
                         self.make_comment(format!("Copy - same size ({}) to ({})", expr_ty, ty));
                         self.instructions.push(Instruction::Copy {
