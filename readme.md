@@ -28,6 +28,7 @@ Test Suite here into folder _next to_ this repo.
 ## Big refactors
 
 * A lot of string cloning. If utilize Some form of RcString where we can share underlying `str` and slice into it.
+* Casting code is not really sustainable. Perhaps rethink!
 
 ## Example commands (WIP)
 

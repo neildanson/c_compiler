@@ -333,6 +333,16 @@ impl TypeChecker {
             crate::parse::Expression::BinOp(op, left, right) => {
                 let left = self.type_check_expression(left)?;
                 let right = self.type_check_expression(right)?;
+
+                match (op, left.get_type()) {
+                    (BinaryOperator::Mod, Type::Double) => {
+                        return Err(CompilerError::SemanticAnalysis(
+                            SemanticAnalysisError::InvalidLValue,
+                        ));
+                    }
+                    _ => {}
+                }
+
                 match op {
                     BinaryOperator::And | BinaryOperator::Or => Ok(Expression::BinOp(
                         op.clone(),
