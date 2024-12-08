@@ -10,7 +10,7 @@ pub enum StaticInit {
     LongInit(i64),
     UIntInit(u32),
     ULongInit(u64),
-    Double(f64),
+    DoubleInit(f64),
 }
 
 impl StaticInit {
@@ -20,7 +20,7 @@ impl StaticInit {
             StaticInit::LongInit(_) => Type::Long,
             StaticInit::UIntInit(_) => Type::UInt,
             StaticInit::ULongInit(_) => Type::ULong,
-            StaticInit::Double(_) => Type::Double,
+            StaticInit::DoubleInit(_) => Type::Double,
         }
     }
 
@@ -30,7 +30,7 @@ impl StaticInit {
             StaticInit::LongInit(val) => *val == 0,
             StaticInit::UIntInit(val) => *val == 0,
             StaticInit::ULongInit(val) => *val == 0,
-            StaticInit::Double(val) => *val == 0.0,
+            StaticInit::DoubleInit(val) => *val == 0.0,
         }
     }
 }
@@ -42,7 +42,7 @@ impl Display for StaticInit {
             StaticInit::LongInit(val) => write!(f, "{}", val),
             StaticInit::UIntInit(val) => write!(f, "{}", val),
             StaticInit::ULongInit(val) => write!(f, "{}", val),
-            StaticInit::Double(val) => write!(f, "{}", val),
+            StaticInit::DoubleInit(val) => write!(f, "{}", val),
         }
     }
 }
@@ -54,7 +54,7 @@ impl From<Constant> for StaticInit {
             Constant::Long(val) => StaticInit::LongInit(val),
             Constant::UnsignedInt(val) => StaticInit::UIntInit(val),
             Constant::UnsignedLong(val) => StaticInit::ULongInit(val),
-            Constant::Double(val) => StaticInit::Double(val),
+            Constant::Double(val) => StaticInit::DoubleInit(val),
             //_ => panic!("Invalid conversion from Constant to StaticInit"),
         }
     }
@@ -67,7 +67,7 @@ impl From<StaticInit> for Constant {
             StaticInit::LongInit(val) => Constant::Long(val),
             StaticInit::UIntInit(val) => Constant::UnsignedInt(val),
             StaticInit::ULongInit(val) => Constant::UnsignedLong(val),
-            StaticInit::Double(val) => Constant::Double(val),
+            StaticInit::DoubleInit(val) => Constant::Double(val),
         }
     }
 }
@@ -79,7 +79,7 @@ impl From<StaticInit> for Expression {
             StaticInit::LongInit(val) => Expression::Constant(Constant::Long(val)),
             StaticInit::UIntInit(val) => Expression::Constant(Constant::UnsignedInt(val)),
             StaticInit::ULongInit(val) => Expression::Constant(Constant::UnsignedLong(val)),
-            StaticInit::Double(val) => Expression::Constant(Constant::Double(val)),
+            StaticInit::DoubleInit(val) => Expression::Constant(Constant::Double(val)),
         }
     }
 }

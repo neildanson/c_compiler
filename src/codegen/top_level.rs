@@ -132,7 +132,7 @@ impl Display for StaticVariable {
                 StaticInit::LongInit(value) => writeln!(f, "\t.quad {}", value),
                 StaticInit::UIntInit(value) => writeln!(f, "\t.long {}", value),
                 StaticInit::ULongInit(value) => writeln!(f, "\t.quad {}", value),
-                StaticInit::Double(value) => writeln!(f, "\t.double {}", value), //TODO: Check if this is correct 
+                StaticInit::DoubleInit(value) => writeln!(f, "\t.double {}", value), //TODO: Check if this is correct 
             }
         }
     }
