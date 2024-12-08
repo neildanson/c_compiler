@@ -241,6 +241,8 @@ impl TypeChecker {
     fn get_common_type(ty1: Type, ty2: Type) -> Type {
         if ty1 == ty2 {
             ty1
+        } else if ty1 == Type::Double || ty2 == Type::Double {
+            Type::Double
         } else if ty1.size() == ty2.size() {
             if ty1.is_signed() {
                 return ty2;
@@ -362,6 +364,16 @@ impl TypeChecker {
                     Box::new(expression),
                     ty,
                 ))
+            }
+            crate::parse::Expression::Unary(UnaryOperator::Tilde, expression) => {
+                let expression = self.type_check_expression(expression)?;
+                let ty = expression.get_type();
+                if ty == Type::Double {
+                    return Err(CompilerError::SemanticAnalysis(
+                        SemanticAnalysisError::InvalidTildeOnDouble,
+                    ));
+                }
+                Ok(Expression::Unary(UnaryOperator::Tilde, Box::new(expression), ty))
             }
             crate::parse::Expression::Unary(op, expression) => {
                 let expression = self.type_check_expression(expression)?;

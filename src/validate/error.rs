@@ -27,6 +27,7 @@ pub enum SemanticAnalysisError {
     IncompatibleTypesInConditional,
     InvalidCastInAssignment,
     ConflictingTypeDefinition(String),
+    InvalidTildeOnDouble,
 }
 
 impl Display for SemanticAnalysisError {
@@ -94,6 +95,9 @@ impl Display for SemanticAnalysisError {
             }
             SemanticAnalysisError::ConflictingTypeDefinition(s) => {
                 write!(f, "Conflicting type definitions for {}", s)
+            },
+            SemanticAnalysisError::InvalidTildeOnDouble => {
+                write!(f, "Invalid ~ operator on double")
             }
         }
     }

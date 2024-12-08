@@ -84,7 +84,7 @@ pub enum ForInit<E> {
     InitExpression(Option<E>),
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Copy)]
 pub enum UnaryOperator {
     Negation,
     Tilde,
