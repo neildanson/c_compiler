@@ -4,7 +4,7 @@ cargo build --release
 
 
 #../writing-a-c-compiler-tests/test_compiler ./target/release/c_compiler --chapter 12
-../writing-a-c-compiler-tests/test_compiler ./target/release/c_compiler --chapter 13 --stage validate
+../writing-a-c-compiler-tests/test_compiler ./target/release/c_compiler --chapter 13 --stage tacky
 
 rm -rf temp
 mkdir temp

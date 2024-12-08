@@ -589,6 +589,12 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
                 let dst = dst.into();
                 Ok(vec![Instruction::MovZeroExtend { src, dst }])
             }
+            tacky::Instruction::DoubleToInt { src:_, dst:_ }  
+            | tacky::Instruction::DoubleToUInt { src:_, dst:_ }
+            | tacky::Instruction::IntToDouble { src:_, dst:_ }
+            | tacky::Instruction::UIntToDouble { src:_, dst:_ } => {
+                unimplemented!("DoubleToInt, DoubleToUInt, IntToDouble, UIntToDouble")
+            }
         }
     }
 }

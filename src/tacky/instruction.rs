@@ -50,4 +50,20 @@ pub enum Instruction {
         src: Value,
         dst: Value,
     },
+    DoubleToInt {
+        src: Value,
+        dst: Value,
+    },
+    DoubleToUInt {
+        src: Value,
+        dst: Value,
+    },
+    IntToDouble {
+        src: Value,
+        dst: Value,
+    },
+    UIntToDouble {
+        src: Value,
+        dst: Value,
+    },
 }
