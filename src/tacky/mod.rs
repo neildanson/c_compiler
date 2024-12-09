@@ -17,13 +17,11 @@ use crate::{
     ast::{
         BinaryOperator, BlockItem, Constant, Declaration, ForInit, FunctionDeclaration,
         StorageClass, Type, UnaryOperator, VariableDeclaration,
-    },
-    error::CompilerError,
-    validate::{
+    }, error::CompilerError, validate::{
         loop_labelling::Statement,
         type_checker::{self, Expression},
         InitialValue, StaticAttr, Symbol, ValidateResult,
-    },
+    }
 };
 use std::{collections::HashMap, fmt::Display};
 
@@ -85,6 +83,93 @@ impl Tacky {
         name
     }
 
+    fn emit_tacky_cast(&mut self, ty : &Type, expr : &Expression) -> Result<Value, CompilerError> {
+        let expr_ty = expr.get_type();
+        let expr = self.emit_tacky_expr(expr)?;
+        self.make_comment(format!("{}", expr));
+        if expr_ty == *ty {
+            self.make_comment(format!("No cast - same type ({}) to ({})", expr_ty, ty));
+            Ok(expr)
+        } else {
+            let dst = self.make_tacky_var(ty.clone());
+            if ty.is_double() && expr_ty.is_integer() {
+                if expr_ty.is_signed() {
+                    self.make_comment(format!(
+                        "Int to Double - cast to double ({}) to ({})",
+                        expr_ty, ty
+                    ));
+                    self.instructions.push(Instruction::IntToDouble {
+                        src: expr,
+                        dst: dst.clone(),
+                    });
+                } else {
+                    self.make_comment(format!(
+                        "Unsigned Int to Double - cast to double ({}) to ({})",
+                        expr_ty, ty
+                    ));
+                    self.instructions.push(Instruction::UIntToDouble { 
+                        src: expr,
+                        dst: dst.clone(),
+                    });
+                }
+            } else if ty.is_integer() && expr_ty.is_double() {
+                if ty.is_signed() {
+                    self.make_comment(format!(
+                        "Double to Int - cast to int ({}) to ({})",
+                        expr_ty, ty
+                    ));
+                    self.instructions.push(Instruction::DoubleToInt {
+                        src: expr,
+                        dst: dst.clone(),
+                    });
+                } else {
+                    self.make_comment(format!(
+                        "Double to Unsigned Int - cast to unsigned int ({}) to ({})",
+                        expr_ty, ty
+                    ));
+                    self.instructions.push(Instruction::DoubleToUInt {
+                        src: expr,
+                        dst: dst.clone(),
+                    });
+                }
+            } else if ty.size() == expr_ty.size() {
+                self.make_comment(format!("Copy - same size ({}) to ({})", expr_ty, ty));
+                self.instructions.push(Instruction::Copy {
+                    src: expr,
+                    dst: dst.clone(),
+                });
+            } else if ty.size() < expr_ty.size() {
+                self.make_comment(format!(
+                    "Truncate - cast to smaller ({}) to ({})",
+                    expr_ty, ty
+                ));
+                self.instructions.push(Instruction::Truncate {
+                    src: expr,
+                    dst: dst.clone(),
+                });
+            } else if expr_ty.is_signed() {
+                self.make_comment(format!(
+                    "Sign Extend - cast to larger ({}) to ({})",
+                    expr_ty, ty
+                ));
+                self.instructions.push(Instruction::SignExtend {
+                    src: expr,
+                    dst: dst.clone(),
+                });
+            } else {
+                self.make_comment(format!(
+                    "(Unsigned) Zero Extend - cast to  ({}) to ({})",
+                    expr_ty, ty
+                ));
+                self.instructions.push(Instruction::ZeroExtend {
+                    src: expr,
+                    dst: dst.clone(),
+                });
+            }
+            Ok(dst)
+        }
+    }
+
     fn emit_tacky_expr(&mut self, e: &Expression) -> Result<Value, CompilerError> {
         match e {
             Expression::BinOp(op, e1, e2, _) => self.emit_tacky_binop(op, e1, e2),
@@ -115,52 +200,7 @@ impl Tacky {
                 Ok(result)
             }
             Expression::Cast(ty, expr) => {
-                let expr_ty = expr.get_type();
-                let expr = self.emit_tacky_expr(expr)?;
-                self.make_comment(format!("{}", expr));
-                if expr_ty == *ty {
-                    self.make_comment(format!("No cast - same type ({}) to ({})", expr_ty, ty));
-                    Ok(expr)
-                } else {
-                    let dst = self.make_tacky_var(ty.clone());
-                    /*TODO include double casting */
-
-                    if ty.size() == expr_ty.size() {
-                        self.make_comment(format!("Copy - same size ({}) to ({})", expr_ty, ty));
-                        self.instructions.push(Instruction::Copy {
-                            src: expr,
-                            dst: dst.clone(),
-                        });
-                    } else if ty.size() < expr_ty.size() {
-                        self.make_comment(format!(
-                            "Truncate - cast to smaller ({}) to ({})",
-                            expr_ty, ty
-                        ));
-                        self.instructions.push(Instruction::Truncate {
-                            src: expr,
-                            dst: dst.clone(),
-                        });
-                    } else if expr_ty.is_signed() {
-                        self.make_comment(format!(
-                            "Sign Extend - cast to larger ({}) to ({})",
-                            expr_ty, ty
-                        ));
-                        self.instructions.push(Instruction::SignExtend {
-                            src: expr,
-                            dst: dst.clone(),
-                        });
-                    } else {
-                        self.make_comment(format!(
-                            "(Unsigned) Zero Extend - cast to  ({}) to ({})",
-                            expr_ty, ty
-                        ));
-                        self.instructions.push(Instruction::ZeroExtend {
-                            src: expr,
-                            dst: dst.clone(),
-                        });
-                    }
-                    Ok(dst)
-                }
+                self.emit_tacky_cast(ty, expr)
             }
             e => self.emit_tacky_factor(e),
         }

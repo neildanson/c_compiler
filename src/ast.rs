@@ -200,6 +200,21 @@ impl Type {
         }
     }
 
+    pub fn is_double(&self) -> bool {
+        matches!(self, Type::Double)
+    }
+
+    pub fn is_integer(&self) -> bool {
+        match self {
+            Type::Int => true,
+            Type::Long => true,
+            Type::UInt => true,
+            Type::ULong => true,
+            Type::Double => false,
+            Type::FunType(_, _) => false,
+        }
+    }
+
     pub fn size(&self) -> Option<usize> {
         match self {
             Type::Int => Some(4),
