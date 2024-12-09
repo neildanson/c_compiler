@@ -6,6 +6,7 @@ use crate::tacky;
 pub enum UnaryOp {
     Neg,
     Complement,
+    Shr,
 }
 
 impl Display for UnaryOp {
@@ -13,7 +14,7 @@ impl Display for UnaryOp {
         match self {
             UnaryOp::Neg => write!(f, "neg"),
             UnaryOp::Complement => write!(f, "not"),
-            //op => unimplemented!("UnaryOp Display not implemented for {:?}", op),
+            op => unimplemented!("UnaryOp Display not implemented for {:?}", op),
         }
     }
 }

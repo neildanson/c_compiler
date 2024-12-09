@@ -11,6 +11,8 @@ fn valid_stack_location(stack_pos: i32, ty: &AssemblyType) -> i32 {
                 stack_pos + 8 - (stack_pos % 8)
             }
         }
+        AssemblyType::Double => unimplemented!()
+
     }
 }
 

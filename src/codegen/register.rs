@@ -8,6 +8,7 @@ pub enum RegisterSize {
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum Reg {
+    //General Purpose
     AX,
     CX,
     DX,
@@ -18,6 +19,17 @@ pub enum Reg {
     R10,
     R11,
     SP,
+    //SSE
+    XMM0,
+    XMM1,
+    XMM2,
+    XMM3,
+    XMM4,
+    XMM5,
+    XMM6,
+    XMM7,
+    XMM14,
+    XMM15
 }
 
 impl Reg {
@@ -34,6 +46,7 @@ impl Reg {
                 Reg::R10 => "%r10b".to_string(),
                 Reg::R11 => "%r11b".to_string(),
                 Reg::SP => "%rsp".to_string(),
+                _ => panic!("Invalid register size")
             },
             Some(AssemblyType::LongWord) => match self {
                 Reg::AX => "%eax".to_string(),
@@ -46,6 +59,7 @@ impl Reg {
                 Reg::R10 => "%r10d".to_string(),
                 Reg::R11 => "%r11d".to_string(),
                 Reg::SP => "%rsp".to_string(),
+                _ => panic!("Invalid register size")
             },
             Some(AssemblyType::QuadWord) => match self {
                 Reg::AX => "%rax".to_string(),
@@ -58,7 +72,21 @@ impl Reg {
                 Reg::R10 => "%r10".to_string(),
                 Reg::R11 => "%r11".to_string(),
                 Reg::SP => "%rsp".to_string(),
+                _ => panic!("Invalid register size")
             },
+            Some(AssemblyType::Double) => match self {
+                Reg::XMM0 => "%xmm0".to_string(),
+                Reg::XMM1 => "%xmm1".to_string(),
+                Reg::XMM2 => "%xmm2".to_string(),
+                Reg::XMM3 => "%xmm3".to_string(),
+                Reg::XMM4 => "%xmm4".to_string(),
+                Reg::XMM5 => "%xmm5".to_string(),
+                Reg::XMM6 => "%xmm6".to_string(),
+                Reg::XMM7 => "%xmm7".to_string(),
+                Reg::XMM14 => "%xmm14".to_string(),
+                Reg::XMM15 => "%xmm15".to_string(),
+                _ => panic!("Invalid register size")
+            }
         }
     }
 }

@@ -13,6 +13,10 @@ pub enum BinaryOp {
     BitwiseAnd,
     BitwiseOr,
     BitwiseXor,
+    DivDouble, 
+    And,
+    Or,
+    Xor
 }
 
 impl Display for BinaryOp {
@@ -26,6 +30,10 @@ impl Display for BinaryOp {
             BinaryOp::BitwiseAnd => write!(f, "and"),
             BinaryOp::BitwiseOr => write!(f, "or"),
             BinaryOp::BitwiseXor => write!(f, "xor"),
+            BinaryOp::DivDouble => write!(f, "div"),
+            BinaryOp::And => write!(f, "and"),
+            BinaryOp::Or => write!(f, "or"),
+            BinaryOp::Xor => write!(f, "xor"),
         }
     }
 }

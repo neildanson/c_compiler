@@ -71,6 +71,7 @@ impl Program {
             match top_level {
                 TopLevel::Function(f) => f.fixup(&symtab),
                 TopLevel::StaticVariable(_) => {}
+                TopLevel::StaticConstant(_) => {}
             }
         }
     }

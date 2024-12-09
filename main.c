@@ -1,5 +1,6 @@
 int main(void) {
     /* "Unsigned double" is not a valid type specifier */
     double d = 10.0;
-    return (int)d;
+    int i = d;
+    return (double)(int)d;
 }

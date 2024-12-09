@@ -3,7 +3,7 @@ use std::{
     fmt::{Display, Formatter},
 };
 
-use crate::{ast::Type, error::CompilerError, tacky, validate::type_checker::StaticInit};
+use crate::{ast::Type, error::CompilerError, tacky::{self}, validate::type_checker::StaticInit};
 
 use super::*;
 
@@ -138,6 +138,14 @@ impl Display for StaticVariable {
     }
 }
 
+
+#[derive(Debug, PartialEq)]
+pub struct StaticConstant {
+    pub identifier: String,
+    pub init: StaticInit,
+    pub ty: Type,
+}
+
 impl TryFrom<tacky::StaticVariable> for StaticVariable {
     type Error = CompilerError;
     fn try_from(ast: tacky::StaticVariable) -> Result<Self, Self::Error> {
@@ -161,6 +169,7 @@ impl TryFrom<tacky::StaticVariable> for StaticVariable {
 pub enum TopLevel {
     Function(Function),
     StaticVariable(StaticVariable),
+    StaticConstant(StaticConstant),
 }
 
 impl Display for TopLevel {
@@ -168,6 +177,7 @@ impl Display for TopLevel {
         match self {
             TopLevel::Function(function) => write!(f, "{}", function),
             TopLevel::StaticVariable(static_variable) => write!(f, "{}", static_variable),
+            TopLevel::StaticConstant(static_constant) => write!(f, "{:?}", static_constant),//TODO: Implement this 
         }
     }
 }

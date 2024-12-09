@@ -11,6 +11,7 @@ use super::*;
 pub enum AssemblyType {
     LongWord, //32 bit
     QuadWord, //64 bit
+    Double, //64 bit
 }
 
 impl AssemblyType {
@@ -18,6 +19,7 @@ impl AssemblyType {
         match self {
             AssemblyType::LongWord => 4,
             AssemblyType::QuadWord => 8,
+            AssemblyType::Double => 8,
         }
     }
 }
@@ -29,7 +31,7 @@ impl From<&Type> for AssemblyType {
             Type::Long => AssemblyType::QuadWord,
             Type::UInt => AssemblyType::LongWord, 
             Type::ULong => AssemblyType::QuadWord,
-            Type::Double => AssemblyType::QuadWord, //TODO: Check if this is correct
+            Type::Double => AssemblyType::Double,
             _ => panic!("Unsupported assembly type for type {:?}", ty),
         }
     }
@@ -40,6 +42,7 @@ impl Display for AssemblyType {
         match self {
             AssemblyType::LongWord => write!(f, "l"),
             AssemblyType::QuadWord => write!(f, "q"),
+            AssemblyType::Double => write!(f, "sd"),//Check
         }
     }
 }
@@ -52,7 +55,7 @@ impl Value {
             Value::Constant(Constant::UnsignedInt(_)) => AssemblyType::LongWord, 
             Value::Constant(Constant::UnsignedLong(_)) => AssemblyType::QuadWord,
             Value::Var(_, ty) => ty.into(),
-            Value::Constant(Constant::Double(_)) => unimplemented!("Double")
+            Value::Constant(Constant::Double(_)) => AssemblyType::Double,
         }
     }
     pub fn parse_type(&self) -> Type {
@@ -112,6 +115,8 @@ pub enum Instruction {
     Push(Operand),
     Pop(Reg), //Defined for pop rdi, but will be introduced later in one of last chapters !
     Call(String),
+    Cvttsd2si(AssemblyType, Operand, Operand), //Double to Signed Int
+    Cvtsi2sd(AssemblyType, Operand, Operand), //Signed Int to Double
 }
 
 fn format_label(label: &str) -> String {
@@ -173,6 +178,9 @@ impl Display for Instruction {
             }
             Instruction::Cdq(AssemblyType::QuadWord) => {
                 write!(f, "\tcqo")
+            }
+            Instruction::Cdq(AssemblyType::Double) => {
+                panic!("Cdq not implemented for double")
             }
             Instruction::Binary {
                 op,
@@ -245,6 +253,24 @@ impl Display for Instruction {
                 dst: _dst,
             } => {
                 panic!("MovZeroExtend not implemented")
+            }
+            Instruction::Cvttsd2si(assembly_type, src, dst) => {
+                write!(
+                    f,
+                    "\tcvttsd2si{}, {}, {}",
+                    assembly_type,
+                    src.asm(*assembly_type),
+                    dst.asm(*assembly_type)
+                )
+            }
+            Instruction::Cvtsi2sd(assembly_type, src, dst) => {
+                write!(
+                    f,
+                    "\tcvtsi2sd{}, {}, {}",
+                    assembly_type,
+                    src.asm(*assembly_type),
+                    dst.asm(*assembly_type)
+                )
             }
         }
     }
