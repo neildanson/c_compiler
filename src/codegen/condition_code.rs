@@ -36,7 +36,6 @@ impl Display for ConditionCode {
 }
 
 impl ConditionCode {
-    //TODO : Add more condition codes for unsigned
     pub fn try_from(cc: tacky::BinaryOp, ty: Type) -> Result<Self, CompilerError> {
         match (cc, ty.is_signed()) {
             (tacky::BinaryOp::Equal, _) => Ok(ConditionCode::E),

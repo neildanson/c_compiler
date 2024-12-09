@@ -207,7 +207,7 @@ impl Display for Instruction {
             Instruction::SetCC(cc, dst) => {
                 let dst = match dst {
                     Operand::Register(register) => register.asm(None),
-                    d => d.asm(AssemblyType::LongWord), //TODO: Check if this is correct
+                    d => d.asm(AssemblyType::LongWord), 
                 };
 
                 write!(f, "\tset{} {}", cc, dst)
@@ -321,7 +321,7 @@ fn convert_function_call(
         });
         instructions.push(Instruction::Pop(Reg::DI));
     }
-    let assembly_type = dst.assembly_type(); //TODO: Check if this is correct
+    let assembly_type = dst.assembly_type(); 
     instructions.push(Instruction::Mov {
         assembly_type,
         src: Operand::Register(Reg::AX),
@@ -337,7 +337,6 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
         match instruction {
             tacky::Instruction::Comment(comment) => Ok(vec![Instruction::Comment(comment)]),
             tacky::Instruction::Return(value) => {
-                //This should use correct type
                 let assembly_type = value.assembly_type(); //TODO: This is incorrect
                 let src = value.into();
                 let dst = Operand::Register(Reg::AX);
@@ -393,7 +392,6 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
             } => {
                 let assembly_type = src1.assembly_type();
                 if src1.parse_type().is_signed() {
-                    //TODO: Check if this is correct
                     let src1 = src1.into();
                     let src2 = src2.into();
                     let dst = dst.into();
@@ -415,7 +413,6 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
                         },
                     ])
                 } else {
-                    //TODO: Check if this is correct
                     let src1 = src1.into();
                     let src2 = src2.into();
                     let dst = dst.into();
@@ -449,7 +446,7 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
                 dst,
             } => {
                 if src2.parse_type().is_signed() {
-                    let assembly_type = src1.assembly_type(); //TODO: Check if this is correct
+                    let assembly_type = src1.assembly_type(); 
                     let src1 = src1.into();
                     let src2 = src2.into();
                     let dst = dst.into();
@@ -471,7 +468,7 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
                         },
                     ])
                 } else {
-                    let assembly_type = src1.assembly_type(); //TODO: Check if this is correct
+                    let assembly_type = src1.assembly_type(); 
                     let src1 = src1.into();
                     let src2 = src2.into();
                     let dst = dst.into();
@@ -525,7 +522,7 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
                 src2,
                 dst,
             } => {
-                let assembly_type = src1.assembly_type(); //TODO: Check if this is correct
+                let assembly_type = src1.assembly_type();
                 let src1 = src1.into();
                 let src2 = src2.into();
                 let dst: Operand = dst.into();

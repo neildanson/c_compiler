@@ -120,9 +120,6 @@ Copilot is pretty good at explaining why asm code segfaults. Use it.
 
 [godbolt](https://godbolt.org/) is a super useful resource. Dont forget to turn off Intel asm syntax.
 
-
-# TODOs
-
 # Progress
 
 100% Implemented up to chapter 12 (excluding some extras)
