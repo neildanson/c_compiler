@@ -11,7 +11,7 @@ use super::*;
 pub enum AssemblyType {
     LongWord, //32 bit
     QuadWord, //64 bit
-    Double, //64 bit
+    Double,   //64 bit
 }
 
 impl AssemblyType {
@@ -29,7 +29,7 @@ impl From<&Type> for AssemblyType {
         match ty {
             Type::Int => AssemblyType::LongWord,
             Type::Long => AssemblyType::QuadWord,
-            Type::UInt => AssemblyType::LongWord, 
+            Type::UInt => AssemblyType::LongWord,
             Type::ULong => AssemblyType::QuadWord,
             Type::Double => AssemblyType::Double,
             _ => panic!("Unsupported assembly type for type {:?}", ty),
@@ -42,7 +42,7 @@ impl Display for AssemblyType {
         match self {
             AssemblyType::LongWord => write!(f, "l"),
             AssemblyType::QuadWord => write!(f, "q"),
-            AssemblyType::Double => write!(f, "sd"),//Check
+            AssemblyType::Double => write!(f, "sd"), //Check
         }
     }
 }
@@ -52,7 +52,7 @@ impl Value {
         match self {
             Value::Constant(Constant::Int(_)) => AssemblyType::LongWord,
             Value::Constant(Constant::Long(_)) => AssemblyType::QuadWord,
-            Value::Constant(Constant::UnsignedInt(_)) => AssemblyType::LongWord, 
+            Value::Constant(Constant::UnsignedInt(_)) => AssemblyType::LongWord,
             Value::Constant(Constant::UnsignedLong(_)) => AssemblyType::QuadWord,
             Value::Var(_, ty) => ty.into(),
             Value::Constant(Constant::Double(_)) => AssemblyType::Double,
@@ -116,7 +116,7 @@ pub enum Instruction {
     Pop(Reg), //Defined for pop rdi, but will be introduced later in one of last chapters !
     Call(String),
     Cvttsd2si(AssemblyType, Operand, Operand), //Double to Signed Int
-    Cvtsi2sd(AssemblyType, Operand, Operand), //Signed Int to Double
+    Cvtsi2sd(AssemblyType, Operand, Operand),  //Signed Int to Double
 }
 
 fn format_label(label: &str) -> String {
@@ -215,7 +215,7 @@ impl Display for Instruction {
             Instruction::SetCC(cc, dst) => {
                 let dst = match dst {
                     Operand::Register(register) => register.asm(None),
-                    d => d.asm(AssemblyType::LongWord), 
+                    d => d.asm(AssemblyType::LongWord),
                 };
 
                 write!(f, "\tset{} {}", cc, dst)
@@ -305,7 +305,7 @@ fn convert_function_call(
     }
 
     for (i, arg) in register_args.iter().enumerate() {
-        let assembly_arg = (*arg).clone().into();
+        let assembly_arg = (*arg).clone().try_into()?;
         instructions.push(Instruction::Mov {
             assembly_type: arg.assembly_type(),
             src: assembly_arg,
@@ -314,7 +314,7 @@ fn convert_function_call(
     }
 
     for arg in stack_args.iter().rev() {
-        let assembly_arg = (*arg).clone().into();
+        let assembly_arg = (*arg).clone().try_into()?;
         if arg.assembly_type() == AssemblyType::QuadWord {
             instructions.push(Instruction::Push(assembly_arg));
         } else {
@@ -347,277 +347,275 @@ fn convert_function_call(
         });
         instructions.push(Instruction::Pop(Reg::DI));
     }
-    let assembly_type = dst.assembly_type(); 
+    let assembly_type = dst.assembly_type();
     instructions.push(Instruction::Mov {
         assembly_type,
         src: Operand::Register(Reg::AX),
-        dst: dst.into(),
+        dst: dst.try_into()?,
     });
 
     Ok(instructions)
 }
 
-impl TryFrom<tacky::Instruction> for Vec<Instruction> {
-    type Error = CompilerError;
-    fn try_from(instruction: tacky::Instruction) -> Result<Self, Self::Error> {
-        match instruction {
-            tacky::Instruction::Comment(comment) => Ok(vec![Instruction::Comment(comment)]),
-            tacky::Instruction::Return(value) => {
-                let assembly_type = value.assembly_type(); //TODO: This is incorrect
-                let src = value.into();
-                let dst = Operand::Register(Reg::AX);
-                Ok(vec![
-                    Instruction::Mov {
-                        assembly_type,
-                        src,
-                        dst,
-                    },
-                    Instruction::Ret,
-                ])
-            }
-            tacky::Instruction::Unary {
-                op: tacky::UnaryOp::Not,
-                src,
-                dst,
-            } => {
-                let assembly_type = src.assembly_type();
-                let src = src.into();
-                let dst: Operand = dst.into();
-                Ok(vec![
-                    Instruction::Cmp(assembly_type, Operand::Immediate { imm: 0 }, src),
-                    Instruction::Mov {
-                        assembly_type,
-                        src: Operand::Immediate { imm: 0 },
-                        dst: dst.clone(),
-                    },
-                    Instruction::SetCC(ConditionCode::E, dst),
-                ])
-            }
-            tacky::Instruction::Unary { op, src, dst } => {
-                let assembly_type = dst.assembly_type();
-                let src = src.into();
-                let dst: Operand = dst.into();
-                Ok(vec![
-                    Instruction::Mov {
-                        assembly_type,
-                        src,
-                        dst: dst.clone(),
-                    },
-                    Instruction::Unary {
-                        assembly_type,
-                        op: op.into(),
-                        dst,
-                    },
-                ])
-            }
-            tacky::Instruction::Binary {
-                op: tacky::BinaryOp::Divide,
-                src1,
-                src2,
-                dst,
-            } => {
-                let assembly_type = src1.assembly_type();
-                if src1.parse_type().is_signed() {
-                    let src1 = src1.into();
-                    let src2 = src2.into();
-                    let dst = dst.into();
-                    Ok(vec![
-                        Instruction::Mov {
-                            assembly_type,
-                            src: src1,
-                            dst: Operand::Register(Reg::AX),
-                        },
-                        Instruction::Cdq(assembly_type),
-                        Instruction::Idiv {
-                            assembly_type,
-                            src: src2,
-                        },
-                        Instruction::Mov {
-                            assembly_type,
-                            src: Operand::Register(Reg::AX),
-                            dst,
-                        },
-                    ])
-                } else {
-                    let src1 = src1.into();
-                    let src2 = src2.into();
-                    let dst = dst.into();
-                    Ok(vec![
-                        Instruction::Mov {
-                            assembly_type,
-                            src: src1,
-                            dst: Operand::Register(Reg::AX),
-                        },
-                        Instruction::Mov {
-                            assembly_type,
-                            src: Operand::Immediate { imm: 0 },
-                            dst: Operand::Register(Reg::DX),
-                        },
-                        Instruction::Div {
-                            assembly_type,
-                            src: src2,
-                        },
-                        Instruction::Mov {
-                            assembly_type,
-                            src: Operand::Register(Reg::AX),
-                            dst,
-                        },
-                    ])
-                }
-            }
-            tacky::Instruction::Binary {
-                op: tacky::BinaryOp::Remainder,
-                src1,
-                src2,
-                dst,
-            } => {
-                if src2.parse_type().is_signed() {
-                    let assembly_type = src1.assembly_type(); 
-                    let src1 = src1.into();
-                    let src2 = src2.into();
-                    let dst = dst.into();
-                    Ok(vec![
-                        Instruction::Mov {
-                            assembly_type,
-                            src: src1,
-                            dst: Operand::Register(Reg::AX),
-                        },
-                        Instruction::Cdq(assembly_type),
-                        Instruction::Idiv {
-                            assembly_type,
-                            src: src2,
-                        },
-                        Instruction::Mov {
-                            assembly_type,
-                            src: Operand::Register(Reg::DX),
-                            dst,
-                        },
-                    ])
-                } else {
-                    let assembly_type = src1.assembly_type(); 
-                    let src1 = src1.into();
-                    let src2 = src2.into();
-                    let dst = dst.into();
-                    Ok(vec![
-                        Instruction::Mov {
-                            assembly_type,
-                            src: src1,
-                            dst: Operand::Register(Reg::AX),
-                        },
-                        Instruction::Mov {
-                            assembly_type,
-                            src: Operand::Immediate { imm: 0 },
-                            dst: Operand::Register(Reg::DX),
-                        },
-                        Instruction::Div {
-                            assembly_type,
-                            src: src2,
-                        },
-                        Instruction::Mov {
-                            assembly_type,
-                            src: Operand::Register(Reg::DX),
-                            dst,
-                        },
-                    ])
-                }
-            }
-            tacky::Instruction::Binary {
-                op,
-                src1,
-                src2,
-                dst,
-            } if let Ok(cc) = ConditionCode::try_from(op.clone(), src1.parse_type()) => {
-                let assembly_type = src1.assembly_type();
-                let src1 = src1.into();
-                let src2 = src2.into();
-                let dst: Operand = dst.into();
-                Ok(vec![
-                    Instruction::Cmp(assembly_type, src2, src1),
-                    Instruction::Mov {
-                        assembly_type,
-                        src: Operand::Immediate { imm: 0 },
-                        dst: dst.clone(),
-                    },
-                    Instruction::SetCC(cc, dst),
-                ])
-            }
-
-            tacky::Instruction::Binary {
-                op,
-                src1,
-                src2,
-                dst,
-            } => {
-                let assembly_type = src1.assembly_type();
-                let src1 = src1.into();
-                let src2 = src2.into();
-                let dst: Operand = dst.into();
-                let op = op.try_into()?;
+pub fn convert_tacky_instruction_to_codegen_instruction(
+    instruction: tacky::Instruction,
+    _static_constants: &mut Vec<StaticConstant>,
+) -> Result<Vec<Instruction>, CompilerError> {
+    match instruction {
+        tacky::Instruction::Comment(comment) => Ok(vec![Instruction::Comment(comment)]),
+        tacky::Instruction::Return(value) => {
+            let assembly_type = value.assembly_type(); //TODO: This is incorrect
+            let src = value.try_into()?; //Track StaticConst
+            let dst = Operand::Register(Reg::AX);
+            Ok(vec![
+                Instruction::Mov {
+                    assembly_type,
+                    src,
+                    dst,
+                },
+                Instruction::Ret,
+            ])
+        }
+        tacky::Instruction::Unary {
+            op: tacky::UnaryOp::Not,
+            src,
+            dst,
+        } => {
+            let assembly_type = src.assembly_type();
+            let src = src.try_into()?; //Track StaticConst
+            let dst: Operand = dst.try_into()?;
+            Ok(vec![
+                Instruction::Cmp(assembly_type, Operand::Immediate { imm: 0 }, src),
+                Instruction::Mov {
+                    assembly_type,
+                    src: Operand::Immediate { imm: 0 },
+                    dst: dst.clone(),
+                },
+                Instruction::SetCC(ConditionCode::E, dst),
+            ])
+        }
+        tacky::Instruction::Unary { op, src, dst } => {
+            let assembly_type = dst.assembly_type();
+            let src = src.try_into()?; //Track StaticConst
+            let dst: Operand = dst.try_into()?;
+            Ok(vec![
+                Instruction::Mov {
+                    assembly_type,
+                    src,
+                    dst: dst.clone(),
+                },
+                Instruction::Unary {
+                    assembly_type,
+                    op: op.into(),
+                    dst,
+                },
+            ])
+        }
+        tacky::Instruction::Binary {
+            op: tacky::BinaryOp::Divide,
+            src1,
+            src2,
+            dst,
+        } => {
+            let assembly_type = src1.assembly_type();
+            if src1.parse_type().is_signed() {
+                let src1 = src1.try_into()?; //Track StaticConst
+                let src2 = src2.try_into()?; //Track StaticConst
+                let dst = dst.try_into()?;
                 Ok(vec![
                     Instruction::Mov {
                         assembly_type,
                         src: src1,
-                        dst: dst.clone(),
+                        dst: Operand::Register(Reg::AX),
                     },
-                    Instruction::Binary {
-                        op,
+                    Instruction::Cdq(assembly_type),
+                    Instruction::Idiv {
                         assembly_type,
-                        src2,
+                        src: src2,
+                    },
+                    Instruction::Mov {
+                        assembly_type,
+                        src: Operand::Register(Reg::AX),
+                        dst,
+                    },
+                ])
+            } else {
+                let src1 = src1.try_into()?; //Track StaticConst
+                let src2 = src2.try_into()?; //Track StaticConst
+                let dst = dst.try_into()?;
+                Ok(vec![
+                    Instruction::Mov {
+                        assembly_type,
+                        src: src1,
+                        dst: Operand::Register(Reg::AX),
+                    },
+                    Instruction::Mov {
+                        assembly_type,
+                        src: Operand::Immediate { imm: 0 },
+                        dst: Operand::Register(Reg::DX),
+                    },
+                    Instruction::Div {
+                        assembly_type,
+                        src: src2,
+                    },
+                    Instruction::Mov {
+                        assembly_type,
+                        src: Operand::Register(Reg::AX),
                         dst,
                     },
                 ])
             }
-            tacky::Instruction::JumpIfZero { condition, target } => Ok(vec![
-                Instruction::Cmp(
-                    condition.assembly_type(),
-                    Operand::Immediate { imm: 0 },
-                    condition.into(),
-                ),
-                Instruction::JmpCC(ConditionCode::E, target),
-            ]),
-            tacky::Instruction::JumpIfNotZero { condition, target } => Ok(vec![
-                Instruction::Cmp(
-                    condition.assembly_type(),
-                    Operand::Immediate { imm: 0 },
-                    condition.into(),
-                ),
-                Instruction::JmpCC(ConditionCode::NE, target),
-            ]),
-            tacky::Instruction::Copy { src, dst } => Ok(vec![Instruction::Mov {
-                assembly_type: dst.assembly_type(),
-                src: src.into(),
-                dst: dst.into(),
-            }]),
-            tacky::Instruction::Label { name } => Ok(vec![Instruction::Label(name)]),
-            tacky::Instruction::Jump { target } => Ok(vec![Instruction::Jmp(target)]),
-            tacky::Instruction::FunCall { name, args, dst } => {
-                convert_function_call(name, args, dst)
+        }
+        tacky::Instruction::Binary {
+            op: tacky::BinaryOp::Remainder,
+            src1,
+            src2,
+            dst,
+        } => {
+            if src2.parse_type().is_signed() {
+                let assembly_type = src1.assembly_type();
+                let src1 = src1.try_into()?; //Track StaticConst
+                let src2 = src2.try_into()?; //Track StaticConst
+                let dst = dst.try_into()?;
+                Ok(vec![
+                    Instruction::Mov {
+                        assembly_type,
+                        src: src1,
+                        dst: Operand::Register(Reg::AX),
+                    },
+                    Instruction::Cdq(assembly_type),
+                    Instruction::Idiv {
+                        assembly_type,
+                        src: src2,
+                    },
+                    Instruction::Mov {
+                        assembly_type,
+                        src: Operand::Register(Reg::DX),
+                        dst,
+                    },
+                ])
+            } else {
+                let assembly_type = src1.assembly_type();
+                let src1 = src1.try_into()?; //Track StaticConst
+                let src2 = src2.try_into()?; //Track StaticConst
+                let dst = dst.try_into()?;
+                Ok(vec![
+                    Instruction::Mov {
+                        assembly_type,
+                        src: src1,
+                        dst: Operand::Register(Reg::AX),
+                    },
+                    Instruction::Mov {
+                        assembly_type,
+                        src: Operand::Immediate { imm: 0 },
+                        dst: Operand::Register(Reg::DX),
+                    },
+                    Instruction::Div {
+                        assembly_type,
+                        src: src2,
+                    },
+                    Instruction::Mov {
+                        assembly_type,
+                        src: Operand::Register(Reg::DX),
+                        dst,
+                    },
+                ])
             }
-            tacky::Instruction::SignExtend { src, dst } => {
-                let src = src.into();
-                let dst = dst.into();
-                Ok(vec![Instruction::Movsx { src, dst }])
-            }
-            tacky::Instruction::Truncate { src, dst } => {
-                let src = src.into();
-                let dst = dst.into();
-                Ok(vec![Instruction::Mov {
-                    assembly_type: AssemblyType::LongWord,
-                    src,
+        }
+        tacky::Instruction::Binary {
+            op,
+            src1,
+            src2,
+            dst,
+        } if let Ok(cc) = ConditionCode::try_from(op.clone(), src1.parse_type()) => {
+            let assembly_type = src1.assembly_type();
+            let src1 = src1.try_into()?; //Track StaticConst
+            let src2 = src2.try_into()?; //Track StaticConst
+            let dst: Operand = dst.try_into()?;
+            Ok(vec![
+                Instruction::Cmp(assembly_type, src2, src1),
+                Instruction::Mov {
+                    assembly_type,
+                    src: Operand::Immediate { imm: 0 },
+                    dst: dst.clone(),
+                },
+                Instruction::SetCC(cc, dst),
+            ])
+        }
+
+        tacky::Instruction::Binary {
+            op,
+            src1,
+            src2,
+            dst,
+        } => {
+            let assembly_type = src1.assembly_type();
+            let src1 = src1.try_into()?; //Track StaticConst
+            let src2 = src2.try_into()?; //Track StaticConst
+            let dst: Operand = dst.try_into()?;
+            let op = op.try_into()?;
+            Ok(vec![
+                Instruction::Mov {
+                    assembly_type,
+                    src: src1,
+                    dst: dst.clone(),
+                },
+                Instruction::Binary {
+                    op,
+                    assembly_type,
+                    src2,
                     dst,
-                }])
-            }
-            tacky::Instruction::ZeroExtend { src, dst } => {
-                let src = src.into();
-                let dst = dst.into();
-                Ok(vec![Instruction::MovZeroExtend { src, dst }])
-            }
-            tacky::Instruction::DoubleToInt { src:_, dst:_ }  
-            | tacky::Instruction::DoubleToUInt { src:_, dst:_ }
-            | tacky::Instruction::IntToDouble { src:_, dst:_ }
-            | tacky::Instruction::UIntToDouble { src:_, dst:_ } => {
-                unimplemented!("DoubleToInt, DoubleToUInt, IntToDouble, UIntToDouble")
-            }
+                },
+            ])
+        }
+        tacky::Instruction::JumpIfZero { condition, target } => Ok(vec![
+            Instruction::Cmp(
+                condition.assembly_type(),
+                Operand::Immediate { imm: 0 },
+                condition.try_into()?,
+            ),
+            Instruction::JmpCC(ConditionCode::E, target),
+        ]),
+        tacky::Instruction::JumpIfNotZero { condition, target } => Ok(vec![
+            Instruction::Cmp(
+                condition.assembly_type(),
+                Operand::Immediate { imm: 0 },
+                condition.try_into()?,
+            ),
+            Instruction::JmpCC(ConditionCode::NE, target),
+        ]),
+        tacky::Instruction::Copy { src, dst } => Ok(vec![Instruction::Mov {
+            assembly_type: dst.assembly_type(),
+            src: src.try_into()?, //Track StaticConst
+            dst: dst.try_into()?,
+        }]),
+        tacky::Instruction::Label { name } => Ok(vec![Instruction::Label(name)]),
+        tacky::Instruction::Jump { target } => Ok(vec![Instruction::Jmp(target)]),
+        tacky::Instruction::FunCall { name, args, dst } => convert_function_call(name, args, dst),
+        tacky::Instruction::SignExtend { src, dst } => {
+            let src = src.try_into()?; //Track StaticConst
+            let dst = dst.try_into()?;
+            Ok(vec![Instruction::Movsx { src, dst }])
+        }
+        tacky::Instruction::Truncate { src, dst } => {
+            let src = src.try_into()?; //Track StaticConst
+            let dst = dst.try_into()?;
+            Ok(vec![Instruction::Mov {
+                assembly_type: AssemblyType::LongWord,
+                src,
+                dst,
+            }])
+        }
+        tacky::Instruction::ZeroExtend { src, dst } => {
+            let src = src.try_into()?; //Track StaticConst
+            let dst = dst.try_into()?;
+            Ok(vec![Instruction::MovZeroExtend { src, dst }])
+        }
+        tacky::Instruction::DoubleToInt { src: _, dst: _ }
+        | tacky::Instruction::DoubleToUInt { src: _, dst: _ }
+        | tacky::Instruction::IntToDouble { src: _, dst: _ }
+        | tacky::Instruction::UIntToDouble { src: _, dst: _ } => {
+            unimplemented!("DoubleToInt, DoubleToUInt, IntToDouble, UIntToDouble")
         }
     }
 }

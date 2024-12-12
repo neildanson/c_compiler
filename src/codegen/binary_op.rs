@@ -13,10 +13,10 @@ pub enum BinaryOp {
     BitwiseAnd,
     BitwiseOr,
     BitwiseXor,
-    DivDouble, 
+    DivDouble,
     And,
     Or,
-    Xor
+    Xor,
 }
 
 impl Display for BinaryOp {

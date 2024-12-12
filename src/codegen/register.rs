@@ -29,7 +29,7 @@ pub enum Reg {
     XMM6,
     XMM7,
     XMM14,
-    XMM15
+    XMM15,
 }
 
 impl Reg {
@@ -46,7 +46,7 @@ impl Reg {
                 Reg::R10 => "%r10b".to_string(),
                 Reg::R11 => "%r11b".to_string(),
                 Reg::SP => "%rsp".to_string(),
-                _ => panic!("Invalid register size")
+                _ => panic!("Invalid register size"),
             },
             Some(AssemblyType::LongWord) => match self {
                 Reg::AX => "%eax".to_string(),
@@ -59,7 +59,7 @@ impl Reg {
                 Reg::R10 => "%r10d".to_string(),
                 Reg::R11 => "%r11d".to_string(),
                 Reg::SP => "%rsp".to_string(),
-                _ => panic!("Invalid register size")
+                _ => panic!("Invalid register size"),
             },
             Some(AssemblyType::QuadWord) => match self {
                 Reg::AX => "%rax".to_string(),
@@ -72,7 +72,7 @@ impl Reg {
                 Reg::R10 => "%r10".to_string(),
                 Reg::R11 => "%r11".to_string(),
                 Reg::SP => "%rsp".to_string(),
-                _ => panic!("Invalid register size")
+                _ => panic!("Invalid register size"),
             },
             Some(AssemblyType::Double) => match self {
                 Reg::XMM0 => "%xmm0".to_string(),
@@ -85,8 +85,8 @@ impl Reg {
                 Reg::XMM7 => "%xmm7".to_string(),
                 Reg::XMM14 => "%xmm14".to_string(),
                 Reg::XMM15 => "%xmm15".to_string(),
-                _ => panic!("Invalid register size")
-            }
+                _ => panic!("Invalid register size"),
+            },
         }
     }
 }

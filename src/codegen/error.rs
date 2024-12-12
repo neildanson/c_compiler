@@ -4,6 +4,7 @@ use std::fmt::Display;
 pub enum CodeGenError {
     InvalidConditionCode,
     InvalidBinaryOp,
+    InvalidDoubleConstant,
 }
 
 impl Display for CodeGenError {
@@ -11,6 +12,7 @@ impl Display for CodeGenError {
         match self {
             CodeGenError::InvalidConditionCode => write!(f, "Invalid Condition Code"),
             CodeGenError::InvalidBinaryOp => write!(f, "Invalid Binary Operation"),
+            CodeGenError::InvalidDoubleConstant => write!(f, "Invalid Double Constant"),
         }
     }
 }

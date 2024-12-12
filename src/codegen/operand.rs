@@ -1,6 +1,6 @@
-use crate::tacky;
+use crate::{ast::Constant, error::CompilerError, tacky};
 
-use super::{AssemblyType, Reg};
+use super::{error::CodeGenError, AssemblyType, Reg};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum Operand {
@@ -29,11 +29,15 @@ impl Operand {
     }
 }
 
-impl From<tacky::Value> for Operand {
-    fn from(value: tacky::Value) -> Self {
+impl TryFrom<tacky::Value> for Operand {
+    type Error = CompilerError;
+    fn try_from(value: tacky::Value) -> Result<Self, Self::Error> {
         match value {
-            tacky::Value::Constant(imm) => Operand::Immediate { imm: imm.as_i128() },
-            tacky::Value::Var(name, _) => Operand::Pseudo(name),
+            tacky::Value::Constant(Constant::Double(_)) => {
+                Err(CompilerError::CodeGen(CodeGenError::InvalidDoubleConstant))
+            }
+            tacky::Value::Constant(imm) => Ok(Operand::Immediate { imm: imm.as_i128() }),
+            tacky::Value::Var(name, _) => Ok(Operand::Pseudo(name)),
         }
     }
 }

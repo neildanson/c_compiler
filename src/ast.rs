@@ -162,7 +162,7 @@ pub enum Type {
     Long,
     UInt,
     ULong,
-    Double, 
+    Double,
     FunType(Vec<Type>, Box<Type>),
 }
 
@@ -232,7 +232,7 @@ impl Type {
             Type::Long => true,
             Type::UInt => false,
             Type::ULong => false,
-            Type::Double => panic!("Double type has no sign"), 
+            Type::Double => panic!("Double type has no sign"),
             Type::FunType(_, _) => panic!("Function type has no sign"),
         }
     }

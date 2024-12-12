@@ -3,7 +3,12 @@ use std::{
     fmt::{Display, Formatter},
 };
 
-use crate::{ast::Type, error::CompilerError, tacky::{self}, validate::type_checker::StaticInit};
+use crate::{
+    ast::Type,
+    error::CompilerError,
+    tacky::{self},
+    validate::type_checker::StaticInit,
+};
 
 use super::*;
 
@@ -50,9 +55,12 @@ impl TryFrom<tacky::Function> for Function {
                     },
                 );
             }
-
+            let mut static_constants = Vec::new();
             for statement in body_ast {
-                let mut instructions: Vec<_> = statement.try_into()?;
+                let mut instructions: Vec<_> = convert_tacky_instruction_to_codegen_instruction(
+                    statement,
+                    &mut static_constants,
+                )?;
                 body.append(&mut instructions);
             }
 
@@ -132,12 +140,11 @@ impl Display for StaticVariable {
                 StaticInit::LongInit(value) => writeln!(f, "\t.quad {}", value),
                 StaticInit::UIntInit(value) => writeln!(f, "\t.long {}", value),
                 StaticInit::ULongInit(value) => writeln!(f, "\t.quad {}", value),
-                StaticInit::DoubleInit(value) => writeln!(f, "\t.double {}", value), //TODO: Check if this is correct 
+                StaticInit::DoubleInit(value) => writeln!(f, "\t.double {}", value), //TODO: Check if this is correct
             }
         }
     }
 }
-
 
 #[derive(Debug, PartialEq)]
 pub struct StaticConstant {
@@ -177,7 +184,7 @@ impl Display for TopLevel {
         match self {
             TopLevel::Function(function) => write!(f, "{}", function),
             TopLevel::StaticVariable(static_variable) => write!(f, "{}", static_variable),
-            TopLevel::StaticConstant(static_constant) => write!(f, "{:?}", static_constant),//TODO: Implement this 
+            TopLevel::StaticConstant(static_constant) => write!(f, "{:?}", static_constant), //TODO: Implement this
         }
     }
 }

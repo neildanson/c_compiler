@@ -45,7 +45,9 @@ impl TypeChecker {
                     (StaticInit::ULongInit(val), Type::Long) => StaticInit::LongInit(val as i64),
                     (StaticInit::ULongInit(val), Type::UInt) => StaticInit::UIntInit(val as u32),
                     (StaticInit::ULongInit(val), Type::ULong) => StaticInit::ULongInit(val),
-                    (StaticInit::ULongInit(val), Type::Double) => StaticInit::DoubleInit(val as f64),
+                    (StaticInit::ULongInit(val), Type::Double) => {
+                        StaticInit::DoubleInit(val as f64)
+                    }
                     (StaticInit::DoubleInit(val), Type::Int) => StaticInit::IntInit(val as i32),
                     (StaticInit::DoubleInit(val), Type::Long) => StaticInit::LongInit(val as i64),
                     (StaticInit::DoubleInit(val), Type::UInt) => StaticInit::UIntInit(val as u32),
@@ -392,7 +394,11 @@ impl TypeChecker {
                         SemanticAnalysisError::InvalidTildeOnDouble,
                     ));
                 }
-                Ok(Expression::Unary(UnaryOperator::Tilde, Box::new(expression), ty))
+                Ok(Expression::Unary(
+                    UnaryOperator::Tilde,
+                    Box::new(expression),
+                    ty,
+                ))
             }
             crate::parse::Expression::Unary(op, expression) => {
                 let expression = self.type_check_expression(expression)?;

@@ -17,11 +17,13 @@ use crate::{
     ast::{
         BinaryOperator, BlockItem, Constant, Declaration, ForInit, FunctionDeclaration,
         StorageClass, Type, UnaryOperator, VariableDeclaration,
-    }, error::CompilerError, validate::{
+    },
+    error::CompilerError,
+    validate::{
         loop_labelling::Statement,
         type_checker::{self, Expression},
         InitialValue, StaticAttr, Symbol, ValidateResult,
-    }
+    },
 };
 use std::{collections::HashMap, fmt::Display};
 
@@ -83,7 +85,7 @@ impl Tacky {
         name
     }
 
-    fn emit_tacky_cast(&mut self, ty : &Type, expr : &Expression) -> Result<Value, CompilerError> {
+    fn emit_tacky_cast(&mut self, ty: &Type, expr: &Expression) -> Result<Value, CompilerError> {
         let expr_ty = expr.get_type();
         let expr = self.emit_tacky_expr(expr)?;
         self.make_comment(format!("{}", expr));
@@ -107,7 +109,7 @@ impl Tacky {
                         "Unsigned Int to Double - cast to double ({}) to ({})",
                         expr_ty, ty
                     ));
-                    self.instructions.push(Instruction::UIntToDouble { 
+                    self.instructions.push(Instruction::UIntToDouble {
                         src: expr,
                         dst: dst.clone(),
                     });
@@ -199,9 +201,7 @@ impl Tacky {
                 });
                 Ok(result)
             }
-            Expression::Cast(ty, expr) => {
-                self.emit_tacky_cast(ty, expr)
-            }
+            Expression::Cast(ty, expr) => self.emit_tacky_cast(ty, expr),
             e => self.emit_tacky_factor(e),
         }
     }
