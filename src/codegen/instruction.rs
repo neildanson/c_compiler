@@ -357,15 +357,33 @@ fn convert_function_call(
     Ok(instructions)
 }
 
+fn make_double_const(constant: &Constant, static_constants: &mut Vec<StaticConstant>) -> Operand {
+    let identifier = format!("LC{}", static_constants.len());
+    static_constants.push(StaticConstant {
+        identifier: identifier.clone(),
+        init: constant.clone().into(),
+        ty: Type::Double,
+    });
+    Operand::Data(identifier)
+}
+
+//Double check that we really need this in all places we call it. 
+fn value_to_operand(value: &Value, static_constants: &mut Vec<StaticConstant>) -> Operand {
+    value.try_into().unwrap_or_else(|_| match value {
+        Value::Constant(c) => make_double_const(c, static_constants),
+        _ => panic!("Value not supported"),
+    })
+}
+
 pub fn convert_tacky_instruction_to_codegen_instruction(
     instruction: tacky::Instruction,
-    _static_constants: &mut Vec<StaticConstant>,
+    static_constants: &mut Vec<StaticConstant>,
 ) -> Result<Vec<Instruction>, CompilerError> {
     match instruction {
         tacky::Instruction::Comment(comment) => Ok(vec![Instruction::Comment(comment)]),
         tacky::Instruction::Return(value) => {
             let assembly_type = value.assembly_type(); //TODO: This is incorrect
-            let src = value.try_into()?; //Track StaticConst
+            let src = value_to_operand(&value, static_constants);
             let dst = Operand::Register(Reg::AX);
             Ok(vec![
                 Instruction::Mov {
@@ -382,7 +400,7 @@ pub fn convert_tacky_instruction_to_codegen_instruction(
             dst,
         } => {
             let assembly_type = src.assembly_type();
-            let src = src.try_into()?; //Track StaticConst
+            let src = value_to_operand(&src, static_constants);
             let dst: Operand = dst.try_into()?;
             Ok(vec![
                 Instruction::Cmp(assembly_type, Operand::Immediate { imm: 0 }, src),
@@ -396,7 +414,7 @@ pub fn convert_tacky_instruction_to_codegen_instruction(
         }
         tacky::Instruction::Unary { op, src, dst } => {
             let assembly_type = dst.assembly_type();
-            let src = src.try_into()?; //Track StaticConst
+            let src = value_to_operand(&src, static_constants);
             let dst: Operand = dst.try_into()?;
             Ok(vec![
                 Instruction::Mov {
@@ -419,8 +437,8 @@ pub fn convert_tacky_instruction_to_codegen_instruction(
         } => {
             let assembly_type = src1.assembly_type();
             if src1.parse_type().is_signed() {
-                let src1 = src1.try_into()?; //Track StaticConst
-                let src2 = src2.try_into()?; //Track StaticConst
+                let src1 = value_to_operand(&src1, static_constants);
+                let src2 = value_to_operand(&src2, static_constants);
                 let dst = dst.try_into()?;
                 Ok(vec![
                     Instruction::Mov {
@@ -440,8 +458,8 @@ pub fn convert_tacky_instruction_to_codegen_instruction(
                     },
                 ])
             } else {
-                let src1 = src1.try_into()?; //Track StaticConst
-                let src2 = src2.try_into()?; //Track StaticConst
+                let src1 = value_to_operand(&src1, static_constants);
+                let src2 = value_to_operand(&src2, static_constants);
                 let dst = dst.try_into()?;
                 Ok(vec![
                     Instruction::Mov {
@@ -474,8 +492,8 @@ pub fn convert_tacky_instruction_to_codegen_instruction(
         } => {
             if src2.parse_type().is_signed() {
                 let assembly_type = src1.assembly_type();
-                let src1 = src1.try_into()?; //Track StaticConst
-                let src2 = src2.try_into()?; //Track StaticConst
+                let src1 = value_to_operand(&src1, static_constants);
+                let src2 = value_to_operand(&src2, static_constants);
                 let dst = dst.try_into()?;
                 Ok(vec![
                     Instruction::Mov {
@@ -496,8 +514,8 @@ pub fn convert_tacky_instruction_to_codegen_instruction(
                 ])
             } else {
                 let assembly_type = src1.assembly_type();
-                let src1 = src1.try_into()?; //Track StaticConst
-                let src2 = src2.try_into()?; //Track StaticConst
+                let src1 = value_to_operand(&src1, static_constants);
+                let src2 = value_to_operand(&src2, static_constants);
                 let dst = dst.try_into()?;
                 Ok(vec![
                     Instruction::Mov {
@@ -529,8 +547,8 @@ pub fn convert_tacky_instruction_to_codegen_instruction(
             dst,
         } if let Ok(cc) = ConditionCode::try_from(op.clone(), src1.parse_type()) => {
             let assembly_type = src1.assembly_type();
-            let src1 = src1.try_into()?; //Track StaticConst
-            let src2 = src2.try_into()?; //Track StaticConst
+            let src1 = value_to_operand(&src1, static_constants);
+            let src2 = value_to_operand(&src2, static_constants);
             let dst: Operand = dst.try_into()?;
             Ok(vec![
                 Instruction::Cmp(assembly_type, src2, src1),
@@ -550,8 +568,8 @@ pub fn convert_tacky_instruction_to_codegen_instruction(
             dst,
         } => {
             let assembly_type = src1.assembly_type();
-            let src1 = src1.try_into()?; //Track StaticConst
-            let src2 = src2.try_into()?; //Track StaticConst
+            let src1 = value_to_operand(&src1, static_constants);
+            let src2 = value_to_operand(&src2, static_constants);
             let dst: Operand = dst.try_into()?;
             let op = op.try_into()?;
             Ok(vec![
@@ -586,19 +604,19 @@ pub fn convert_tacky_instruction_to_codegen_instruction(
         ]),
         tacky::Instruction::Copy { src, dst } => Ok(vec![Instruction::Mov {
             assembly_type: dst.assembly_type(),
-            src: src.try_into()?, //Track StaticConst
+            src: value_to_operand(&src, static_constants),
             dst: dst.try_into()?,
         }]),
         tacky::Instruction::Label { name } => Ok(vec![Instruction::Label(name)]),
         tacky::Instruction::Jump { target } => Ok(vec![Instruction::Jmp(target)]),
         tacky::Instruction::FunCall { name, args, dst } => convert_function_call(name, args, dst),
         tacky::Instruction::SignExtend { src, dst } => {
-            let src = src.try_into()?; //Track StaticConst
+            let src = src.try_into()?;
             let dst = dst.try_into()?;
             Ok(vec![Instruction::Movsx { src, dst }])
         }
         tacky::Instruction::Truncate { src, dst } => {
-            let src = src.try_into()?; //Track StaticConst
+            let src = src.try_into()?;
             let dst = dst.try_into()?;
             Ok(vec![Instruction::Mov {
                 assembly_type: AssemblyType::LongWord,
@@ -607,7 +625,7 @@ pub fn convert_tacky_instruction_to_codegen_instruction(
             }])
         }
         tacky::Instruction::ZeroExtend { src, dst } => {
-            let src = src.try_into()?; //Track StaticConst
+            let src = src.try_into()?;
             let dst = dst.try_into()?;
             Ok(vec![Instruction::MovZeroExtend { src, dst }])
         }

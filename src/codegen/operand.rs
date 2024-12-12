@@ -42,6 +42,20 @@ impl TryFrom<tacky::Value> for Operand {
     }
 }
 
+//TODO Unify above
+impl TryFrom<&tacky::Value> for Operand {
+    type Error = CompilerError;
+    fn try_from(value: &tacky::Value) -> Result<Self, Self::Error> {
+        match value {
+            tacky::Value::Constant(Constant::Double(_)) => {
+                Err(CompilerError::CodeGen(CodeGenError::InvalidDoubleConstant))
+            }
+            tacky::Value::Constant(imm) => Ok(Operand::Immediate { imm: imm.as_i128() }),
+            tacky::Value::Var(name, _) => Ok(Operand::Pseudo(name.clone())),
+        }
+    }
+}
+
 const ARG_REGISTERS: [Reg; 6] = [Reg::DI, Reg::SI, Reg::DX, Reg::CX, Reg::R8, Reg::R9];
 
 impl Operand {
