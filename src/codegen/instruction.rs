@@ -358,7 +358,7 @@ fn convert_function_call(
 }
 
 fn make_double_const(constant: &Constant, static_constants: &mut Vec<StaticConstant>) -> Operand {
-    let identifier = format!(".LC{}", static_constants.len());
+    let identifier = format!(".LC{}", static_constants.len()); //TODO - get method name to ensure unique
     static_constants.push(StaticConstant {
         identifier: identifier.clone(),
         init: constant.clone().into(),

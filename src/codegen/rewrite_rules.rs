@@ -264,6 +264,29 @@ pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
                 new_body.push(instruction.clone());
             }
             Instruction::Mov {
+                assembly_type: AssemblyType::Double,
+                src,
+                dst,
+            } => {
+                let assembly_type = AssemblyType::Double;
+                if let Operand::Stack(_) | Operand::Data(_) = src {
+                    if let Operand::Stack(_) | Operand::Data(_) = dst {
+                        new_body.push(Instruction::Mov {
+                            assembly_type,
+                            src,
+                            dst: Operand::Register(Reg::XMM0),
+                        });
+                        new_body.push(Instruction::Mov {
+                            assembly_type,
+                            src: Operand::Register(Reg::XMM0),
+                            dst,
+                        });
+                        continue;
+                    }
+                }
+                new_body.push(instruction.clone());
+            }
+            Instruction::Mov {
                 assembly_type: AssemblyType::QuadWord,
                 src,
                 dst,
