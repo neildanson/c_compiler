@@ -1,4 +1,4 @@
-use super::{AssemblyType, Function, StaticVariable, TopLevel};
+use super::{convert_function_to_top_level, AssemblyType, Function, StaticVariable, TopLevel};
 use crate::{
     error::CompilerError,
     tacky::{self},
@@ -33,11 +33,13 @@ impl TryFrom<tacky::Program> for Program {
         for tl in ast.top_level {
             match tl {
                 tacky::TopLevel::Function(f) => {
-                    top_level.push(TopLevel::Function(Function::try_from(f)?));
+                    let mut new_levels = convert_function_to_top_level(f)?;
+                    top_level.append(&mut new_levels);
                 }
                 tacky::TopLevel::StaticVariable(s) => {
                     top_level.push(TopLevel::StaticVariable(StaticVariable::try_from(s)?));
                 }
+
             }
         }
 

@@ -39,9 +39,8 @@ impl Display for Function {
     }
 }
 
-impl TryFrom<tacky::Function> for Function {
-    type Error = CompilerError;
-    fn try_from(ast: tacky::Function) -> Result<Self, Self::Error> {
+pub fn convert_function_to_top_level(ast: tacky::Function) -> Result<Vec<TopLevel> , CompilerError> {
+    let mut top_level = vec![];
         if let Some(body_ast) = ast.body {
             let mut body = Vec::new();
 
@@ -64,20 +63,26 @@ impl TryFrom<tacky::Function> for Function {
                 body.append(&mut instructions);
             }
 
-            Ok(Function {
+            for static_constant in static_constants {            
+                top_level.push(TopLevel::StaticConstant(static_constant));
+            }
+
+            top_level.push(TopLevel::Function(Function {
                 name: ast.name,
                 global: ast.global,
                 body: Some(body),
-            })
+            }));
+            Ok(top_level)
         } else {
-            Ok(Function {
+            top_level.push(TopLevel::Function(Function {
                 name: ast.name,
                 global: ast.global,
                 body: None,
-            })
+            }));
+            Ok(top_level)
         }
     }
-}
+
 
 impl Function {
     pub fn fixup(&mut self, symbol_table: &HashMap<String, self::AsmSymTabEntry>) {
@@ -146,13 +151,6 @@ impl Display for StaticVariable {
     }
 }
 
-#[derive(Debug, PartialEq)]
-pub struct StaticConstant {
-    pub identifier: String,
-    pub init: StaticInit,
-    pub ty: Type,
-}
-
 impl TryFrom<tacky::StaticVariable> for StaticVariable {
     type Error = CompilerError;
     fn try_from(ast: tacky::StaticVariable) -> Result<Self, Self::Error> {
@@ -172,6 +170,30 @@ impl TryFrom<tacky::StaticVariable> for StaticVariable {
     }
 }
 
+
+#[derive(Debug, PartialEq)]
+pub struct StaticConstant {
+    pub identifier: String,
+    pub init: StaticInit,
+    pub ty: Type,
+}
+
+impl Display for StaticConstant {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+        writeln!(f, "\t.section .rodata")?;
+        writeln!(f, "\t.balign 8")?;
+        writeln!(f, "{}:", self.identifier)?;
+        match self.init {
+            StaticInit::IntInit(value) => writeln!(f, "\t.long {}", value),
+            StaticInit::LongInit(value) => writeln!(f, "\t.quad {}", value),
+            StaticInit::UIntInit(value) => writeln!(f, "\t.long {}", value),
+            StaticInit::ULongInit(value) => writeln!(f, "\t.quad {}", value),
+            StaticInit::DoubleInit(value) => writeln!(f, "\t.double {}", value), //TODO: Check if this is correct
+        }
+        
+    }
+}
+
 #[derive(Debug, PartialEq)]
 pub enum TopLevel {
     Function(Function),
@@ -184,7 +206,7 @@ impl Display for TopLevel {
         match self {
             TopLevel::Function(function) => write!(f, "{}", function),
             TopLevel::StaticVariable(static_variable) => write!(f, "{}", static_variable),
-            TopLevel::StaticConstant(static_constant) => write!(f, "{:?}", static_constant), //TODO: Implement this
+            TopLevel::StaticConstant(static_constant) => write!(f, "{}", static_constant),
         }
     }
 }
