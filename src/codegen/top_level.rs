@@ -39,50 +39,47 @@ impl Display for Function {
     }
 }
 
-pub fn convert_function_to_top_level(ast: tacky::Function) -> Result<Vec<TopLevel> , CompilerError> {
+pub fn convert_function_to_top_level(ast: tacky::Function) -> Result<Vec<TopLevel>, CompilerError> {
     let mut top_level = vec![];
-        if let Some(body_ast) = ast.body {
-            let mut body = Vec::new();
+    if let Some(body_ast) = ast.body {
+        let mut body = Vec::new();
 
-            for (i, (ty, parameter)) in ast.params.into_iter().enumerate().rev() {
-                body.insert(
-                    0,
-                    Instruction::Mov {
-                        assembly_type: (&ty).into(),
-                        src: Operand::arg(i),
-                        dst: Operand::Pseudo(parameter),
-                    },
-                );
-            }
-            let mut static_constants = Vec::new();
-            for statement in body_ast {
-                let mut instructions: Vec<_> = convert_tacky_instruction_to_codegen_instruction(
-                    statement,
-                    &mut static_constants,
-                )?;
-                body.append(&mut instructions);
-            }
-
-            for static_constant in static_constants {            
-                top_level.push(TopLevel::StaticConstant(static_constant));
-            }
-
-            top_level.push(TopLevel::Function(Function {
-                name: ast.name,
-                global: ast.global,
-                body: Some(body),
-            }));
-            Ok(top_level)
-        } else {
-            top_level.push(TopLevel::Function(Function {
-                name: ast.name,
-                global: ast.global,
-                body: None,
-            }));
-            Ok(top_level)
+        for (i, (ty, parameter)) in ast.params.into_iter().enumerate().rev() {
+            body.insert(
+                0,
+                Instruction::Mov {
+                    assembly_type: (&ty).into(),
+                    src: Operand::arg(i),
+                    dst: Operand::Pseudo(parameter),
+                },
+            );
         }
-    }
+        let mut static_constants = Vec::new();
+        for statement in body_ast {
+            let mut instructions: Vec<_> =
+                convert_tacky_instruction_to_codegen_instruction(statement, &mut static_constants)?;
+            body.append(&mut instructions);
+        }
 
+        for static_constant in static_constants {
+            top_level.push(TopLevel::StaticConstant(static_constant));
+        }
+
+        top_level.push(TopLevel::Function(Function {
+            name: ast.name,
+            global: ast.global,
+            body: Some(body),
+        }));
+        Ok(top_level)
+    } else {
+        top_level.push(TopLevel::Function(Function {
+            name: ast.name,
+            global: ast.global,
+            body: None,
+        }));
+        Ok(top_level)
+    }
+}
 
 impl Function {
     pub fn fixup(&mut self, symbol_table: &HashMap<String, self::AsmSymTabEntry>) {
@@ -170,7 +167,6 @@ impl TryFrom<tacky::StaticVariable> for StaticVariable {
     }
 }
 
-
 #[derive(Debug, PartialEq)]
 pub struct StaticConstant {
     pub identifier: String,
@@ -190,7 +186,6 @@ impl Display for StaticConstant {
             StaticInit::ULongInit(value) => writeln!(f, "\t.quad {}", value),
             StaticInit::DoubleInit(value) => writeln!(f, "\t.double {}", value), //TODO: Check if this is correct
         }
-        
     }
 }
 

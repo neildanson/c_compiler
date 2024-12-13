@@ -258,7 +258,7 @@ impl Display for Instruction {
                 write!(
                     f,
                     "\tcvttsd2si{} {}, {}",
-                    assembly_type, 
+                    assembly_type,
                     src.asm(AssemblyType::Double),
                     dst.asm(*assembly_type)
                 )
@@ -367,7 +367,7 @@ fn make_double_const(constant: &Constant, static_constants: &mut Vec<StaticConst
     Operand::Data(identifier)
 }
 
-//Double check that we really need this in all places we call it. 
+//Double check that we really need this in all places we call it.
 fn value_to_operand(value: &Value, static_constants: &mut Vec<StaticConstant>) -> Operand {
     value.try_into().unwrap_or_else(|_| match value {
         Value::Constant(c) => make_double_const(c, static_constants),
@@ -602,14 +602,11 @@ pub fn convert_tacky_instruction_to_codegen_instruction(
             ),
             Instruction::JmpCC(ConditionCode::NE, target),
         ]),
-        tacky::Instruction::Copy { src, dst } => {
-
-
-            Ok(vec![Instruction::Mov {
+        tacky::Instruction::Copy { src, dst } => Ok(vec![Instruction::Mov {
             assembly_type: dst.assembly_type(),
             src: value_to_operand(&src, static_constants),
             dst: dst.try_into()?,
-        }])},
+        }]),
         tacky::Instruction::Label { name } => Ok(vec![Instruction::Label(name)]),
         tacky::Instruction::Jump { target } => Ok(vec![Instruction::Jmp(target)]),
         tacky::Instruction::FunCall { name, args, dst } => convert_function_call(name, args, dst),
@@ -635,9 +632,13 @@ pub fn convert_tacky_instruction_to_codegen_instruction(
         tacky::Instruction::DoubleToInt { src, dst } => {
             let src = src.try_into()?;
             let dst = dst.try_into()?;
-            Ok(vec![Instruction::Cvttsd2si(AssemblyType::LongWord,src, dst)])
+            Ok(vec![Instruction::Cvttsd2si(
+                AssemblyType::LongWord,
+                src,
+                dst,
+            )])
         }
-        | tacky::Instruction::DoubleToUInt { src: _, dst: _ }
+        tacky::Instruction::DoubleToUInt { src: _, dst: _ }
         | tacky::Instruction::IntToDouble { src: _, dst: _ }
         | tacky::Instruction::UIntToDouble { src: _, dst: _ } => {
             unimplemented!("DoubleToInt, DoubleToUInt, IntToDouble, UIntToDouble")
