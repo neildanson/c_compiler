@@ -126,8 +126,13 @@ Copilot is pretty good at explaining why asm code segfaults. Use it.
 
 Chapter 13 notes
 
-* Lexer not started
-* Parser not started
-* Validate not started
-* Tacky not started
-* Codegen in not started
+* Lexer Done
+* Parser Done
+* Validate Done
+* Tacky Done
+* Codegen In Progress
+
+
+Implement
+	movsd .LC0(%rip), %xmm0
+	movsd %xmm0, -8(%rbp)
