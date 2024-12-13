@@ -257,16 +257,16 @@ impl Display for Instruction {
             Instruction::Cvttsd2si(assembly_type, src, dst) => {
                 write!(
                     f,
-                    "\tcvttsd2si{}, {}, {}",
-                    assembly_type,
-                    src.asm(*assembly_type),
+                    "\tcvttsd2si{} {}, {}",
+                    assembly_type, 
+                    src.asm(AssemblyType::Double),
                     dst.asm(*assembly_type)
                 )
             }
             Instruction::Cvtsi2sd(assembly_type, src, dst) => {
                 write!(
                     f,
-                    "\tcvtsi2sd{}, {}, {}",
+                    "\tcvtsi2sd{} {}, {}",
                     assembly_type,
                     src.asm(*assembly_type),
                     dst.asm(*assembly_type)
@@ -632,7 +632,11 @@ pub fn convert_tacky_instruction_to_codegen_instruction(
             let dst = dst.try_into()?;
             Ok(vec![Instruction::MovZeroExtend { src, dst }])
         }
-        tacky::Instruction::DoubleToInt { src: _, dst: _ }
+        tacky::Instruction::DoubleToInt { src, dst } => {
+            let src = src.try_into()?;
+            let dst = dst.try_into()?;
+            Ok(vec![Instruction::Cvttsd2si(AssemblyType::LongWord,src, dst)])
+        }
         | tacky::Instruction::DoubleToUInt { src: _, dst: _ }
         | tacky::Instruction::IntToDouble { src: _, dst: _ }
         | tacky::Instruction::UIntToDouble { src: _, dst: _ } => {

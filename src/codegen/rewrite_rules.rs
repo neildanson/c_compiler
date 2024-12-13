@@ -216,6 +216,23 @@ pub(crate) fn rewrite_pseudo_with_stack(
                     },
                 });
             }
+            Instruction::Cvttsd2si(assembly_type, src, dst) => {
+                new_body.push(Instruction::Cvttsd2si(
+                    assembly_type,
+                    match src {
+                        Operand::Pseudo(name) => {
+                            fixup_pseudo(name, &mut stack, false, static_variables)
+                        }
+                        _ => src,
+                    },
+                    match dst {
+                        Operand::Pseudo(name) => {
+                            fixup_pseudo(name, &mut stack, false, static_variables)
+                        }
+                        _ => dst,
+                    },
+                ));
+            }
             any_other => new_body.push(any_other),
         }
     }
@@ -582,6 +599,27 @@ pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
                     });
                     continue;
                 }
+            }
+            Instruction::Cvttsd2si(assembly_type, src, dst) => {
+                //Dst cannot be a stack location
+                if let Operand::Stack(_) | Operand::Data(_) = src {
+                    if let Operand::Stack(_) | Operand::Data(_) = dst {
+                        new_body.push(Instruction::Mov {
+                            assembly_type: AssemblyType::Double,
+                            src,
+                            dst: Operand::Register(Reg::XMM0),
+                        });
+                        new_body.push(Instruction::Cvttsd2si(assembly_type, Operand::Register(Reg::XMM0), Operand::Register(Reg::R10)));
+                        new_body.push(Instruction::Mov {
+                            assembly_type,
+                            src: Operand::Register(Reg::R10),
+                            dst,
+                        });
+                        continue;
+                    }
+                    continue;
+                }
+                new_body.push(instruction.clone());
             }
             _ => new_body.push(instruction.clone()),
         }
