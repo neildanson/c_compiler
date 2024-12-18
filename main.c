@@ -1,5 +1,9 @@
+/* Test that we follow the calling convention for a double return type */
+double d(void) {
+    return 1234.e75;
+}
+
 int main(void) {
-    /* "Unsigned double" is not a valid type specifier */
-    double d = 10.1;
-    return (int)d;
+    double retval = d();
+    return retval == 1234.e75;
 }

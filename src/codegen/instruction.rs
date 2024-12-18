@@ -383,16 +383,32 @@ pub fn convert_tacky_instruction_to_codegen_instruction(
         tacky::Instruction::Comment(comment) => Ok(vec![Instruction::Comment(comment)]),
         tacky::Instruction::Return(value) => {
             let assembly_type = value.assembly_type(); //TODO: This is incorrect
-            let src = value.try_into()?;
-            let dst = Operand::Register(Reg::AX);
-            Ok(vec![
-                Instruction::Mov {
-                    assembly_type,
-                    src,
-                    dst,
-                },
-                Instruction::Ret,
-            ])
+            match assembly_type {
+                AssemblyType::LongWord | AssemblyType::QuadWord  => {
+                    let src = value.try_into()?;
+                    let dst = Operand::Register(Reg::AX);
+                    Ok(vec![
+                        Instruction::Mov {
+                            assembly_type,
+                            src,
+                            dst,
+                        },
+                        Instruction::Ret,
+                    ])
+                }
+                AssemblyType::Double => {
+                    let src = value_to_operand(&value, static_constants);
+                    let dst = Operand::Register(Reg::XMM0);
+                    Ok(vec![
+                        Instruction::Mov {
+                            assembly_type,
+                            src,
+                            dst,
+                        },
+                        Instruction::Ret,
+                    ])
+                }
+            }
         }
         tacky::Instruction::Unary {
             op: tacky::UnaryOp::Not,
@@ -414,7 +430,7 @@ pub fn convert_tacky_instruction_to_codegen_instruction(
         }
         tacky::Instruction::Unary { op, src, dst } => {
             let assembly_type = dst.assembly_type();
-            let src = src.try_into()?;
+            let src = value_to_operand(&src, static_constants);
             let dst: Operand = dst.try_into()?;
             Ok(vec![
                 Instruction::Mov {
@@ -436,53 +452,59 @@ pub fn convert_tacky_instruction_to_codegen_instruction(
             dst,
         } => {
             let assembly_type = src1.assembly_type();
-            if src1.parse_type().is_signed() {
-                let src1 = src1.try_into()?;
-                let src2 = src2.try_into()?;
-                let dst = dst.try_into()?;
-                Ok(vec![
-                    Instruction::Mov {
-                        assembly_type,
-                        src: src1,
-                        dst: Operand::Register(Reg::AX),
-                    },
-                    Instruction::Cdq(assembly_type),
-                    Instruction::Idiv {
-                        assembly_type,
-                        src: src2,
-                    },
-                    Instruction::Mov {
-                        assembly_type,
-                        src: Operand::Register(Reg::AX),
-                        dst,
-                    },
-                ])
-            } else {
-                let src1 = src1.try_into()?;
-                let src2 = src2.try_into()?;
-                let dst = dst.try_into()?;
-                Ok(vec![
-                    Instruction::Mov {
-                        assembly_type,
-                        src: src1,
-                        dst: Operand::Register(Reg::AX),
-                    },
-                    Instruction::Mov {
-                        assembly_type,
-                        src: Operand::Immediate { imm: 0 },
-                        dst: Operand::Register(Reg::DX),
-                    },
-                    Instruction::Div {
-                        assembly_type,
-                        src: src2,
-                    },
-                    Instruction::Mov {
-                        assembly_type,
-                        src: Operand::Register(Reg::AX),
-                        dst,
-                    },
-                ])
-            }
+            let parse_type = src1.parse_type();
+            match parse_type {
+                Type::Double => panic!("Double division not implemented"),
+                _ => {
+                    if src1.parse_type().is_signed() {
+                        let src1 = src1.try_into()?;
+                        let src2 = src2.try_into()?;
+                        let dst = dst.try_into()?;
+                        Ok(vec![
+                            Instruction::Mov {
+                                assembly_type,
+                                src: src1,
+                                dst: Operand::Register(Reg::AX),
+                            },
+                            Instruction::Cdq(assembly_type),
+                            Instruction::Idiv {
+                                assembly_type,
+                                src: src2,
+                            },
+                            Instruction::Mov {
+                                assembly_type,
+                                src: Operand::Register(Reg::AX),
+                                dst,
+                            },
+                        ])
+                    } else {
+                        let src1 = src1.try_into()?;
+                        let src2 = src2.try_into()?;
+                        let dst = dst.try_into()?;
+                        Ok(vec![
+                            Instruction::Mov {
+                                assembly_type,
+                                src: src1,
+                                dst: Operand::Register(Reg::AX),
+                            },
+                            Instruction::Mov {
+                                assembly_type,
+                                src: Operand::Immediate { imm: 0 },
+                                dst: Operand::Register(Reg::DX),
+                            },
+                            Instruction::Div {
+                                assembly_type,
+                                src: src2,
+                            },
+                            Instruction::Mov {
+                                assembly_type,
+                                src: Operand::Register(Reg::AX),
+                                dst,
+                            },
+                        ])
+                    }
+                }
+            }        
         }
         tacky::Instruction::Binary {
             op: tacky::BinaryOp::Remainder,
@@ -547,8 +569,8 @@ pub fn convert_tacky_instruction_to_codegen_instruction(
             dst,
         } if let Ok(cc) = ConditionCode::try_from(op.clone(), src1.parse_type()) => {
             let assembly_type = src1.assembly_type();
-            let src1 = src1.try_into()?;
-            let src2 = src2.try_into()?;
+            let src1 = value_to_operand(&src1, static_constants);
+            let src2 = value_to_operand(&src2, static_constants);
             let dst: Operand = dst.try_into()?;
             Ok(vec![
                 Instruction::Cmp(assembly_type, src2, src1),
@@ -568,8 +590,8 @@ pub fn convert_tacky_instruction_to_codegen_instruction(
             dst,
         } => {
             let assembly_type = src1.assembly_type();
-            let src1 = src1.try_into()?;
-            let src2 = src2.try_into()?;
+            let src1 = value_to_operand(&src1, static_constants);
+            let src2 = value_to_operand(&src2, static_constants);
             let dst: Operand = dst.try_into()?;
             let op = op.try_into()?;
             Ok(vec![
