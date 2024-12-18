@@ -447,7 +447,7 @@ pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
 
                 new_body.push(Instruction::Cmp(assembly_type, lhs, rhs));
             }
-            Instruction::Cmp(assembly_type, lhs, rhs) => {
+            Instruction::Cmp(assembly_type, lhs, rhs) if assembly_type == AssemblyType::LongWord || assembly_type == AssemblyType::QuadWord => {
                 if let Operand::Stack(_) | Operand::Data(_) = lhs {
                     if let Operand::Stack(_) | Operand::Data(_) = rhs {
                         new_body.push(Instruction::Mov {
@@ -473,6 +473,38 @@ pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
                         assembly_type,
                         lhs,
                         Operand::Register(Reg::R10),
+                    ));
+                    continue;
+                }
+                new_body.push(instruction.clone());
+            }
+            Instruction::Cmp(AssemblyType::Double, lhs, rhs) => {
+                let assembly_type = AssemblyType::Double;
+                if let Operand::Stack(_) | Operand::Data(_) = lhs {
+                    if let Operand::Stack(_) | Operand::Data(_) = rhs {
+                        new_body.push(Instruction::Mov {
+                            assembly_type,
+                            src: lhs,
+                            dst: Operand::Register(Reg::XMM0),
+                        });
+                        new_body.push(Instruction::Cmp(
+                            assembly_type,
+                            Operand::Register(Reg::XMM0),
+                            rhs,
+                        ));
+                        continue;
+                    }
+                }
+                if let Operand::Immediate { imm: _ } = rhs {
+                    new_body.push(Instruction::Mov {
+                        assembly_type,
+                        src: rhs,
+                        dst: Operand::Register(Reg::XMM0),
+                    });
+                    new_body.push(Instruction::Cmp(
+                        assembly_type,
+                        lhs,
+                        Operand::Register(Reg::XMM0),
                     ));
                     continue;
                 }
