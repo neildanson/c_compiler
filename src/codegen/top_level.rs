@@ -57,7 +57,7 @@ pub fn convert_function_to_top_level(ast: tacky::Function) -> Result<Vec<TopLeve
         let mut static_constants = Vec::new();
         for statement in body_ast {
             let mut instructions: Vec<_> =
-                convert_tacky_instruction_to_codegen_instruction(statement, &mut static_constants)?;
+                convert_tacky_instruction_to_codegen_instruction(&ast.name, statement, &mut static_constants)?;
             body.append(&mut instructions);
         }
 

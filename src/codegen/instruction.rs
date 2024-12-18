@@ -370,8 +370,8 @@ fn convert_function_call(
     Ok(instructions)
 }
 
-fn make_double_const(constant: &Constant, static_constants: &mut Vec<StaticConstant>) -> Operand {
-    let identifier = format!(".LC{}", static_constants.len()); //TODO - get method name to ensure unique
+fn make_double_const(function_name : &str, constant: &Constant, static_constants: &mut Vec<StaticConstant>) -> Operand {
+    let identifier = format!(".{}_LC{}",function_name, static_constants.len());
     static_constants.push(StaticConstant {
         identifier: identifier.clone(),
         init: constant.clone().into(),
@@ -381,14 +381,15 @@ fn make_double_const(constant: &Constant, static_constants: &mut Vec<StaticConst
 }
 
 //Double check that we really need this in all places we call it.
-fn value_to_operand(value: &Value, static_constants: &mut Vec<StaticConstant>) -> Operand {
+fn value_to_operand(function_name : &str, value: &Value, static_constants: &mut Vec<StaticConstant>) -> Operand {
     value.try_into().unwrap_or_else(|_| match value {
-        Value::Constant(c) => make_double_const(c, static_constants),
+        Value::Constant(c) => make_double_const(function_name, c, static_constants),
         _ => panic!("Value not supported"),
     })
 }
 
 pub fn convert_tacky_instruction_to_codegen_instruction(
+    function_name : &str,
     instruction: tacky::Instruction,
     static_constants: &mut Vec<StaticConstant>,
 ) -> Result<Vec<Instruction>, CompilerError> {
@@ -410,7 +411,7 @@ pub fn convert_tacky_instruction_to_codegen_instruction(
                     ])
                 }
                 AssemblyType::Double => {
-                    let src = value_to_operand(&value, static_constants);
+                    let src = value_to_operand(function_name, &value, static_constants);
                     let dst = Operand::Register(Reg::XMM0);
                     Ok(vec![
                         Instruction::Mov {
@@ -443,7 +444,7 @@ pub fn convert_tacky_instruction_to_codegen_instruction(
         }
         tacky::Instruction::Unary { op, src, dst } => {
             let assembly_type = dst.assembly_type();
-            let src = value_to_operand(&src, static_constants);
+            let src = value_to_operand(function_name, &src, static_constants);
             let dst: Operand = dst.try_into()?;
             Ok(vec![
                 Instruction::Mov {
@@ -582,8 +583,8 @@ pub fn convert_tacky_instruction_to_codegen_instruction(
             dst,
         } if let Ok(cc) = ConditionCode::try_from(op.clone(), src1.parse_type()) => {
             let assembly_type = src1.assembly_type();
-            let src1 = value_to_operand(&src1, static_constants);
-            let src2 = value_to_operand(&src2, static_constants);
+            let src1 = value_to_operand(function_name, &src1, static_constants);
+            let src2 = value_to_operand(function_name, &src2, static_constants);
             let dst: Operand = dst.try_into()?;
             Ok(vec![
                 Instruction::Cmp(assembly_type, src2, src1),
@@ -603,8 +604,8 @@ pub fn convert_tacky_instruction_to_codegen_instruction(
             dst,
         } => {
             let assembly_type = src1.assembly_type();
-            let src1 = value_to_operand(&src1, static_constants);
-            let src2 = value_to_operand(&src2, static_constants);
+            let src1 = value_to_operand(function_name, &src1, static_constants);
+            let src2 = value_to_operand(function_name, &src2, static_constants);
             let dst: Operand = dst.try_into()?;
             let op = op.try_into()?;
             Ok(vec![
@@ -639,7 +640,7 @@ pub fn convert_tacky_instruction_to_codegen_instruction(
         ]),
         tacky::Instruction::Copy { src, dst } => Ok(vec![Instruction::Mov {
             assembly_type: dst.assembly_type(),
-            src: value_to_operand(&src, static_constants),
+            src: value_to_operand(function_name, &src, static_constants),
             dst: dst.try_into()?,
         }]),
         tacky::Instruction::Label { name } => Ok(vec![Instruction::Label(name)]),
