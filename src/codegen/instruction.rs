@@ -348,12 +348,25 @@ fn convert_function_call(
         instructions.push(Instruction::Pop(Reg::DI));
     }
     let assembly_type = dst.assembly_type();
-    instructions.push(Instruction::Mov {
-        assembly_type,
-        src: Operand::Register(Reg::AX),
-        dst: dst.try_into()?,
-    });
 
+    match assembly_type {
+        AssemblyType::LongWord | AssemblyType::QuadWord => {
+            let dst = dst.try_into()?;
+            instructions.push(Instruction::Mov {
+                assembly_type,
+                src: Operand::Register(Reg::AX),
+                dst,
+            });
+        }
+        AssemblyType::Double => {
+            let dst = Operand::Register(Reg::XMM0);
+            instructions.push(Instruction::Mov {
+                assembly_type,
+                src: Operand::Register(Reg::XMM0),
+                dst,
+            });
+        }
+    }
     Ok(instructions)
 }
 
