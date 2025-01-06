@@ -197,6 +197,15 @@ impl Display for Instruction {
                     dst.asm(*assembly_type)
                 )
             }
+            Instruction::Cmp(AssemblyType::Double, src1, src2) => {
+                write!(
+                    f,
+                    "\tcomi{} {}, {}",
+                    AssemblyType::Double,
+                    src1.asm(AssemblyType::Double),
+                    src2.asm(AssemblyType::Double)
+                )
+            }
             Instruction::Cmp(assembly_type, src1, src2) => {
                 write!(
                     f,
@@ -589,7 +598,7 @@ pub fn convert_tacky_instruction_to_codegen_instruction(
             Ok(vec![
                 Instruction::Cmp(assembly_type, src2, src1),
                 Instruction::Mov {
-                    assembly_type,
+                    assembly_type : AssemblyType::LongWord, 
                     src: Operand::Immediate { imm: 0 },
                     dst: dst.clone(),
                 },
@@ -610,7 +619,7 @@ pub fn convert_tacky_instruction_to_codegen_instruction(
             let op = op.try_into()?;
             Ok(vec![
                 Instruction::Mov {
-                    assembly_type,
+                    assembly_type, //Check
                     src: src1,
                     dst: dst.clone(),
                 },

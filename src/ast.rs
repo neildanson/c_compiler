@@ -232,7 +232,7 @@ impl Type {
             Type::Long => true,
             Type::UInt => false,
             Type::ULong => false,
-            Type::Double => true,
+            Type::Double => false, //TODO: Check if this is correct
             Type::FunType(_, _) => panic!("Function type has no sign"),
         }
     }
