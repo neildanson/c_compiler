@@ -160,15 +160,14 @@ impl IdentifierResolution {
         &mut self,
         decl: VariableDeclaration<Expression>,
     ) -> Result<VariableDeclaration<Expression>, CompilerError> {
-        if let Some(entry) = self.identifier_map.get(&decl.name) {
-            if entry.from_current_scope
+        if let Some(entry) = self.identifier_map.get(&decl.name)
+            && entry.from_current_scope
                 && !(entry.has_external_linkage && decl.storage_class == Some(StorageClass::Extern))
             {
                 return Err(CompilerError::SemanticAnalysis(
                     SemanticAnalysisError::VariableAlreadyDeclared(decl.name),
                 ));
             }
-        }
 
         if decl.storage_class == Some(StorageClass::Extern) {
             self.identifier_map.insert(
@@ -218,15 +217,14 @@ impl IdentifierResolution {
         decl: FunctionDeclaration<Statement<Expression>, Expression>,
         nested: bool,
     ) -> Result<FunctionDeclaration<Statement<Expression>, Expression>, CompilerError> {
-        if let Some(entry) = self.identifier_map.get(&decl.name) {
-            if entry.from_current_scope && !entry.has_external_linkage {
+        if let Some(entry) = self.identifier_map.get(&decl.name)
+            && entry.from_current_scope && !entry.has_external_linkage {
                 {
                     return Err(CompilerError::SemanticAnalysis(
                         SemanticAnalysisError::FunctionAlreadyDeclared(decl.name),
                     ));
                 }
             }
-        }
 
         let unique_name = decl.name.clone();
         let map_entry = MapEntry::new(unique_name.clone(), true, true);

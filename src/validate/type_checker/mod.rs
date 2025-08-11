@@ -243,14 +243,14 @@ impl TypeChecker {
             ty1
         } else if ty1.size() == ty2.size() {
             if ty1.is_signed() {
-                return ty2;
+                ty2
             } else {
-                return ty1;
+                ty1
             }
         } else if ty1.size().unwrap_or(0) > ty2.size().unwrap_or(0) {
-            return ty1;
+            ty1
         } else {
-            return ty2;
+            ty2
         }
     }
 

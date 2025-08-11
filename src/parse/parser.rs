@@ -680,11 +680,10 @@ pub fn parse_program(tokens: &[Token]) -> Result<Program<Statement<Expression>, 
         }
     }
 
-    if let Some(err) = error {
-        if !tokens.is_empty() {
+    if let Some(err) = error
+        && !tokens.is_empty() {
             return Err(err);
         }
-    }
     Ok(Program { declarations })
 }
 
