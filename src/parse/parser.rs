@@ -92,7 +92,7 @@ fn parse_nth_parameter(tokens: &[Token]) -> Result<(Identifier, Type, &[Token])>
     }
 }
 
-fn parse_parameter_list(tokens: &[Token]) -> Result<ParameterListResult> {
+fn parse_parameter_list(tokens: &[Token]) -> Result<ParameterListResult<'_>> {
     let (parameters, rest) = match tokens {
         [Token::Void, rest @ ..] => (Vec::new(), rest),
         rest => {
@@ -539,7 +539,7 @@ fn parse_variable_declaration(
     Ok((declaration, rest))
 }
 
-fn parse_declaration(tokens: &[Token]) -> Result<DeclarationResult> {
+fn parse_declaration(tokens: &[Token]) -> Result<DeclarationResult<'_>> {
     let declaration = parse_variable_declaration(tokens);
     if let Ok((declaration, rest)) = declaration {
         return Ok((Declaration::Variable(declaration), rest));
@@ -563,7 +563,7 @@ fn parse_declaration(tokens: &[Token]) -> Result<DeclarationResult> {
     }
 }
 
-fn parse_block_item(tokens: &[Token]) -> Result<BlockItemResult> {
+fn parse_block_item(tokens: &[Token]) -> Result<BlockItemResult<'_>> {
     let declaration = parse_declaration(tokens);
     if let Ok((declaration, rest)) = declaration {
         return Ok((BlockItem::Declaration(declaration), rest));
@@ -609,7 +609,7 @@ fn parse_unsigned_constant(constant: &str) -> Result<Constant> {
     }
 }
 
-fn parse_function_body(tokens: &[Token]) -> Result<FunctionBodyResult> {
+fn parse_function_body(tokens: &[Token]) -> Result<FunctionBodyResult<'_>> {
     let mut statements = Vec::new();
     let rest = tokens;
     let mut error = None;
@@ -635,7 +635,7 @@ fn parse_function_body(tokens: &[Token]) -> Result<FunctionBodyResult> {
     }
 }
 
-fn parse_function_declaration(tokens: &[Token]) -> Result<FunctionDeclarationResult> {
+fn parse_function_declaration(tokens: &[Token]) -> Result<FunctionDeclarationResult<'_>> {
     let (fun_type, storage_class, rest) = parse_type_and_storage(tokens, true)?;
     let (function, rest) = match rest {
         [Token::Identifier(name), Token::LParen, rest @ ..] => {
