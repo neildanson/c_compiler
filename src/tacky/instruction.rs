@@ -50,4 +50,28 @@ pub enum Instruction {
         src: Value,
         dst: Value,
     },
+    IntToFloat {
+        src: Value,
+        dst: Value,
+    },
+    IntToDouble {
+        src: Value,
+        dst: Value,
+    },
+    FloatToInt {
+        src: Value,
+        dst: Value,
+    },
+    DoubleToInt {
+        src: Value,
+        dst: Value,
+    },
+    FloatToDouble {
+        src: Value,
+        dst: Value,
+    },
+    DoubleToFloat {
+        src: Value,
+        dst: Value,
+    },
 }

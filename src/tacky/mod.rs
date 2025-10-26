@@ -123,39 +123,95 @@ impl Tacky {
                     Ok(expr)
                 } else {
                     let dst = self.make_tacky_var(ty.clone());
-                    if ty.size() == expr_ty.size() {
-                        self.make_comment(format!("Copy - same size ({}) to ({})", expr_ty, ty));
-                        self.instructions.push(Instruction::Copy {
-                            src: expr,
-                            dst: dst.clone(),
-                        });
-                    } else if ty.size() < expr_ty.size() {
-                        self.make_comment(format!(
-                            "Truncate - cast to smaller ({}) to ({})",
-                            expr_ty, ty
-                        ));
-                        self.instructions.push(Instruction::Truncate {
-                            src: expr,
-                            dst: dst.clone(),
-                        });
-                    } else if expr_ty.is_signed() {
-                        self.make_comment(format!(
-                            "Sign Extend - cast to larger ({}) to ({})",
-                            expr_ty, ty
-                        ));
-                        self.instructions.push(Instruction::SignExtend {
-                            src: expr,
-                            dst: dst.clone(),
-                        });
-                    } else {
-                        self.make_comment(format!(
-                            "(Unsigned) Zero Extend - cast to  ({}) to ({})",
-                            expr_ty, ty
-                        ));
-                        self.instructions.push(Instruction::ZeroExtend {
-                            src: expr,
-                            dst: dst.clone(),
-                        });
+                    
+                    // Handle conversions between floating point and integer types
+                    use crate::ast::Type::*;
+                    match (&expr_ty, ty) {
+                        // Int/Long/UInt/ULong to Float
+                        (Int | Long | UInt | ULong, Float) => {
+                            self.make_comment(format!("Convert {} to float", expr_ty));
+                            self.instructions.push(Instruction::IntToFloat {
+                                src: expr,
+                                dst: dst.clone(),
+                            });
+                        }
+                        // Int/Long/UInt/ULong to Double
+                        (Int | Long | UInt | ULong, Double) => {
+                            self.make_comment(format!("Convert {} to double", expr_ty));
+                            self.instructions.push(Instruction::IntToDouble {
+                                src: expr,
+                                dst: dst.clone(),
+                            });
+                        }
+                        // Float to Int/Long/UInt/ULong
+                        (Float, Int | Long | UInt | ULong) => {
+                            self.make_comment(format!("Convert float to {}", ty));
+                            self.instructions.push(Instruction::FloatToInt {
+                                src: expr,
+                                dst: dst.clone(),
+                            });
+                        }
+                        // Double to Int/Long/UInt/ULong
+                        (Double, Int | Long | UInt | ULong) => {
+                            self.make_comment(format!("Convert double to {}", ty));
+                            self.instructions.push(Instruction::DoubleToInt {
+                                src: expr,
+                                dst: dst.clone(),
+                            });
+                        }
+                        // Float to Double
+                        (Float, Double) => {
+                            self.make_comment(format!("Convert float to double"));
+                            self.instructions.push(Instruction::FloatToDouble {
+                                src: expr,
+                                dst: dst.clone(),
+                            });
+                        }
+                        // Double to Float
+                        (Double, Float) => {
+                            self.make_comment(format!("Convert double to float"));
+                            self.instructions.push(Instruction::DoubleToFloat {
+                                src: expr,
+                                dst: dst.clone(),
+                            });
+                        }
+                        // Integer type conversions (existing logic)
+                        _ => {
+                            if ty.size() == expr_ty.size() {
+                                self.make_comment(format!("Copy - same size ({}) to ({})", expr_ty, ty));
+                                self.instructions.push(Instruction::Copy {
+                                    src: expr,
+                                    dst: dst.clone(),
+                                });
+                            } else if ty.size() < expr_ty.size() {
+                                self.make_comment(format!(
+                                    "Truncate - cast to smaller ({}) to ({})",
+                                    expr_ty, ty
+                                ));
+                                self.instructions.push(Instruction::Truncate {
+                                    src: expr,
+                                    dst: dst.clone(),
+                                });
+                            } else if expr_ty.is_signed() {
+                                self.make_comment(format!(
+                                    "Sign Extend - cast to larger ({}) to ({})",
+                                    expr_ty, ty
+                                ));
+                                self.instructions.push(Instruction::SignExtend {
+                                    src: expr,
+                                    dst: dst.clone(),
+                                });
+                            } else {
+                                self.make_comment(format!(
+                                    "(Unsigned) Zero Extend - cast to  ({}) to ({})",
+                                    expr_ty, ty
+                                ));
+                                self.instructions.push(Instruction::ZeroExtend {
+                                    src: expr,
+                                    dst: dst.clone(),
+                                });
+                            }
+                        }
                     }
                     Ok(dst)
                 }

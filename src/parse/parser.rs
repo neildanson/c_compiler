@@ -95,6 +95,7 @@ fn parse_nth_parameter(tokens: &[Token]) -> Result<(Identifier, Type, &[Token])>
 fn parse_parameter_list(tokens: &[Token]) -> Result<ParameterListResult<'_>> {
     let (parameters, rest) = match tokens {
         [Token::Void, rest @ ..] => (Vec::new(), rest),
+        [Token::RParen, ..] => (Vec::new(), tokens), // Handle empty parameter list
         rest => {
             let (ty, _, rest) = parse_type_and_storage(rest, false)?;
             match rest {

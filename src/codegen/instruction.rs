@@ -115,6 +115,91 @@ pub enum Instruction {
     Push(Operand),
     Pop(Reg), //Defined for pop rdi, but will be introduced later in one of last chapters !
     Call(String),
+    // SSE instructions for floating point
+    Movss {
+        src: Operand,
+        dst: Operand,
+    },
+    Movsd {
+        src: Operand,
+        dst: Operand,
+    },
+    Cvtsi2ss {
+        assembly_type: AssemblyType,
+        src: Operand,
+        dst: Operand,
+    },
+    Cvtsi2sd {
+        assembly_type: AssemblyType,
+        src: Operand,
+        dst: Operand,
+    },
+    Cvttss2si {
+        assembly_type: AssemblyType,
+        src: Operand,
+        dst: Operand,
+    },
+    Cvttsd2si {
+        assembly_type: AssemblyType,
+        src: Operand,
+        dst: Operand,
+    },
+    Cvtss2sd {
+        src: Operand,
+        dst: Operand,
+    },
+    Cvtsd2ss {
+        src: Operand,
+        dst: Operand,
+    },
+    Addss {
+        src: Operand,
+        dst: Operand,
+    },
+    Addsd {
+        src: Operand,
+        dst: Operand,
+    },
+    Subss {
+        src: Operand,
+        dst: Operand,
+    },
+    Subsd {
+        src: Operand,
+        dst: Operand,
+    },
+    Mulss {
+        src: Operand,
+        dst: Operand,
+    },
+    Mulsd {
+        src: Operand,
+        dst: Operand,
+    },
+    Divss {
+        src: Operand,
+        dst: Operand,
+    },
+    Divsd {
+        src: Operand,
+        dst: Operand,
+    },
+    Xorps {
+        src: Operand,
+        dst: Operand,
+    },
+    Xorpd {
+        src: Operand,
+        dst: Operand,
+    },
+    Ucomiss {
+        src1: Operand,
+        src2: Operand,
+    },
+    Ucomisd {
+        src1: Operand,
+        src2: Operand,
+    },
 }
 
 fn format_label(label: &str) -> String {
@@ -249,6 +334,67 @@ impl Display for Instruction {
             } => {
                 panic!("MovZeroExtend not implemented")
             }
+            // SSE floating point instructions
+            Instruction::Movss { src, dst } => {
+                write!(f, "\tmovss {}, {}", src.asm(AssemblyType::LongWord), dst.asm(AssemblyType::LongWord))
+            }
+            Instruction::Movsd { src, dst } => {
+                write!(f, "\tmovsd {}, {}", src.asm(AssemblyType::QuadWord), dst.asm(AssemblyType::QuadWord))
+            }
+            Instruction::Cvtsi2ss { assembly_type, src, dst } => {
+                write!(f, "\tcvtsi2ss{} {}, {}", assembly_type, src.asm(*assembly_type), dst.asm(AssemblyType::LongWord))
+            }
+            Instruction::Cvtsi2sd { assembly_type, src, dst } => {
+                write!(f, "\tcvtsi2sd{} {}, {}", assembly_type, src.asm(*assembly_type), dst.asm(AssemblyType::QuadWord))
+            }
+            Instruction::Cvttss2si { assembly_type, src, dst } => {
+                write!(f, "\tcvttss2si{} {}, {}", assembly_type, src.asm(AssemblyType::LongWord), dst.asm(*assembly_type))
+            }
+            Instruction::Cvttsd2si { assembly_type, src, dst } => {
+                write!(f, "\tcvttsd2si{} {}, {}", assembly_type, src.asm(AssemblyType::QuadWord), dst.asm(*assembly_type))
+            }
+            Instruction::Cvtss2sd { src, dst } => {
+                write!(f, "\tcvtss2sd {}, {}", src.asm(AssemblyType::LongWord), dst.asm(AssemblyType::QuadWord))
+            }
+            Instruction::Cvtsd2ss { src, dst } => {
+                write!(f, "\tcvtsd2ss {}, {}", src.asm(AssemblyType::QuadWord), dst.asm(AssemblyType::LongWord))
+            }
+            Instruction::Addss { src, dst } => {
+                write!(f, "\taddss {}, {}", src.asm(AssemblyType::LongWord), dst.asm(AssemblyType::LongWord))
+            }
+            Instruction::Addsd { src, dst } => {
+                write!(f, "\taddsd {}, {}", src.asm(AssemblyType::QuadWord), dst.asm(AssemblyType::QuadWord))
+            }
+            Instruction::Subss { src, dst } => {
+                write!(f, "\tsubss {}, {}", src.asm(AssemblyType::LongWord), dst.asm(AssemblyType::LongWord))
+            }
+            Instruction::Subsd { src, dst } => {
+                write!(f, "\tsubsd {}, {}", src.asm(AssemblyType::QuadWord), dst.asm(AssemblyType::QuadWord))
+            }
+            Instruction::Mulss { src, dst } => {
+                write!(f, "\tmulss {}, {}", src.asm(AssemblyType::LongWord), dst.asm(AssemblyType::LongWord))
+            }
+            Instruction::Mulsd { src, dst } => {
+                write!(f, "\tmulsd {}, {}", src.asm(AssemblyType::QuadWord), dst.asm(AssemblyType::QuadWord))
+            }
+            Instruction::Divss { src, dst } => {
+                write!(f, "\tdivss {}, {}", src.asm(AssemblyType::LongWord), dst.asm(AssemblyType::LongWord))
+            }
+            Instruction::Divsd { src, dst } => {
+                write!(f, "\tdivsd {}, {}", src.asm(AssemblyType::QuadWord), dst.asm(AssemblyType::QuadWord))
+            }
+            Instruction::Xorps { src, dst } => {
+                write!(f, "\txorps {}, {}", src.asm(AssemblyType::LongWord), dst.asm(AssemblyType::LongWord))
+            }
+            Instruction::Xorpd { src, dst } => {
+                write!(f, "\txorpd {}, {}", src.asm(AssemblyType::QuadWord), dst.asm(AssemblyType::QuadWord))
+            }
+            Instruction::Ucomiss { src1, src2 } => {
+                write!(f, "\tucomiss {}, {}", src1.asm(AssemblyType::LongWord), src2.asm(AssemblyType::LongWord))
+            }
+            Instruction::Ucomisd { src1, src2 } => {
+                write!(f, "\tucomisd {}, {}", src1.asm(AssemblyType::QuadWord), src2.asm(AssemblyType::QuadWord))
+            }
         }
     }
 }
@@ -340,18 +486,31 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
         match instruction {
             tacky::Instruction::Comment(comment) => Ok(vec![Instruction::Comment(comment)]),
             tacky::Instruction::Return(value) => {
-                //This should use correct type
-                let assembly_type = value.assembly_type(); //TODO: This is incorrect
-                let src = value.into();
-                let dst = Operand::Register(Reg::AX);
-                Ok(vec![
-                    Instruction::Mov {
-                        assembly_type,
-                        src,
-                        dst,
-                    },
-                    Instruction::Ret,
-                ])
+                let ty = value.parse_type();
+                let assembly_type = value.assembly_type();
+                let src = value.clone().into();
+                
+                // Use XMM0 for float/double return values, RAX for integer types
+                if ty == Type::Float {
+                    Ok(vec![
+                        Instruction::Movss { src, dst: Operand::Register(Reg::XMM0) },
+                        Instruction::Ret,
+                    ])
+                } else if ty == Type::Double {
+                    Ok(vec![
+                        Instruction::Movsd { src, dst: Operand::Register(Reg::XMM0) },
+                        Instruction::Ret,
+                    ])
+                } else {
+                    Ok(vec![
+                        Instruction::Mov {
+                            assembly_type,
+                            src,
+                            dst: Operand::Register(Reg::AX),
+                        },
+                        Instruction::Ret,
+                    ])
+                }
             }
             tacky::Instruction::Unary {
                 op: tacky::UnaryOp::Not,
@@ -372,21 +531,63 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
                 ])
             }
             tacky::Instruction::Unary { op, src, dst } => {
+                let ty = dst.parse_type();
                 let assembly_type = dst.assembly_type();
-                let src = src.into();
-                let dst: Operand = dst.into();
-                Ok(vec![
-                    Instruction::Mov {
-                        assembly_type,
-                        src,
-                        dst: dst.clone(),
-                    },
-                    Instruction::Unary {
-                        assembly_type,
-                        op: op.into(),
-                        dst,
-                    },
-                ])
+                let src_op = src.into();
+                let dst_op: Operand = dst.into();
+                
+                // Handle floating point negation
+                if matches!(op, tacky::UnaryOp::Negate) && ty == Type::Float {
+                    // XOR with sign bit to negate float
+                    Ok(vec![
+                        Instruction::Movss { src: src_op, dst: dst_op.clone() },
+                        Instruction::Mov {
+                            assembly_type: AssemblyType::LongWord,
+                            src: Operand::Immediate { imm: 0x80000000 },
+                            dst: Operand::Register(Reg::R10),
+                        },
+                        Instruction::Movss {
+                            src: Operand::Register(Reg::R10),
+                            dst: Operand::Register(Reg::XMM1),
+                        },
+                        Instruction::Xorps {
+                            src: Operand::Register(Reg::XMM1),
+                            dst: dst_op,
+                        },
+                    ])
+                } else if matches!(op, tacky::UnaryOp::Negate) && ty == Type::Double {
+                    // XOR with sign bit to negate double
+                    Ok(vec![
+                        Instruction::Movsd { src: src_op, dst: dst_op.clone() },
+                        Instruction::Mov {
+                            assembly_type: AssemblyType::QuadWord,
+                            src: Operand::Immediate { imm: 0x8000000000000000u64 as i128 },
+                            dst: Operand::Register(Reg::R10),
+                        },
+                        Instruction::Movsd {
+                            src: Operand::Register(Reg::R10),
+                            dst: Operand::Register(Reg::XMM1),
+                        },
+                        Instruction::Xorpd {
+                            src: Operand::Register(Reg::XMM1),
+                            dst: dst_op,
+                        },
+                    ])
+                } else {
+                    // Integer unary operations
+                    Ok(vec![
+                        Instruction::Mov {
+                            assembly_type,
+                            src: src_op,
+                            dst: dst_op.clone(),
+                        },
+                        Instruction::Unary {
+                            assembly_type,
+                            op: op.into(),
+                            dst: dst_op,
+                        },
+                    ])
+                }
             }
             tacky::Instruction::Binary {
                 op: tacky::BinaryOp::Divide,
@@ -394,12 +595,31 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
                 src2,
                 dst,
             } => {
+                let ty = src1.parse_type();
                 let assembly_type = src1.assembly_type();
-                if src1.parse_type().is_signed() {
+                
+                // Handle floating point division
+                if ty == Type::Float {
+                    let src1: Operand = src1.into();
+                    let src2: Operand = src2.into();
+                    let dst: Operand = dst.into();
+                    Ok(vec![
+                        Instruction::Movss { src: src1, dst: dst.clone() },
+                        Instruction::Divss { src: src2, dst },
+                    ])
+                } else if ty == Type::Double {
+                    let src1: Operand = src1.into();
+                    let src2: Operand = src2.into();
+                    let dst: Operand = dst.into();
+                    Ok(vec![
+                        Instruction::Movsd { src: src1, dst: dst.clone() },
+                        Instruction::Divsd { src: src2, dst },
+                    ])
+                } else if ty.is_signed() {
                     //TODO: Check if this is correct
-                    let src1 = src1.into();
-                    let src2 = src2.into();
-                    let dst = dst.into();
+                    let src1: Operand = src1.into();
+                    let src2: Operand = src2.into();
+                    let dst: Operand = dst.into();
                     Ok(vec![
                         Instruction::Mov {
                             assembly_type,
@@ -507,19 +727,44 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
                 src2,
                 dst,
             } if let Ok(cc) = ConditionCode::try_from(op.clone(), src1.parse_type()) => {
+                let ty = src1.parse_type();
                 let assembly_type = src1.assembly_type();
-                let src1 = src1.into();
-                let src2 = src2.into();
+                let src1: Operand = src1.into();
+                let src2: Operand = src2.into();
                 let dst: Operand = dst.into();
-                Ok(vec![
-                    Instruction::Cmp(assembly_type, src2, src1),
-                    Instruction::Mov {
-                        assembly_type,
-                        src: Operand::Immediate { imm: 0 },
-                        dst: dst.clone(),
-                    },
-                    Instruction::SetCC(cc, dst),
-                ])
+                
+                // Handle floating point comparisons
+                if ty == Type::Float {
+                    Ok(vec![
+                        Instruction::Ucomiss { src1: src2.clone(), src2: src1.clone() },
+                        Instruction::Mov {
+                            assembly_type: AssemblyType::LongWord,
+                            src: Operand::Immediate { imm: 0 },
+                            dst: dst.clone(),
+                        },
+                        Instruction::SetCC(cc, dst),
+                    ])
+                } else if ty == Type::Double {
+                    Ok(vec![
+                        Instruction::Ucomisd { src1: src2.clone(), src2: src1.clone() },
+                        Instruction::Mov {
+                            assembly_type: AssemblyType::QuadWord,
+                            src: Operand::Immediate { imm: 0 },
+                            dst: dst.clone(),
+                        },
+                        Instruction::SetCC(cc, dst),
+                    ])
+                } else {
+                    Ok(vec![
+                        Instruction::Cmp(assembly_type, src2, src1),
+                        Instruction::Mov {
+                            assembly_type,
+                            src: Operand::Immediate { imm: 0 },
+                            dst: dst.clone(),
+                        },
+                        Instruction::SetCC(cc, dst),
+                    ])
+                }
             }
 
             tacky::Instruction::Binary {
@@ -528,46 +773,152 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
                 src2,
                 dst,
             } => {
+                let ty = src1.parse_type();
                 let assembly_type = src1.assembly_type(); //TODO: Check if this is correct
-                let src1 = src1.into();
-                let src2 = src2.into();
-                let dst: Operand = dst.into();
-                let op = op.try_into()?;
-                Ok(vec![
-                    Instruction::Mov {
-                        assembly_type,
-                        src: src1,
-                        dst: dst.clone(),
-                    },
-                    Instruction::Binary {
-                        op,
-                        assembly_type,
-                        src2,
-                        dst,
-                    },
-                ])
+                let src1_op = src1.into();
+                let src2_op = src2.into();
+                let dst_op: Operand = dst.into();
+                
+                // Handle floating point operations
+                match (ty, &op) {
+                    (Type::Float, tacky::BinaryOp::Add) => {
+                        Ok(vec![
+                            Instruction::Movss { src: src1_op, dst: dst_op.clone() },
+                            Instruction::Addss { src: src2_op, dst: dst_op },
+                        ])
+                    }
+                    (Type::Double, tacky::BinaryOp::Add) => {
+                        Ok(vec![
+                            Instruction::Movsd { src: src1_op, dst: dst_op.clone() },
+                            Instruction::Addsd { src: src2_op, dst: dst_op },
+                        ])
+                    }
+                    (Type::Float, tacky::BinaryOp::Subtract) => {
+                        Ok(vec![
+                            Instruction::Movss { src: src1_op, dst: dst_op.clone() },
+                            Instruction::Subss { src: src2_op, dst: dst_op },
+                        ])
+                    }
+                    (Type::Double, tacky::BinaryOp::Subtract) => {
+                        Ok(vec![
+                            Instruction::Movsd { src: src1_op, dst: dst_op.clone() },
+                            Instruction::Subsd { src: src2_op, dst: dst_op },
+                        ])
+                    }
+                    (Type::Float, tacky::BinaryOp::Multiply) => {
+                        Ok(vec![
+                            Instruction::Movss { src: src1_op, dst: dst_op.clone() },
+                            Instruction::Mulss { src: src2_op, dst: dst_op },
+                        ])
+                    }
+                    (Type::Double, tacky::BinaryOp::Multiply) => {
+                        Ok(vec![
+                            Instruction::Movsd { src: src1_op, dst: dst_op.clone() },
+                            Instruction::Mulsd { src: src2_op, dst: dst_op },
+                        ])
+                    }
+                    // Integer operations
+                    _ => {
+                        let op = op.try_into()?;
+                        Ok(vec![
+                            Instruction::Mov {
+                                assembly_type,
+                                src: src1_op,
+                                dst: dst_op.clone(),
+                            },
+                            Instruction::Binary {
+                                op,
+                                assembly_type,
+                                src2: src2_op,
+                                dst: dst_op,
+                            },
+                        ])
+                    }
+                }
             }
-            tacky::Instruction::JumpIfZero { condition, target } => Ok(vec![
-                Instruction::Cmp(
-                    condition.assembly_type(),
-                    Operand::Immediate { imm: 0 },
-                    condition.into(),
-                ),
-                Instruction::JmpCC(ConditionCode::E, target),
-            ]),
-            tacky::Instruction::JumpIfNotZero { condition, target } => Ok(vec![
-                Instruction::Cmp(
-                    condition.assembly_type(),
-                    Operand::Immediate { imm: 0 },
-                    condition.into(),
-                ),
-                Instruction::JmpCC(ConditionCode::NE, target),
-            ]),
-            tacky::Instruction::Copy { src, dst } => Ok(vec![Instruction::Mov {
-                assembly_type: dst.assembly_type(),
-                src: src.into(),
-                dst: dst.into(),
-            }]),
+            tacky::Instruction::JumpIfZero { condition, target } => {
+                let ty = condition.parse_type();
+                let cond_op = condition.clone().into();
+                
+                if ty == Type::Float {
+                    Ok(vec![
+                        Instruction::Xorps {
+                            src: Operand::Register(Reg::XMM1),
+                            dst: Operand::Register(Reg::XMM1),
+                        },
+                        Instruction::Ucomiss { src1: cond_op, src2: Operand::Register(Reg::XMM1) },
+                        Instruction::JmpCC(ConditionCode::E, target),
+                    ])
+                } else if ty == Type::Double {
+                    Ok(vec![
+                        Instruction::Xorpd {
+                            src: Operand::Register(Reg::XMM1),
+                            dst: Operand::Register(Reg::XMM1),
+                        },
+                        Instruction::Ucomisd { src1: cond_op, src2: Operand::Register(Reg::XMM1) },
+                        Instruction::JmpCC(ConditionCode::E, target),
+                    ])
+                } else {
+                    Ok(vec![
+                        Instruction::Cmp(
+                            condition.assembly_type(),
+                            Operand::Immediate { imm: 0 },
+                            cond_op,
+                        ),
+                        Instruction::JmpCC(ConditionCode::E, target),
+                    ])
+                }
+            }
+            tacky::Instruction::JumpIfNotZero { condition, target } => {
+                let ty = condition.parse_type();
+                let cond_op = condition.clone().into();
+                
+                if ty == Type::Float {
+                    Ok(vec![
+                        Instruction::Xorps {
+                            src: Operand::Register(Reg::XMM1),
+                            dst: Operand::Register(Reg::XMM1),
+                        },
+                        Instruction::Ucomiss { src1: cond_op, src2: Operand::Register(Reg::XMM1) },
+                        Instruction::JmpCC(ConditionCode::NE, target),
+                    ])
+                } else if ty == Type::Double {
+                    Ok(vec![
+                        Instruction::Xorpd {
+                            src: Operand::Register(Reg::XMM1),
+                            dst: Operand::Register(Reg::XMM1),
+                        },
+                        Instruction::Ucomisd { src1: cond_op, src2: Operand::Register(Reg::XMM1) },
+                        Instruction::JmpCC(ConditionCode::NE, target),
+                    ])
+                } else {
+                    Ok(vec![
+                        Instruction::Cmp(
+                            condition.assembly_type(),
+                            Operand::Immediate { imm: 0 },
+                            cond_op,
+                        ),
+                        Instruction::JmpCC(ConditionCode::NE, target),
+                    ])
+                }
+            }
+            tacky::Instruction::Copy { src, dst } => {
+                let ty = dst.parse_type();
+                let src_op = src.into();
+                let dst_op = dst.into();
+                
+                if ty == Type::Float {
+                    Ok(vec![Instruction::Movss { src: src_op, dst: dst_op }])
+                } else if ty == Type::Double {
+                    Ok(vec![Instruction::Movsd { src: src_op, dst: dst_op }])
+                } else {
+                    Ok(vec![Instruction::Mov {
+                        assembly_type: AssemblyType::from(&ty),
+                        src: src_op,
+                        dst: dst_op,
+                    }])
+                }
+            }
             tacky::Instruction::Label { name } => Ok(vec![Instruction::Label(name)]),
             tacky::Instruction::Jump { target } => Ok(vec![Instruction::Jmp(target)]),
             tacky::Instruction::FunCall { name, args, dst } => {
@@ -591,6 +942,56 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
                 let src = src.into();
                 let dst = dst.into();
                 Ok(vec![Instruction::MovZeroExtend { src, dst }])
+            }
+            tacky::Instruction::IntToFloat { src, dst } => {
+                let assembly_type = src.assembly_type();
+                let src = src.into();
+                let dst = dst.into();
+                Ok(vec![Instruction::Cvtsi2ss {
+                    assembly_type,
+                    src,
+                    dst,
+                }])
+            }
+            tacky::Instruction::IntToDouble { src, dst } => {
+                let assembly_type = src.assembly_type();
+                let src = src.into();
+                let dst = dst.into();
+                Ok(vec![Instruction::Cvtsi2sd {
+                    assembly_type,
+                    src,
+                    dst,
+                }])
+            }
+            tacky::Instruction::FloatToInt { src, dst } => {
+                let assembly_type = dst.assembly_type();
+                let src = src.into();
+                let dst = dst.into();
+                Ok(vec![Instruction::Cvttss2si {
+                    assembly_type,
+                    src,
+                    dst,
+                }])
+            }
+            tacky::Instruction::DoubleToInt { src, dst } => {
+                let assembly_type = dst.assembly_type();
+                let src = src.into();
+                let dst = dst.into();
+                Ok(vec![Instruction::Cvttsd2si {
+                    assembly_type,
+                    src,
+                    dst,
+                }])
+            }
+            tacky::Instruction::FloatToDouble { src, dst } => {
+                let src = src.into();
+                let dst = dst.into();
+                Ok(vec![Instruction::Cvtss2sd { src, dst }])
+            }
+            tacky::Instruction::DoubleToFloat { src, dst } => {
+                let src = src.into();
+                let dst = dst.into();
+                Ok(vec![Instruction::Cvtsd2ss { src, dst }])
             }
         }
     }
