@@ -270,8 +270,12 @@ impl Constant {
             Constant::Long(val) => *val as i128,
             Constant::UnsignedInt(val) => *val as i128,
             Constant::UnsignedLong(val) => *val as i128,
-            Constant::Float(val) => *val as i128,
-            Constant::Double(val) => *val as i128,
+            Constant::Float(val) => val.to_bits() as i128,
+            Constant::Double(val) => val.to_bits() as i128,
         }
+    }
+
+    pub fn is_floating_point(&self) -> bool {
+        matches!(self, Constant::Float(_) | Constant::Double(_))
     }
 }
