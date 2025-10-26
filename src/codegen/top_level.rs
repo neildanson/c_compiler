@@ -132,6 +132,16 @@ impl Display for StaticVariable {
                 StaticInit::LongInit(value) => writeln!(f, "\t.quad {}", value),
                 StaticInit::UIntInit(value) => writeln!(f, "\t.long {}", value), //TODO Check
                 StaticInit::ULongInit(value) => writeln!(f, "\t.quad {}", value), //TODO Check
+                StaticInit::FloatInit(value) => {
+                    // Use hex representation for exact bit pattern
+                    let bits = value.to_bits();
+                    writeln!(f, "\t.long {}", bits)
+                }
+                StaticInit::DoubleInit(value) => {
+                    // Use hex representation for exact bit pattern
+                    let bits = value.to_bits();
+                    writeln!(f, "\t.quad {}", bits)
+                }
             }
         }
     }
@@ -145,6 +155,8 @@ impl TryFrom<tacky::StaticVariable> for StaticVariable {
             Type::Long => 8,
             Type::UInt => 4,
             Type::ULong => 8,
+            Type::Float => 4,
+            Type::Double => 8,
             _ => panic!("Unsupported type"),
         };
         Ok(StaticVariable {

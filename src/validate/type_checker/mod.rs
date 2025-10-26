@@ -26,22 +26,51 @@ impl TypeChecker {
         match i {
             InitialValue::Initial(init) => {
                 let new_init = match (init, ty) {
+                    // Integer to integer conversions (existing)
                     (StaticInit::IntInit(val), Type::Int) => StaticInit::IntInit(val),
                     (StaticInit::IntInit(val), Type::Long) => StaticInit::LongInit(val as i64),
                     (StaticInit::IntInit(val), Type::UInt) => StaticInit::UIntInit(val as u32),
                     (StaticInit::IntInit(val), Type::ULong) => StaticInit::ULongInit(val as u64),
+                    (StaticInit::IntInit(val), Type::Float) => StaticInit::FloatInit(val as f32),
+                    (StaticInit::IntInit(val), Type::Double) => StaticInit::DoubleInit(val as f64),
+                    
                     (StaticInit::LongInit(val), Type::Int) => StaticInit::IntInit(val as i32),
                     (StaticInit::LongInit(val), Type::Long) => StaticInit::LongInit(val),
                     (StaticInit::LongInit(val), Type::UInt) => StaticInit::UIntInit(val as u32),
                     (StaticInit::LongInit(val), Type::ULong) => StaticInit::ULongInit(val as u64),
+                    (StaticInit::LongInit(val), Type::Float) => StaticInit::FloatInit(val as f32),
+                    (StaticInit::LongInit(val), Type::Double) => StaticInit::DoubleInit(val as f64),
+                    
                     (StaticInit::UIntInit(val), Type::Int) => StaticInit::IntInit(val as i32),
                     (StaticInit::UIntInit(val), Type::Long) => StaticInit::LongInit(val as i64),
                     (StaticInit::UIntInit(val), Type::UInt) => StaticInit::UIntInit(val),
                     (StaticInit::UIntInit(val), Type::ULong) => StaticInit::ULongInit(val as u64),
+                    (StaticInit::UIntInit(val), Type::Float) => StaticInit::FloatInit(val as f32),
+                    (StaticInit::UIntInit(val), Type::Double) => StaticInit::DoubleInit(val as f64),
+                    
                     (StaticInit::ULongInit(val), Type::Int) => StaticInit::IntInit(val as i32),
                     (StaticInit::ULongInit(val), Type::Long) => StaticInit::LongInit(val as i64),
                     (StaticInit::ULongInit(val), Type::UInt) => StaticInit::UIntInit(val as u32),
                     (StaticInit::ULongInit(val), Type::ULong) => StaticInit::ULongInit(val),
+                    (StaticInit::ULongInit(val), Type::Float) => StaticInit::FloatInit(val as f32),
+                    (StaticInit::ULongInit(val), Type::Double) => StaticInit::DoubleInit(val as f64),
+                    
+                    // Float to other types
+                    (StaticInit::FloatInit(val), Type::Int) => StaticInit::IntInit(val as i32),
+                    (StaticInit::FloatInit(val), Type::Long) => StaticInit::LongInit(val as i64),
+                    (StaticInit::FloatInit(val), Type::UInt) => StaticInit::UIntInit(val as u32),
+                    (StaticInit::FloatInit(val), Type::ULong) => StaticInit::ULongInit(val as u64),
+                    (StaticInit::FloatInit(val), Type::Float) => StaticInit::FloatInit(val),
+                    (StaticInit::FloatInit(val), Type::Double) => StaticInit::DoubleInit(val as f64),
+                    
+                    // Double to other types
+                    (StaticInit::DoubleInit(val), Type::Int) => StaticInit::IntInit(val as i32),
+                    (StaticInit::DoubleInit(val), Type::Long) => StaticInit::LongInit(val as i64),
+                    (StaticInit::DoubleInit(val), Type::UInt) => StaticInit::UIntInit(val as u32),
+                    (StaticInit::DoubleInit(val), Type::ULong) => StaticInit::ULongInit(val as u64),
+                    (StaticInit::DoubleInit(val), Type::Float) => StaticInit::FloatInit(val as f32),
+                    (StaticInit::DoubleInit(val), Type::Double) => StaticInit::DoubleInit(val),
+                    
                     _ => panic!("Invalid cast"),
                 };
                 InitialValue::Initial(new_init)
@@ -241,7 +270,15 @@ impl TypeChecker {
     fn get_common_type(ty1: Type, ty2: Type) -> Type {
         if ty1 == ty2 {
             ty1
-        } else if ty1.size() == ty2.size() {
+        }
+        // Floating point promotion rules: double > float > integer types
+        else if ty1 == Type::Double || ty2 == Type::Double {
+            Type::Double
+        } else if ty1 == Type::Float || ty2 == Type::Float {
+            Type::Float
+        }
+        // Integer promotion rules
+        else if ty1.size() == ty2.size() {
             if ty1.is_signed() {
                 ty2
             } else {
