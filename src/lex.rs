@@ -12,8 +12,12 @@ pub enum Token {
     LongConstant(String),          //[0-9]+[lL]\b
     UnsignedIntConstant(String),   //[0-9]+[uU]\b
     UnsignedLongConstant(String),  //[0-9]+[lL][uU]|[uU]|[lL]\b
+    FloatConstant(String),         //[0-9]+\.[0-9]+[fF]?
+    DoubleConstant(String),        //[0-9]+\.[0-9]+
     Int,                           //int\b
     Long,                          //long\b
+    Double,                        //double\b
+    Float,                         //float\b
     Void,                          //void\b
     Return,                        //return\b
     Static,                        //static\b
@@ -105,6 +109,8 @@ impl Tokenizer {
             TokenMapper::new(r"^extern\b", Box::new(|_| Token::Extern)),
             TokenMapper::new(r"^int\b", Box::new(|_| Token::Int)),
             TokenMapper::new(r"^long\b", Box::new(|_| Token::Long)),
+            TokenMapper::new(r"^double\b", Box::new(|_| Token::Double)),
+            TokenMapper::new(r"^float\b", Box::new(|_| Token::Float)),
             TokenMapper::new(r"^if\b", Box::new(|_| Token::If)),
             TokenMapper::new(r"^else\b", Box::new(|_| Token::Else)),
             TokenMapper::new(r"^do\b", Box::new(|_| Token::Do)),
@@ -120,6 +126,9 @@ impl Tokenizer {
             TokenMapper::new(r"^\}", Box::new(|_| Token::RBrace)),
             TokenMapper::new(r"^;", Box::new(|_| Token::SemiColon)),
             TokenMapper::new(r"^[a-zA-Z_]\w*\b", Box::new(Token::Identifier)),
+            // Floating point constants must come before integer constants
+            TokenMapper::new(r"^[0-9]+\.[0-9]+([eE][+-]?[0-9]+)?[fF]\b", Box::new(Token::FloatConstant)),
+            TokenMapper::new(r"^[0-9]+\.[0-9]+([eE][+-]?[0-9]+)?\b", Box::new(Token::DoubleConstant)),
             TokenMapper::new(r"^[0-9]+\b", Box::new(Token::Constant)),
             TokenMapper::new(r"^[0-9]+[lL]\b", Box::new(Token::LongConstant)),
             TokenMapper::new(r"^[0-9]+[uU]\b", Box::new(Token::UnsignedIntConstant)),
@@ -260,6 +269,47 @@ mod tests {
         assert_eq!(
             tokens,
             vec![Token::Asterisk, Token::Constant("42".to_string())]
+        );
+    }
+
+    #[test]
+    fn test_double_constant() {
+        let tokenizer = Tokenizer::new();
+        let tokens = tokenizer.tokenize("3.14").unwrap();
+        assert_eq!(tokens, vec![Token::DoubleConstant("3.14".to_string())]);
+    }
+
+    #[test]
+    fn test_float_constant() {
+        let tokenizer = Tokenizer::new();
+        let tokens = tokenizer.tokenize("3.14f").unwrap();
+        assert_eq!(tokens, vec![Token::FloatConstant("3.14f".to_string())]);
+    }
+
+    #[test]
+    fn test_double_with_exponent() {
+        let tokenizer = Tokenizer::new();
+        let tokens = tokenizer.tokenize("1.5e10").unwrap();
+        assert_eq!(tokens, vec![Token::DoubleConstant("1.5e10".to_string())]);
+    }
+
+    #[test]
+    fn test_float_keywords() {
+        let tokenizer = Tokenizer::new();
+        let tokens = tokenizer.tokenize("float double").unwrap();
+        assert_eq!(tokens, vec![Token::Float, Token::Double]);
+    }
+
+    #[test]
+    fn test_integer_not_broken() {
+        let tokenizer = Tokenizer::new();
+        let tokens = tokenizer.tokenize("42 100").unwrap();
+        assert_eq!(
+            tokens,
+            vec![
+                Token::Constant("42".to_string()),
+                Token::Constant("100".to_string())
+            ]
         );
     }
 }

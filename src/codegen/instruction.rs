@@ -50,6 +50,8 @@ impl Value {
             Value::Constant(Constant::Long(_)) => AssemblyType::QuadWord,
             Value::Constant(Constant::UnsignedInt(_)) => AssemblyType::LongWord, //TODO: Check if this is correct
             Value::Constant(Constant::UnsignedLong(_)) => AssemblyType::QuadWord, //TODO: Check if this is correct
+            Value::Constant(Constant::Float(_)) => AssemblyType::LongWord,
+            Value::Constant(Constant::Double(_)) => AssemblyType::QuadWord,
             Value::Var(_, ty) => ty.into(),
         }
     }
@@ -59,6 +61,8 @@ impl Value {
             Value::Constant(Constant::Long(_)) => Type::Long,
             Value::Constant(Constant::UnsignedInt(_)) => Type::UInt,
             Value::Constant(Constant::UnsignedLong(_)) => Type::ULong,
+            Value::Constant(Constant::Float(_)) => Type::Float,
+            Value::Constant(Constant::Double(_)) => Type::Double,
             Value::Var(_, ty) => ty.clone(),
         }
     }

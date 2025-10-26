@@ -175,6 +175,14 @@ fn parse_factor(tokens: &[Token]) -> Result<(Expression, &[Token])> {
             let constant = parse_unsigned_constant(c)?;
             (Expression::Constant(constant), rest)
         }
+        [Token::FloatConstant(c), rest @ ..] => {
+            let constant = parse_float_constant(c)?;
+            (Expression::Constant(constant), rest)
+        }
+        [Token::DoubleConstant(c), rest @ ..] => {
+            let constant = parse_double_constant(c)?;
+            (Expression::Constant(constant), rest)
+        }
         [Token::Minus, rest @ ..] => {
             let (factor, rest) = parse_factor(rest)?;
             (
@@ -435,6 +443,19 @@ fn parse_type(token: &[&Token]) -> Result<Type> {
         return Err(CompilerError::Parse("Conflicting type specifier".to_string()).into());
     }
 
+    // Floating point types cannot have signedness modifiers
+    if (unique_tokens.contains(&Token::Float) || unique_tokens.contains(&Token::Double))
+        && (unique_tokens.contains(&Token::Signed) || unique_tokens.contains(&Token::Unsigned))
+    {
+        return Err(CompilerError::Parse("Floating point types cannot have signedness modifiers".to_string()).into());
+    }
+
+    if unique_tokens.contains(&Token::Double) {
+        return Ok(Type::Double);
+    }
+    if unique_tokens.contains(&Token::Float) {
+        return Ok(Type::Float);
+    }
     if unique_tokens.contains(&Token::Unsigned) && unique_tokens.contains(&Token::Long) {
         return Ok(Type::ULong);
     }
@@ -465,6 +486,8 @@ fn parse_type_and_storage(
             || specifier == &Token::Long
             || specifier == &Token::Unsigned
             || specifier == &Token::Signed
+            || specifier == &Token::Float
+            || specifier == &Token::Double
         {
             types.push(specifier);
         } else {
@@ -607,6 +630,17 @@ fn parse_unsigned_constant(constant: &str) -> Result<Constant> {
     } else {
         Ok(Constant::UnsignedLong(v))
     }
+}
+
+fn parse_float_constant(constant: &str) -> Result<Constant> {
+    let constant = constant.replace("f", "").replace("F", "");
+    let v = constant.parse::<f32>()?;
+    Ok(Constant::Float(v))
+}
+
+fn parse_double_constant(constant: &str) -> Result<Constant> {
+    let v = constant.parse::<f64>()?;
+    Ok(Constant::Double(v))
 }
 
 fn parse_function_body(tokens: &[Token]) -> Result<FunctionBodyResult<'_>> {

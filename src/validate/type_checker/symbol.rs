@@ -50,7 +50,8 @@ impl From<Constant> for StaticInit {
             Constant::Long(val) => StaticInit::LongInit(val),
             Constant::UnsignedInt(val) => StaticInit::UIntInit(val),
             Constant::UnsignedLong(val) => StaticInit::ULongInit(val),
-            //_ => panic!("Invalid conversion from Constant to StaticInit"),
+            Constant::Float(_) => panic!("Float not supported in static initialization yet"),
+            Constant::Double(_) => panic!("Double not supported in static initialization yet"),
         }
     }
 }
