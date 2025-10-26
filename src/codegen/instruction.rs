@@ -200,6 +200,14 @@ pub enum Instruction {
         src1: Operand,
         src2: Operand,
     },
+    Movd {
+        src: Operand,
+        dst: Operand,
+    },
+    Movq {
+        src: Operand,
+        dst: Operand,
+    },
 }
 
 fn format_label(label: &str) -> String {
@@ -395,6 +403,12 @@ impl Display for Instruction {
             Instruction::Ucomisd { src1, src2 } => {
                 write!(f, "\tucomisd {}, {}", src1.asm(AssemblyType::QuadWord), src2.asm(AssemblyType::QuadWord))
             }
+            Instruction::Movd { src, dst } => {
+                write!(f, "\tmovd {}, {}", src.asm(AssemblyType::LongWord), dst.asm(AssemblyType::LongWord))
+            }
+            Instruction::Movq { src, dst } => {
+                write!(f, "\tmovq {}, {}", src.asm(AssemblyType::QuadWord), dst.asm(AssemblyType::QuadWord))
+            }
         }
     }
 }
@@ -480,6 +494,54 @@ fn convert_function_call(
     Ok(instructions)
 }
 
+// Helper function to load a float/double value into an XMM register
+// Handles immediate values by loading through an integer register first
+fn load_float_to_xmm(src: Operand, dst: Reg, ty: Type) -> Vec<Instruction> {
+    if matches!(src, Operand::Immediate { .. }) {
+        // For immediates, load through integer register first
+        let assembly_type = if ty == Type::Float {
+            AssemblyType::LongWord
+        } else {
+            AssemblyType::QuadWord
+        };
+        
+        let temp_reg = Reg::R10;
+        let mut insts = vec![
+            Instruction::Mov {
+                assembly_type,
+                src: src.clone(),
+                dst: Operand::Register(temp_reg),
+            }
+        ];
+        
+        if ty == Type::Float {
+            insts.push(Instruction::Movd {
+                src: Operand::Register(temp_reg),
+                dst: Operand::Register(dst),
+            });
+        } else {
+            insts.push(Instruction::Movq {
+                src: Operand::Register(temp_reg),
+                dst: Operand::Register(dst),
+            });
+        }
+        insts
+    } else {
+        // For non-immediates, can load directly
+        if ty == Type::Float {
+            vec![Instruction::Movss {
+                src,
+                dst: Operand::Register(dst),
+            }]
+        } else {
+            vec![Instruction::Movsd {
+                src,
+                dst: Operand::Register(dst),
+            }]
+        }
+    }
+}
+
 impl TryFrom<tacky::Instruction> for Vec<Instruction> {
     type Error = CompilerError;
     fn try_from(instruction: tacky::Instruction) -> Result<Self, Self::Error> {
@@ -488,19 +550,13 @@ impl TryFrom<tacky::Instruction> for Vec<Instruction> {
             tacky::Instruction::Return(value) => {
                 let ty = value.parse_type();
                 let assembly_type = value.assembly_type();
-                let src = value.clone().into();
+                let src: Operand = value.clone().into();
                 
                 // Use XMM0 for float/double return values, RAX for integer types
-                if ty == Type::Float {
-                    Ok(vec![
-                        Instruction::Movss { src, dst: Operand::Register(Reg::XMM0) },
-                        Instruction::Ret,
-                    ])
-                } else if ty == Type::Double {
-                    Ok(vec![
-                        Instruction::Movsd { src, dst: Operand::Register(Reg::XMM0) },
-                        Instruction::Ret,
-                    ])
+                if ty == Type::Float || ty == Type::Double {
+                    let mut insts = load_float_to_xmm(src, Reg::XMM0, ty);
+                    insts.push(Instruction::Ret);
+                    Ok(insts)
                 } else {
                     Ok(vec![
                         Instruction::Mov {

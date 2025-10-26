@@ -214,6 +214,277 @@ pub(crate) fn rewrite_pseudo_with_stack(
                     },
                 });
             }
+            // SSE floating point instructions
+            Instruction::Movss { src, dst } => {
+                let src = match src {
+                    Operand::Pseudo(name) => {
+                        fixup_pseudo(name, &mut stack, false, static_variables)
+                    }
+                    _ => src,
+                };
+                let dst = match dst {
+                    Operand::Pseudo(name) => {
+                        fixup_pseudo(name, &mut stack, false, static_variables)
+                    }
+                    _ => dst,
+                };
+                new_body.push(Instruction::Movss { src, dst });
+            }
+            Instruction::Movsd { src, dst } => {
+                let src = match src {
+                    Operand::Pseudo(name) => {
+                        fixup_pseudo(name, &mut stack, false, static_variables)
+                    }
+                    _ => src,
+                };
+                let dst = match dst {
+                    Operand::Pseudo(name) => {
+                        fixup_pseudo(name, &mut stack, false, static_variables)
+                    }
+                    _ => dst,
+                };
+                new_body.push(Instruction::Movsd { src, dst });
+            }
+            Instruction::Addss { src, dst } => {
+                let src = match src {
+                    Operand::Pseudo(name) => {
+                        fixup_pseudo(name, &mut stack, false, static_variables)
+                    }
+                    _ => src,
+                };
+                let dst = match dst {
+                    Operand::Pseudo(name) => {
+                        fixup_pseudo(name, &mut stack, false, static_variables)
+                    }
+                    _ => dst,
+                };
+                new_body.push(Instruction::Addss { src, dst });
+            }
+            Instruction::Addsd { src, dst } => {
+                let src = match src {
+                    Operand::Pseudo(name) => {
+                        fixup_pseudo(name, &mut stack, false, static_variables)
+                    }
+                    _ => src,
+                };
+                let dst = match dst {
+                    Operand::Pseudo(name) => {
+                        fixup_pseudo(name, &mut stack, false, static_variables)
+                    }
+                    _ => dst,
+                };
+                new_body.push(Instruction::Addsd { src, dst });
+            }
+            Instruction::Subss { src, dst } => {
+                let src = match src {
+                    Operand::Pseudo(name) => {
+                        fixup_pseudo(name, &mut stack, false, static_variables)
+                    }
+                    _ => src,
+                };
+                let dst = match dst {
+                    Operand::Pseudo(name) => {
+                        fixup_pseudo(name, &mut stack, false, static_variables)
+                    }
+                    _ => dst,
+                };
+                new_body.push(Instruction::Subss { src, dst });
+            }
+            Instruction::Subsd { src, dst } => {
+                let src = match src {
+                    Operand::Pseudo(name) => {
+                        fixup_pseudo(name, &mut stack, false, static_variables)
+                    }
+                    _ => src,
+                };
+                let dst = match dst {
+                    Operand::Pseudo(name) => {
+                        fixup_pseudo(name, &mut stack, false, static_variables)
+                    }
+                    _ => dst,
+                };
+                new_body.push(Instruction::Subsd { src, dst });
+            }
+            Instruction::Mulss { src, dst } => {
+                let src = match src {
+                    Operand::Pseudo(name) => {
+                        fixup_pseudo(name, &mut stack, false, static_variables)
+                    }
+                    _ => src,
+                };
+                let dst = match dst {
+                    Operand::Pseudo(name) => {
+                        fixup_pseudo(name, &mut stack, false, static_variables)
+                    }
+                    _ => dst,
+                };
+                new_body.push(Instruction::Mulss { src, dst });
+            }
+            Instruction::Mulsd { src, dst } => {
+                let src = match src {
+                    Operand::Pseudo(name) => {
+                        fixup_pseudo(name, &mut stack, false, static_variables)
+                    }
+                    _ => src,
+                };
+                let dst = match dst {
+                    Operand::Pseudo(name) => {
+                        fixup_pseudo(name, &mut stack, false, static_variables)
+                    }
+                    _ => dst,
+                };
+                new_body.push(Instruction::Mulsd { src, dst });
+            }
+            Instruction::Divss { src, dst } => {
+                let src = match src {
+                    Operand::Pseudo(name) => {
+                        fixup_pseudo(name, &mut stack, false, static_variables)
+                    }
+                    _ => src,
+                };
+                let dst = match dst {
+                    Operand::Pseudo(name) => {
+                        fixup_pseudo(name, &mut stack, false, static_variables)
+                    }
+                    _ => dst,
+                };
+                new_body.push(Instruction::Divss { src, dst });
+            }
+            Instruction::Divsd { src, dst } => {
+                let src = match src {
+                    Operand::Pseudo(name) => {
+                        fixup_pseudo(name, &mut stack, false, static_variables)
+                    }
+                    _ => src,
+                };
+                let dst = match dst {
+                    Operand::Pseudo(name) => {
+                        fixup_pseudo(name, &mut stack, false, static_variables)
+                    }
+                    _ => dst,
+                };
+                new_body.push(Instruction::Divsd { src, dst });
+            }
+            Instruction::Cvtsi2ss { assembly_type, src, dst } => {
+                let src = match src {
+                    Operand::Pseudo(name) => {
+                        fixup_pseudo(name, &mut stack, false, static_variables)
+                    }
+                    _ => src,
+                };
+                let dst = match dst {
+                    Operand::Pseudo(name) => {
+                        fixup_pseudo(name, &mut stack, false, static_variables)
+                    }
+                    _ => dst,
+                };
+                new_body.push(Instruction::Cvtsi2ss { assembly_type, src, dst });
+            }
+            Instruction::Cvtsi2sd { assembly_type, src, dst } => {
+                let src = match src {
+                    Operand::Pseudo(name) => {
+                        fixup_pseudo(name, &mut stack, false, static_variables)
+                    }
+                    _ => src,
+                };
+                let dst = match dst {
+                    Operand::Pseudo(name) => {
+                        fixup_pseudo(name, &mut stack, false, static_variables)
+                    }
+                    _ => dst,
+                };
+                new_body.push(Instruction::Cvtsi2sd { assembly_type, src, dst });
+            }
+            Instruction::Cvttss2si { assembly_type, src, dst } => {
+                let src = match src {
+                    Operand::Pseudo(name) => {
+                        fixup_pseudo(name, &mut stack, false, static_variables)
+                    }
+                    _ => src,
+                };
+                let dst = match dst {
+                    Operand::Pseudo(name) => {
+                        fixup_pseudo(name, &mut stack, false, static_variables)
+                    }
+                    _ => dst,
+                };
+                new_body.push(Instruction::Cvttss2si { assembly_type, src, dst });
+            }
+            Instruction::Cvttsd2si { assembly_type, src, dst } => {
+                let src = match src {
+                    Operand::Pseudo(name) => {
+                        fixup_pseudo(name, &mut stack, false, static_variables)
+                    }
+                    _ => src,
+                };
+                let dst = match dst {
+                    Operand::Pseudo(name) => {
+                        fixup_pseudo(name, &mut stack, false, static_variables)
+                    }
+                    _ => dst,
+                };
+                new_body.push(Instruction::Cvttsd2si { assembly_type, src, dst });
+            }
+            Instruction::Cvtss2sd { src, dst } => {
+                let src = match src {
+                    Operand::Pseudo(name) => {
+                        fixup_pseudo(name, &mut stack, false, static_variables)
+                    }
+                    _ => src,
+                };
+                let dst = match dst {
+                    Operand::Pseudo(name) => {
+                        fixup_pseudo(name, &mut stack, false, static_variables)
+                    }
+                    _ => dst,
+                };
+                new_body.push(Instruction::Cvtss2sd { src, dst });
+            }
+            Instruction::Cvtsd2ss { src, dst } => {
+                let src = match src {
+                    Operand::Pseudo(name) => {
+                        fixup_pseudo(name, &mut stack, false, static_variables)
+                    }
+                    _ => src,
+                };
+                let dst = match dst {
+                    Operand::Pseudo(name) => {
+                        fixup_pseudo(name, &mut stack, false, static_variables)
+                    }
+                    _ => dst,
+                };
+                new_body.push(Instruction::Cvtsd2ss { src, dst });
+            }
+            Instruction::Movd { src, dst } => {
+                let src = match src {
+                    Operand::Pseudo(name) => {
+                        fixup_pseudo(name, &mut stack, false, static_variables)
+                    }
+                    _ => src,
+                };
+                let dst = match dst {
+                    Operand::Pseudo(name) => {
+                        fixup_pseudo(name, &mut stack, false, static_variables)
+                    }
+                    _ => dst,
+                };
+                new_body.push(Instruction::Movd { src, dst });
+            }
+            Instruction::Movq { src, dst } => {
+                let src = match src {
+                    Operand::Pseudo(name) => {
+                        fixup_pseudo(name, &mut stack, false, static_variables)
+                    }
+                    _ => src,
+                };
+                let dst = match dst {
+                    Operand::Pseudo(name) => {
+                        fixup_pseudo(name, &mut stack, false, static_variables)
+                    }
+                    _ => dst,
+                };
+                new_body.push(Instruction::Movq { src, dst });
+            }
             any_other => new_body.push(any_other),
         }
     }
@@ -550,6 +821,197 @@ pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
                     });
                     continue;
                 }
+            }
+            // SSE floating point instructions that cannot use immediate operands
+            Instruction::Movss { src, dst } => {
+                if let Operand::Immediate { .. } = src {
+                    new_body.push(Instruction::Mov {
+                        assembly_type: AssemblyType::LongWord,
+                        src: src.clone(),
+                        dst: Operand::Register(Reg::R10),
+                    });
+                    new_body.push(Instruction::Movd {
+                        src: Operand::Register(Reg::R10),
+                        dst: Operand::Register(Reg::XMM1),
+                    });
+                    new_body.push(Instruction::Movss {
+                        src: Operand::Register(Reg::XMM1),
+                        dst,
+                    });
+                    continue;
+                }
+                new_body.push(instruction.clone());
+            }
+            Instruction::Movsd { src, dst } => {
+                if let Operand::Immediate { .. } = src {
+                    new_body.push(Instruction::Mov {
+                        assembly_type: AssemblyType::QuadWord,
+                        src: src.clone(),
+                        dst: Operand::Register(Reg::R10),
+                    });
+                    new_body.push(Instruction::Movq {
+                        src: Operand::Register(Reg::R10),
+                        dst: Operand::Register(Reg::XMM1),
+                    });
+                    new_body.push(Instruction::Movsd {
+                        src: Operand::Register(Reg::XMM1),
+                        dst,
+                    });
+                    continue;
+                }
+                new_body.push(instruction.clone());
+            }
+            Instruction::Addss { src, dst } => {
+                if let Operand::Immediate { .. } = src {
+                    new_body.push(Instruction::Mov {
+                        assembly_type: AssemblyType::LongWord,
+                        src: src.clone(),
+                        dst: Operand::Register(Reg::R10),
+                    });
+                    new_body.push(Instruction::Movd {
+                        src: Operand::Register(Reg::R10),
+                        dst: Operand::Register(Reg::XMM1),
+                    });
+                    new_body.push(Instruction::Addss {
+                        src: Operand::Register(Reg::XMM1),
+                        dst,
+                    });
+                    continue;
+                }
+                new_body.push(instruction.clone());
+            }
+            Instruction::Addsd { src, dst } => {
+                if let Operand::Immediate { .. } = src {
+                    new_body.push(Instruction::Mov {
+                        assembly_type: AssemblyType::QuadWord,
+                        src: src.clone(),
+                        dst: Operand::Register(Reg::R10),
+                    });
+                    new_body.push(Instruction::Movq {
+                        src: Operand::Register(Reg::R10),
+                        dst: Operand::Register(Reg::XMM1),
+                    });
+                    new_body.push(Instruction::Addsd {
+                        src: Operand::Register(Reg::XMM1),
+                        dst,
+                    });
+                    continue;
+                }
+                new_body.push(instruction.clone());
+            }
+            Instruction::Subss { src, dst } => {
+                if let Operand::Immediate { .. } = src {
+                    new_body.push(Instruction::Mov {
+                        assembly_type: AssemblyType::LongWord,
+                        src: src.clone(),
+                        dst: Operand::Register(Reg::R10),
+                    });
+                    new_body.push(Instruction::Movd {
+                        src: Operand::Register(Reg::R10),
+                        dst: Operand::Register(Reg::XMM1),
+                    });
+                    new_body.push(Instruction::Subss {
+                        src: Operand::Register(Reg::XMM1),
+                        dst,
+                    });
+                    continue;
+                }
+                new_body.push(instruction.clone());
+            }
+            Instruction::Subsd { src, dst } => {
+                if let Operand::Immediate { .. } = src {
+                    new_body.push(Instruction::Mov {
+                        assembly_type: AssemblyType::QuadWord,
+                        src: src.clone(),
+                        dst: Operand::Register(Reg::R10),
+                    });
+                    new_body.push(Instruction::Movq {
+                        src: Operand::Register(Reg::R10),
+                        dst: Operand::Register(Reg::XMM1),
+                    });
+                    new_body.push(Instruction::Subsd {
+                        src: Operand::Register(Reg::XMM1),
+                        dst,
+                    });
+                    continue;
+                }
+                new_body.push(instruction.clone());
+            }
+            Instruction::Mulss { src, dst } => {
+                if let Operand::Immediate { .. } = src {
+                    new_body.push(Instruction::Mov {
+                        assembly_type: AssemblyType::LongWord,
+                        src: src.clone(),
+                        dst: Operand::Register(Reg::R10),
+                    });
+                    new_body.push(Instruction::Movd {
+                        src: Operand::Register(Reg::R10),
+                        dst: Operand::Register(Reg::XMM1),
+                    });
+                    new_body.push(Instruction::Mulss {
+                        src: Operand::Register(Reg::XMM1),
+                        dst,
+                    });
+                    continue;
+                }
+                new_body.push(instruction.clone());
+            }
+            Instruction::Mulsd { src, dst } => {
+                if let Operand::Immediate { .. } = src {
+                    new_body.push(Instruction::Mov {
+                        assembly_type: AssemblyType::QuadWord,
+                        src: src.clone(),
+                        dst: Operand::Register(Reg::R10),
+                    });
+                    new_body.push(Instruction::Movq {
+                        src: Operand::Register(Reg::R10),
+                        dst: Operand::Register(Reg::XMM1),
+                    });
+                    new_body.push(Instruction::Mulsd {
+                        src: Operand::Register(Reg::XMM1),
+                        dst,
+                    });
+                    continue;
+                }
+                new_body.push(instruction.clone());
+            }
+            Instruction::Divss { src, dst } => {
+                if let Operand::Immediate { .. } = src {
+                    new_body.push(Instruction::Mov {
+                        assembly_type: AssemblyType::LongWord,
+                        src: src.clone(),
+                        dst: Operand::Register(Reg::R10),
+                    });
+                    new_body.push(Instruction::Movd {
+                        src: Operand::Register(Reg::R10),
+                        dst: Operand::Register(Reg::XMM1),
+                    });
+                    new_body.push(Instruction::Divss {
+                        src: Operand::Register(Reg::XMM1),
+                        dst,
+                    });
+                    continue;
+                }
+                new_body.push(instruction.clone());
+            }
+            Instruction::Divsd { src, dst } => {
+                if let Operand::Immediate { .. } = src {
+                    new_body.push(Instruction::Mov {
+                        assembly_type: AssemblyType::QuadWord,
+                        src: src.clone(),
+                        dst: Operand::Register(Reg::R10),
+                    });
+                    new_body.push(Instruction::Movq {
+                        src: Operand::Register(Reg::R10),
+                        dst: Operand::Register(Reg::XMM1),
+                    });
+                    new_body.push(Instruction::Divsd {
+                        src: Operand::Register(Reg::XMM1),
+                        dst,
+                    });
+                    continue;
+                }
+                new_body.push(instruction.clone());
             }
             _ => new_body.push(instruction.clone()),
         }
