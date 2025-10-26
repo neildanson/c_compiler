@@ -484,12 +484,27 @@ fn convert_function_call(
         });
         instructions.push(Instruction::Pop(Reg::DI));
     }
-    let assembly_type = dst.assembly_type(); //TODO: Check if this is correct
-    instructions.push(Instruction::Mov {
-        assembly_type,
-        src: Operand::Register(Reg::AX),
-        dst: dst.into(),
-    });
+    let ty = dst.parse_type();
+    let assembly_type = dst.assembly_type();
+    
+    // Return values: XMM0 for float/double, RAX for integers
+    if ty == Type::Float {
+        instructions.push(Instruction::Movss {
+            src: Operand::Register(Reg::XMM0),
+            dst: dst.into(),
+        });
+    } else if ty == Type::Double {
+        instructions.push(Instruction::Movsd {
+            src: Operand::Register(Reg::XMM0),
+            dst: dst.into(),
+        });
+    } else {
+        instructions.push(Instruction::Mov {
+            assembly_type,
+            src: Operand::Register(Reg::AX),
+            dst: dst.into(),
+        });
+    }
 
     Ok(instructions)
 }

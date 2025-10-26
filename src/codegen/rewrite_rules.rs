@@ -838,9 +838,20 @@ pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
                         src: Operand::Register(Reg::XMM1),
                         dst,
                     });
-                    continue;
+                } else if let Operand::Stack(_) | Operand::Data(_) = src
+                    && let Operand::Stack(_) | Operand::Data(_) = dst {
+                    // Cannot move directly from memory to memory - go through register
+                    new_body.push(Instruction::Movss {
+                        src,
+                        dst: Operand::Register(Reg::XMM1),
+                    });
+                    new_body.push(Instruction::Movss {
+                        src: Operand::Register(Reg::XMM1),
+                        dst,
+                    });
+                } else {
+                    new_body.push(instruction.clone());
                 }
-                new_body.push(instruction.clone());
             }
             Instruction::Movsd { src, dst } => {
                 if let Operand::Immediate { .. } = src {
@@ -857,12 +868,24 @@ pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
                         src: Operand::Register(Reg::XMM1),
                         dst,
                     });
-                    continue;
+                } else if let Operand::Stack(_) | Operand::Data(_) = src
+                    && let Operand::Stack(_) | Operand::Data(_) = dst {
+                    // Cannot move directly from memory to memory - go through register
+                    new_body.push(Instruction::Movsd {
+                        src,
+                        dst: Operand::Register(Reg::XMM1),
+                    });
+                    new_body.push(Instruction::Movsd {
+                        src: Operand::Register(Reg::XMM1),
+                        dst,
+                    });
+                } else {
+                    new_body.push(instruction.clone());
                 }
-                new_body.push(instruction.clone());
             }
             Instruction::Addss { src, dst } => {
-                if let Operand::Immediate { .. } = src {
+                // Handle immediate sources
+                let src = if let Operand::Immediate { .. } = src {
                     new_body.push(Instruction::Mov {
                         assembly_type: AssemblyType::LongWord,
                         src: src.clone(),
@@ -871,17 +894,34 @@ pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
                     new_body.push(Instruction::Movd {
                         src: Operand::Register(Reg::R10),
                         dst: Operand::Register(Reg::XMM1),
+                    });
+                    Operand::Register(Reg::XMM1)
+                } else {
+                    src
+                };
+                
+                // SSE arithmetic can't write directly to memory - must use XMM register
+                if let Operand::Stack(_) | Operand::Data(_) = dst {
+                    // Load destination to XMM2, add, store back
+                    new_body.push(Instruction::Movss {
+                        src: dst.clone(),
+                        dst: Operand::Register(Reg::XMM2),
                     });
                     new_body.push(Instruction::Addss {
-                        src: Operand::Register(Reg::XMM1),
+                        src,
+                        dst: Operand::Register(Reg::XMM2),
+                    });
+                    new_body.push(Instruction::Movss {
+                        src: Operand::Register(Reg::XMM2),
                         dst,
                     });
-                    continue;
+                } else {
+                    new_body.push(Instruction::Addss { src, dst });
                 }
-                new_body.push(instruction.clone());
             }
             Instruction::Addsd { src, dst } => {
-                if let Operand::Immediate { .. } = src {
+                // Handle immediate sources
+                let src = if let Operand::Immediate { .. } = src {
                     new_body.push(Instruction::Mov {
                         assembly_type: AssemblyType::QuadWord,
                         src: src.clone(),
@@ -890,17 +930,32 @@ pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
                     new_body.push(Instruction::Movq {
                         src: Operand::Register(Reg::R10),
                         dst: Operand::Register(Reg::XMM1),
+                    });
+                    Operand::Register(Reg::XMM1)
+                } else {
+                    src
+                };
+                
+                // SSE arithmetic can't write directly to memory
+                if let Operand::Stack(_) | Operand::Data(_) = dst {
+                    new_body.push(Instruction::Movsd {
+                        src: dst.clone(),
+                        dst: Operand::Register(Reg::XMM2),
                     });
                     new_body.push(Instruction::Addsd {
-                        src: Operand::Register(Reg::XMM1),
+                        src,
+                        dst: Operand::Register(Reg::XMM2),
+                    });
+                    new_body.push(Instruction::Movsd {
+                        src: Operand::Register(Reg::XMM2),
                         dst,
                     });
-                    continue;
+                } else {
+                    new_body.push(Instruction::Addsd { src, dst });
                 }
-                new_body.push(instruction.clone());
             }
             Instruction::Subss { src, dst } => {
-                if let Operand::Immediate { .. } = src {
+                let src = if let Operand::Immediate { .. } = src {
                     new_body.push(Instruction::Mov {
                         assembly_type: AssemblyType::LongWord,
                         src: src.clone(),
@@ -909,17 +964,31 @@ pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
                     new_body.push(Instruction::Movd {
                         src: Operand::Register(Reg::R10),
                         dst: Operand::Register(Reg::XMM1),
+                    });
+                    Operand::Register(Reg::XMM1)
+                } else {
+                    src
+                };
+                
+                if let Operand::Stack(_) | Operand::Data(_) = dst {
+                    new_body.push(Instruction::Movss {
+                        src: dst.clone(),
+                        dst: Operand::Register(Reg::XMM2),
                     });
                     new_body.push(Instruction::Subss {
-                        src: Operand::Register(Reg::XMM1),
+                        src,
+                        dst: Operand::Register(Reg::XMM2),
+                    });
+                    new_body.push(Instruction::Movss {
+                        src: Operand::Register(Reg::XMM2),
                         dst,
                     });
-                    continue;
+                } else {
+                    new_body.push(Instruction::Subss { src, dst });
                 }
-                new_body.push(instruction.clone());
             }
             Instruction::Subsd { src, dst } => {
-                if let Operand::Immediate { .. } = src {
+                let src = if let Operand::Immediate { .. } = src {
                     new_body.push(Instruction::Mov {
                         assembly_type: AssemblyType::QuadWord,
                         src: src.clone(),
@@ -928,17 +997,31 @@ pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
                     new_body.push(Instruction::Movq {
                         src: Operand::Register(Reg::R10),
                         dst: Operand::Register(Reg::XMM1),
+                    });
+                    Operand::Register(Reg::XMM1)
+                } else {
+                    src
+                };
+                
+                if let Operand::Stack(_) | Operand::Data(_) = dst {
+                    new_body.push(Instruction::Movsd {
+                        src: dst.clone(),
+                        dst: Operand::Register(Reg::XMM2),
                     });
                     new_body.push(Instruction::Subsd {
-                        src: Operand::Register(Reg::XMM1),
+                        src,
+                        dst: Operand::Register(Reg::XMM2),
+                    });
+                    new_body.push(Instruction::Movsd {
+                        src: Operand::Register(Reg::XMM2),
                         dst,
                     });
-                    continue;
+                } else {
+                    new_body.push(Instruction::Subsd { src, dst });
                 }
-                new_body.push(instruction.clone());
             }
             Instruction::Mulss { src, dst } => {
-                if let Operand::Immediate { .. } = src {
+                let src = if let Operand::Immediate { .. } = src {
                     new_body.push(Instruction::Mov {
                         assembly_type: AssemblyType::LongWord,
                         src: src.clone(),
@@ -947,17 +1030,31 @@ pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
                     new_body.push(Instruction::Movd {
                         src: Operand::Register(Reg::R10),
                         dst: Operand::Register(Reg::XMM1),
+                    });
+                    Operand::Register(Reg::XMM1)
+                } else {
+                    src
+                };
+                
+                if let Operand::Stack(_) | Operand::Data(_) = dst {
+                    new_body.push(Instruction::Movss {
+                        src: dst.clone(),
+                        dst: Operand::Register(Reg::XMM2),
                     });
                     new_body.push(Instruction::Mulss {
-                        src: Operand::Register(Reg::XMM1),
+                        src,
+                        dst: Operand::Register(Reg::XMM2),
+                    });
+                    new_body.push(Instruction::Movss {
+                        src: Operand::Register(Reg::XMM2),
                         dst,
                     });
-                    continue;
+                } else {
+                    new_body.push(Instruction::Mulss { src, dst });
                 }
-                new_body.push(instruction.clone());
             }
             Instruction::Mulsd { src, dst } => {
-                if let Operand::Immediate { .. } = src {
+                let src = if let Operand::Immediate { .. } = src {
                     new_body.push(Instruction::Mov {
                         assembly_type: AssemblyType::QuadWord,
                         src: src.clone(),
@@ -967,16 +1064,30 @@ pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
                         src: Operand::Register(Reg::R10),
                         dst: Operand::Register(Reg::XMM1),
                     });
+                    Operand::Register(Reg::XMM1)
+                } else {
+                    src
+                };
+                
+                if let Operand::Stack(_) | Operand::Data(_) = dst {
+                    new_body.push(Instruction::Movsd {
+                        src: dst.clone(),
+                        dst: Operand::Register(Reg::XMM2),
+                    });
                     new_body.push(Instruction::Mulsd {
-                        src: Operand::Register(Reg::XMM1),
+                        src,
+                        dst: Operand::Register(Reg::XMM2),
+                    });
+                    new_body.push(Instruction::Movsd {
+                        src: Operand::Register(Reg::XMM2),
                         dst,
                     });
-                    continue;
+                } else {
+                    new_body.push(Instruction::Mulsd { src, dst });
                 }
-                new_body.push(instruction.clone());
             }
             Instruction::Divss { src, dst } => {
-                if let Operand::Immediate { .. } = src {
+                let src = if let Operand::Immediate { .. } = src {
                     new_body.push(Instruction::Mov {
                         assembly_type: AssemblyType::LongWord,
                         src: src.clone(),
@@ -986,16 +1097,30 @@ pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
                         src: Operand::Register(Reg::R10),
                         dst: Operand::Register(Reg::XMM1),
                     });
+                    Operand::Register(Reg::XMM1)
+                } else {
+                    src
+                };
+                
+                if let Operand::Stack(_) | Operand::Data(_) = dst {
+                    new_body.push(Instruction::Movss {
+                        src: dst.clone(),
+                        dst: Operand::Register(Reg::XMM2),
+                    });
                     new_body.push(Instruction::Divss {
-                        src: Operand::Register(Reg::XMM1),
+                        src,
+                        dst: Operand::Register(Reg::XMM2),
+                    });
+                    new_body.push(Instruction::Movss {
+                        src: Operand::Register(Reg::XMM2),
                         dst,
                     });
-                    continue;
+                } else {
+                    new_body.push(Instruction::Divss { src, dst });
                 }
-                new_body.push(instruction.clone());
             }
             Instruction::Divsd { src, dst } => {
-                if let Operand::Immediate { .. } = src {
+                let src = if let Operand::Immediate { .. } = src {
                     new_body.push(Instruction::Mov {
                         assembly_type: AssemblyType::QuadWord,
                         src: src.clone(),
@@ -1005,13 +1130,27 @@ pub(crate) fn fixup_stack_operations(body: &[Instruction]) -> Vec<Instruction> {
                         src: Operand::Register(Reg::R10),
                         dst: Operand::Register(Reg::XMM1),
                     });
+                    Operand::Register(Reg::XMM1)
+                } else {
+                    src
+                };
+                
+                if let Operand::Stack(_) | Operand::Data(_) = dst {
+                    new_body.push(Instruction::Movsd {
+                        src: dst.clone(),
+                        dst: Operand::Register(Reg::XMM2),
+                    });
                     new_body.push(Instruction::Divsd {
-                        src: Operand::Register(Reg::XMM1),
+                        src,
+                        dst: Operand::Register(Reg::XMM2),
+                    });
+                    new_body.push(Instruction::Movsd {
+                        src: Operand::Register(Reg::XMM2),
                         dst,
                     });
-                    continue;
+                } else {
+                    new_body.push(Instruction::Divsd { src, dst });
                 }
-                new_body.push(instruction.clone());
             }
             _ => new_body.push(instruction.clone()),
         }
