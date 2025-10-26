@@ -836,4 +836,50 @@ int main(void) {
 
         assert!(rest.is_empty());
     }
+
+    #[test]
+    fn test_parse_float_constant() {
+        let tokenizer = Tokenizer::new();
+        let tokens = tokenizer.tokenize("3.14f").unwrap();
+        let (expression, rest) = parse_expression(&tokens, 0).unwrap();
+        assert_eq!(expression, Expression::Constant(Constant::Float(3.14)));
+        assert!(rest.is_empty());
+    }
+
+    #[test]
+    fn test_parse_double_constant() {
+        let tokenizer = Tokenizer::new();
+        let tokens = tokenizer.tokenize("2.71").unwrap();
+        let (expression, rest) = parse_expression(&tokens, 0).unwrap();
+        assert_eq!(expression, Expression::Constant(Constant::Double(2.71)));
+        assert!(rest.is_empty());
+    }
+
+    #[test]
+    fn test_parse_float_variable() {
+        let tokenizer = Tokenizer::new();
+        let tokens = tokenizer.tokenize("float x = 3.14f;").unwrap();
+        let (decl, rest) = parse_variable_declaration(&tokens).unwrap();
+        assert_eq!(decl.var_type, Type::Float);
+        assert_eq!(decl.name, "x");
+        assert_eq!(
+            decl.init,
+            Some(Expression::Constant(Constant::Float(3.14)))
+        );
+        assert!(rest.is_empty());
+    }
+
+    #[test]
+    fn test_parse_double_variable() {
+        let tokenizer = Tokenizer::new();
+        let tokens = tokenizer.tokenize("double y = 2.71;").unwrap();
+        let (decl, rest) = parse_variable_declaration(&tokens).unwrap();
+        assert_eq!(decl.var_type, Type::Double);
+        assert_eq!(decl.name, "y");
+        assert_eq!(
+            decl.init,
+            Some(Expression::Constant(Constant::Double(2.71)))
+        );
+        assert!(rest.is_empty());
+    }
 }
